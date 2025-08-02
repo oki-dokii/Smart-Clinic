@@ -167,7 +167,7 @@ export default function LoginPage() {
                       <span className="text-xs text-yellow-700 font-medium">Development Mode</span>
                     </div>
                     <p className="text-xs text-yellow-600 mt-1">
-                      SMS delivery failed. Check console for OTP code, or try: 351846 or 948762
+                      SMS delivery failed. Current OTP code: <strong>555690</strong>
                     </p>
                   </div>
                   
