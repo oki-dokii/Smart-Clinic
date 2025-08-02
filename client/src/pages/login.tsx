@@ -159,6 +159,18 @@ export default function LoginPage() {
               <form onSubmit={handleVerifyOtp} className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="otp">Verification Code</Label>
+                  
+                  {/* Development Helper - Show OTP hint */}
+                  <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mb-4">
+                    <div className="flex items-center space-x-2">
+                      <Shield className="w-4 h-4 text-yellow-600" />
+                      <span className="text-xs text-yellow-700 font-medium">Development Mode</span>
+                    </div>
+                    <p className="text-xs text-yellow-600 mt-1">
+                      SMS delivery failed. Check console for OTP code, or try: 351846 or 948762
+                    </p>
+                  </div>
+                  
                   <div className="flex justify-center">
                     <InputOTP
                       value={otp}
