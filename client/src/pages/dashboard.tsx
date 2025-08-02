@@ -1,0 +1,470 @@
+import {
+  Bell,
+  Calendar,
+  Clock,
+  Home,
+  MapPin,
+  Phone,
+  Settings,
+  AlertTriangle,
+  Pill,
+  Stethoscope,
+  Activity,
+  UserCheck,
+  Zap,
+  User,
+} from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Progress } from "@/components/ui/progress";
+import { useQuery } from "@tanstack/react-query";
+import { useState, useEffect } from "react";
+import { useLocation } from "wouter";
+import { useToast } from "@/hooks/use-toast";
+
+export default function SmartClinicDashboard() {
+  const [, setLocation] = useLocation();
+  const { toast } = useToast();
+  const [user, setUser] = useState<any>(null);
+
+  useEffect(() => {
+    const token = localStorage.getItem("auth_token");
+    const userData = localStorage.getItem("user");
+    
+    if (!token || !userData) {
+      setLocation("/login");
+      return;
+    }
+    
+    setUser(JSON.parse(userData));
+  }, [setLocation]);
+
+  const { data: appointments } = useQuery({
+    queryKey: ["/api/appointments"],
+    enabled: !!user,
+  });
+
+  const { data: queuePosition } = useQuery({
+    queryKey: ["/api/queue/position"],
+    enabled: !!user?.role === "patient",
+  });
+
+  const { data: reminders } = useQuery({
+    queryKey: ["/api/reminders"],
+    enabled: !!user?.role === "patient",
+  });
+
+  const handleLogout = () => {
+    localStorage.removeItem("auth_token");
+    localStorage.removeItem("user");
+    setLocation("/login");
+    toast({
+      title: "Logged out",
+      description: "You have been successfully logged out.",
+    });
+  };
+
+  if (!user) {
+    return <div>Loading...</div>;
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      {/* Header */}
+      <header className="bg-white border-b border-gray-200 px-4 sm:px-6 py-4">
+        <div className="flex items-center justify-between max-w-7xl mx-auto">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 sm:w-10 sm:h-10 bg-blue-500 rounded-lg flex items-center justify-center">
+              <Stethoscope className="w-4 h-4 sm:w-6 sm:h-6 text-white" />
+            </div>
+            <div className="hidden sm:block">
+              <h1 className="text-lg sm:text-xl font-semibold text-gray-900">SmartClinic</h1>
+              <p className="text-xs sm:text-sm text-gray-500">Healthcare Manager</p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 sm:gap-4">
+            <div className="relative">
+              <Bell className="w-5 h-5 text-gray-600" />
+              <div className="absolute -top-2 -right-2 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center font-medium">
+                3
+              </div>
+            </div>
+
+            <div className="flex flex-col items-center gap-1">
+              <span className="text-sm font-medium text-gray-900">
+                {user.firstName || user.phoneNumber}
+              </span>
+              <Badge className="bg-green-500 text-white text-xs px-2 py-1 rounded-full">
+                {user.role}
+              </Badge>
+            </div>
+
+            <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center">
+              <User className="w-4 h-4 text-gray-600" />
+            </div>
+
+            <Settings className="w-5 h-5 text-gray-600" />
+
+            <button onClick={handleLogout} className="w-5 h-5 text-gray-600">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                <polyline points="16,17 21,12 16,7" />
+                <line x1="21" y1="12" x2="9" y2="12" />
+              </svg>
+            </button>
+          </div>
+        </div>
+      </header>
+
+      {/* Hero Section */}
+      <section className="bg-gradient-to-r from-blue-500 to-blue-600 px-4 sm:px-6 py-8 sm:py-12 relative overflow-hidden">
+        <div className="max-w-7xl mx-auto relative z-10">
+          <div className="text-white mb-6 sm:mb-8">
+            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-2">
+              Welcome back, {user.firstName || "User"}!
+            </h2>
+            <p className="text-blue-100 text-base sm:text-lg">Manage your healthcare with smart tools</p>
+          </div>
+
+          <div className="flex flex-col sm:flex-row gap-4 items-stretch sm:items-center">
+            <Button className="bg-green-500 hover:bg-green-600 text-white px-4 sm:px-6 py-3 w-full sm:w-auto">
+              <Calendar className="w-4 h-4 mr-2" />
+              Book Appointment
+            </Button>
+            <div className="bg-white rounded-lg px-4 py-3 flex-1 max-w-full sm:max-w-md">
+              <Input
+                placeholder="Search doctors, specialties..."
+                className="border-0 p-0 focus-visible:ring-0 text-sm sm:text-base"
+              />
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Main Dashboard */}
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
+        {/* Status Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-6 sm:mb-8">
+          {/* Next Appointment */}
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-medium text-gray-600 flex items-center gap-2">
+                <Calendar className="w-4 h-4 text-blue-500" />
+                Next Appointment
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold mb-1">
+                {appointments?.length > 0 ? "2:30 PM" : "None"}
+              </div>
+              <div className="text-sm text-gray-600 mb-4">
+                {appointments?.length > 0 ? "Dr. Sarah Wilson - Cardiology" : "No upcoming appointments"}
+              </div>
+              <Button className="w-full bg-blue-500 hover:bg-blue-600">View Details</Button>
+            </CardContent>
+          </Card>
+
+          {/* Queue Position */}
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-medium text-gray-600 flex items-center gap-2">
+                <Activity className="w-4 h-4 text-green-500" />
+                Queue Position
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold mb-1">
+                {queuePosition ? `#${queuePosition.tokenNumber}` : "Not in queue"}
+              </div>
+              <div className="text-sm text-gray-600 mb-4">
+                {queuePosition ? "Estimated wait: 45 minutes" : "Join queue when you arrive"}
+              </div>
+              <Button className="w-full bg-green-500 hover:bg-green-600">Track Live</Button>
+            </CardContent>
+          </Card>
+
+          {/* Pending Medicines */}
+          <Card className="border-orange-200">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-medium text-gray-600 flex items-center gap-2">
+                <Pill className="w-4 h-4 text-orange-500" />
+                Pending Medicines
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center gap-2 mb-1">
+                <span className="text-2xl font-bold">
+                  {reminders?.filter((r: any) => !r.isTaken).length || 0}
+                </span>
+                {reminders?.some((r: any) => !r.isTaken && new Date(r.scheduledAt) < new Date()) && (
+                  <Badge className="bg-red-500 text-white text-xs">Urgent</Badge>
+                )}
+              </div>
+              <div className="text-sm text-gray-600 mb-4">
+                {reminders?.filter((r: any) => !r.isTaken && new Date(r.scheduledAt) < new Date()).length || 0} dose(s) overdue
+              </div>
+              <Button className="w-full bg-orange-500 hover:bg-orange-600">Take Medicine</Button>
+            </CardContent>
+          </Card>
+
+          {/* Doctor Status */}
+          <Card className="border-red-200">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-medium text-gray-600 flex items-center gap-2">
+                <Clock className="w-4 h-4 text-red-500" />
+                Doctor Status
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center gap-2 mb-1">
+                <span className="text-2xl font-bold">On Time</span>
+              </div>
+              <div className="text-sm text-gray-600 mb-4">All appointments on schedule</div>
+              <Button className="w-full bg-blue-500 hover:bg-blue-600">Get Updates</Button>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Main Content Grid */}
+        <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 sm:gap-8">
+          {/* Live Queue Tracker */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Activity className="w-5 h-5 text-blue-500" />
+                Live Queue Tracker
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="bg-blue-500 text-white rounded-lg p-6 text-center mb-6">
+                <div className="text-sm mb-2">Now Serving</div>
+                <div className="text-4xl font-bold mb-2">#12</div>
+                <div className="text-sm">Token Number</div>
+              </div>
+
+              <div className="space-y-3">
+                <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg">
+                  <div className="flex items-center gap-3">
+                    <Badge className="bg-blue-500 text-white">#13</Badge>
+                    <div>
+                      <div className="text-sm font-medium">Next Patient</div>
+                      <div className="text-xs text-gray-500">10:45 AM</div>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-sm font-medium">0min</div>
+                    <div className="text-xs text-gray-500">est. wait</div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex gap-2 mt-4">
+                <Button variant="outline" className="flex-1 bg-transparent">
+                  Refresh Queue
+                </Button>
+                <Button className="flex-1 bg-blue-500 hover:bg-blue-600">Join Queue</Button>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Medicine Reminders */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Pill className="w-5 h-5 text-orange-500" />
+                Medicine Reminders
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex justify-center gap-8 mb-6">
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-blue-600">
+                    {reminders?.filter((r: any) => !r.isTaken).length || 0}
+                  </div>
+                  <div className="text-xs text-gray-500">Due Today</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-green-600">
+                    {reminders?.filter((r: any) => r.isTaken).length || 0}
+                  </div>
+                  <div className="text-xs text-gray-500">Completed</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-red-600">
+                    {reminders?.filter((r: any) => r.isSkipped).length || 0}
+                  </div>
+                  <div className="text-xs text-gray-500">Missed</div>
+                </div>
+              </div>
+
+              {reminders?.length > 0 ? (
+                <div className="space-y-4">
+                  {reminders.slice(0, 2).map((reminder: any) => (
+                    <div key={reminder.id} className="border rounded-lg p-4">
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-2">
+                          <span className="font-medium">{reminder.prescription.medicine.name}</span>
+                          <Pill className="w-4 h-4 text-blue-500" />
+                        </div>
+                        <div className="text-right">
+                          <div className="text-sm font-medium">
+                            {new Date(reminder.scheduledAt).toLocaleTimeString()}
+                          </div>
+                          {!reminder.isTaken && new Date(reminder.scheduledAt) < new Date() && (
+                            <Badge className="bg-red-100 text-red-800 text-xs">Overdue</Badge>
+                          )}
+                        </div>
+                      </div>
+                      <div className="text-sm text-gray-600 mb-2">{reminder.prescription.dosage}</div>
+                      <div className="flex gap-2">
+                        <Button size="sm" className="flex-1 bg-green-500 hover:bg-green-600">
+                          Mark Taken
+                        </Button>
+                        <Button size="sm" variant="outline" className="flex-1 bg-transparent">
+                          <Clock className="w-3 h-3 mr-2" />
+                          Snooze
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8 text-gray-500">
+                  No medicine reminders for today
+                </div>
+              )}
+
+              <Button className="w-full mt-4 bg-blue-500 hover:bg-blue-600">
+                <Calendar className="w-4 h-4 mr-2" />
+                View Full Schedule
+              </Button>
+            </CardContent>
+          </Card>
+
+          {/* Appointments */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Calendar className="w-5 h-5 text-blue-500" />
+                Appointments
+                <Button size="sm" className="ml-auto bg-blue-500 hover:bg-blue-600">
+                  Book New
+                </Button>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex justify-center gap-8 mb-6">
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-blue-600">
+                    {appointments?.length || 0}
+                  </div>
+                  <div className="text-xs text-gray-500">Upcoming</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-green-600">0</div>
+                  <div className="text-xs text-gray-500">Home Visits</div>
+                </div>
+              </div>
+
+              {appointments?.length > 0 ? (
+                <div className="space-y-4">
+                  {appointments.slice(0, 2).map((appointment: any) => (
+                    <div key={appointment.id} className="border rounded-lg p-4">
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-2">
+                          <span className="font-medium">
+                            Dr. {appointment.doctor.firstName} {appointment.doctor.lastName}
+                          </span>
+                          <Badge className="bg-green-100 text-green-800 text-xs">
+                            {appointment.status}
+                          </Badge>
+                        </div>
+                        <div className="flex items-center gap-1 text-sm text-gray-600">
+                          <Stethoscope className="w-3 h-3" />
+                          {appointment.type}
+                        </div>
+                      </div>
+                      <div className="text-sm text-gray-500 mb-3">{appointment.location}</div>
+                      <div className="flex items-center gap-2 mb-3">
+                        <Calendar className="w-4 h-4 text-gray-400" />
+                        <span className="text-sm">
+                          {new Date(appointment.appointmentDate).toLocaleDateString()}
+                        </span>
+                        <Clock className="w-4 h-4 text-gray-400 ml-2" />
+                        <span className="text-sm">
+                          {new Date(appointment.appointmentDate).toLocaleTimeString()}
+                        </span>
+                      </div>
+                      <div className="flex gap-2">
+                        <Button size="sm" variant="outline" className="flex-1 bg-transparent">
+                          Reschedule
+                        </Button>
+                        <Button size="sm" variant="outline" className="flex-1 text-red-600 border-red-200 bg-transparent">
+                          Cancel
+                        </Button>
+                        <Button size="sm" className="bg-green-500 hover:bg-green-600">
+                          <Phone className="w-3 h-3" />
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8 text-gray-500">
+                  No upcoming appointments
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+        
+        {/* Quick Actions */}
+        <div className="mt-8">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Zap className="w-5 h-5 text-blue-500" />
+                Quick Actions
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+                <Button
+                  variant="outline"
+                  className="h-16 sm:h-20 flex-col gap-1 sm:gap-2 bg-transparent text-xs sm:text-sm"
+                >
+                  <UserCheck className="w-5 h-5 sm:w-6 sm:h-6 text-green-500" />
+                  <span>Check In</span>
+                </Button>
+                <Button
+                  variant="outline"
+                  className="h-16 sm:h-20 flex-col gap-1 sm:gap-2 bg-transparent text-xs sm:text-sm"
+                >
+                  <AlertTriangle className="w-5 h-5 sm:w-6 sm:h-6 text-red-500" />
+                  <span>Emergency</span>
+                </Button>
+                <Button
+                  variant="outline"
+                  className="h-16 sm:h-20 flex-col gap-1 sm:gap-2 bg-transparent text-xs sm:text-sm"
+                >
+                  <Clock className="w-5 h-5 sm:w-6 sm:h-6 text-blue-500" />
+                  <span>Reschedule</span>
+                </Button>
+                <Button
+                  variant="outline"
+                  className="h-16 sm:h-20 flex-col gap-1 sm:gap-2 bg-transparent text-xs sm:text-sm"
+                >
+                  <Home className="w-5 h-5 sm:w-6 sm:h-6 text-purple-500" />
+                  <span>Home Care</span>
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </main>
+    </div>
+  );
+}
