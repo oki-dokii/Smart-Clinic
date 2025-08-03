@@ -686,35 +686,65 @@ export default function SmartClinicDashboard() {
             <CardContent>
               <div className="bg-blue-500 text-white rounded-lg p-6 text-center mb-6">
                 <div className="text-sm mb-2">
-                  {queuePosition?.status === 'waiting' ? 'Your Position' : 'Now Serving'}
+                  {queuePosition?.status === 'waiting' ? 'Your Position' : 'Queue Status'}
                 </div>
                 <div className="text-4xl font-bold mb-2">
-                  #{queuePosition?.status === 'waiting' ? queuePosition.tokenNumber : '12'}
+                  #{queuePosition?.status === 'waiting' ? queuePosition.tokenNumber : '6'}
                 </div>
-                <div className="text-sm">Token Number</div>
+                <div className="text-sm">
+                  {queuePosition?.status === 'waiting' ? `You are ${queuePosition.tokenNumber - 1} patients away` : 'Token Number'}
+                </div>
               </div>
 
               <div className="space-y-3">
-                <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg">
+                <div className="text-xs text-gray-500 mb-2">Queue Status: 5 patients waiting</div>
+                
+                {/* Currently being served */}
+                <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg border-l-4 border-green-500">
                   <div className="flex items-center gap-3">
-                    <Badge className="bg-blue-500 text-white">
-                      #{queuePosition?.status === 'waiting' ? (queuePosition.tokenNumber - 1) : '13'}
-                    </Badge>
+                    <Badge className="bg-green-500 text-white">#1</Badge>
                     <div>
-                      <div className="text-sm font-medium">
-                        {queuePosition?.status === 'waiting' ? 'Before You' : 'Next Patient'}
-                      </div>
-                      <div className="text-xs text-gray-500">
-                        {new Date().toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'})}
-                      </div>
+                      <div className="text-sm font-medium">Now Being Served</div>
+                      <div className="text-xs text-gray-500">Started at {new Date(Date.now() - 8 * 60000).toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'})}</div>
                     </div>
                   </div>
                   <div className="text-right">
-                    <div className="text-sm font-medium">
-                      {queuePosition?.estimatedWaitTime || 15}min
+                    <div className="text-sm font-medium text-green-600">Active</div>
+                    <div className="text-xs text-gray-500">8 min ago</div>
+                  </div>
+                </div>
+
+                {/* Next patients in queue */}
+                <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg">
+                  <div className="flex items-center gap-3">
+                    <Badge className="bg-blue-500 text-white">#2</Badge>
+                    <div>
+                      <div className="text-sm font-medium">Next Patient</div>
+                      <div className="text-xs text-gray-500">Waiting since {new Date(Date.now() - 25 * 60000).toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'})}</div>
                     </div>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-sm font-medium">~5min</div>
                     <div className="text-xs text-gray-500">est. wait</div>
                   </div>
+                </div>
+
+                <div className="flex items-center justify-between p-3 bg-orange-50 rounded-lg">
+                  <div className="flex items-center gap-3">
+                    <Badge className="bg-orange-500 text-white">#3</Badge>
+                    <div>
+                      <div className="text-sm font-medium">3rd in Line</div>
+                      <div className="text-xs text-gray-500">Waiting since {new Date(Date.now() - 35 * 60000).toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'})}</div>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-sm font-medium">~20min</div>
+                    <div className="text-xs text-gray-500">est. wait</div>
+                  </div>
+                </div>
+
+                <div className="text-center text-xs text-gray-500 pt-2">
+                  + 2 more patients waiting
                 </div>
               </div>
 

@@ -218,28 +218,53 @@ export default function ProfilePage() {
                 Account Information
               </CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                <div className="flex justify-between items-center py-2 border-b">
-                  <span className="text-sm font-medium text-gray-600">Phone Number</span>
-                  <span className="text-sm text-gray-900">{user.phoneNumber}</span>
-                </div>
-                <div className="flex justify-between items-center py-2 border-b">
-                  <span className="text-sm font-medium text-gray-600">Role</span>
-                  <span className="text-sm text-gray-900 capitalize">{user.role}</span>
-                </div>
-                <div className="flex justify-between items-center py-2 border-b">
-                  <span className="text-sm font-medium text-gray-600">Account Status</span>
-                  <span className={`text-sm ${user.isActive ? 'text-green-600' : 'text-red-600'}`}>
-                    {user.isActive ? 'Active' : 'Inactive'}
-                  </span>
-                </div>
-                <div className="flex justify-between items-center py-2">
-                  <span className="text-sm font-medium text-gray-600">Account Created</span>
-                  <span className="text-sm text-gray-900">
-                    {new Date(user.createdAt).toLocaleDateString()}
-                  </span>
-                </div>
+            <CardContent className="space-y-4">
+              <div>
+                <Label htmlFor="firstName">First Name</Label>
+                <Input
+                  id="firstName"
+                  value={formData.firstName}
+                  onChange={(e) => handleInputChange("firstName", e.target.value)}
+                  placeholder="Enter your first name"
+                />
+              </div>
+              <div>
+                <Label htmlFor="lastName">Last Name</Label>
+                <Input
+                  id="lastName"
+                  value={formData.lastName}
+                  onChange={(e) => handleInputChange("lastName", e.target.value)}
+                  placeholder="Enter your last name"
+                />
+              </div>
+              <div>
+                <Label htmlFor="email">Email Address</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  value={formData.email}
+                  onChange={(e) => handleInputChange("email", e.target.value)}
+                  placeholder="Enter your email address"
+                />
+              </div>
+              <div>
+                <Label htmlFor="phoneNumber">Phone Number</Label>
+                <Input
+                  id="phoneNumber"
+                  value={user.phoneNumber}
+                  disabled
+                  className="bg-gray-100"
+                />
+                <p className="text-xs text-gray-500 mt-1">Contact support to update your phone number.</p>
+              </div>
+              <div className="pt-4">
+                <Button
+                  onClick={handleSaveProfile}
+                  disabled={updateProfileMutation.isPending}
+                  className="bg-blue-500 hover:bg-blue-600 w-full"
+                >
+                  {updateProfileMutation.isPending ? "Saving..." : "Save Changes"}
+                </Button>
               </div>
             </CardContent>
           </Card>
