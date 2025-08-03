@@ -162,8 +162,8 @@ export default function ProfilePage() {
                   <Input
                     id="dateOfBirth"
                     type="date"
-                    value={formData.dateOfBirth}
-                    onChange={(e) => handleInputChange("dateOfBirth", e.target.value)}
+                    value={formData.dateOfBirth ? new Date(formData.dateOfBirth).toISOString().split('T')[0] : ''}
+                    onChange={(e) => handleInputChange("dateOfBirth", e.target.value ? new Date(e.target.value).toISOString() : '')}
                     className="pl-10"
                   />
                 </div>

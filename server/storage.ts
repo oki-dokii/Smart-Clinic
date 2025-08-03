@@ -630,13 +630,18 @@ export class DatabaseStorage implements IStorage {
     return updatedToken || undefined;
   }
 
-  async getPatientQueuePosition(patientId: string, doctorId: string): Promise<QueueToken | undefined> {
+  async getPatientQueuePosition(patientId: string, doctorId?: string): Promise<QueueToken | undefined> {
+    let whereClause = and(
+      eq(queueTokens.patientId, patientId),
+      sql`${queueTokens.status} IN ('waiting', 'called')`
+    );
+    
+    if (doctorId) {
+      whereClause = and(whereClause, eq(queueTokens.doctorId, doctorId));
+    }
+    
     const [token] = await db.select().from(queueTokens)
-      .where(and(
-        eq(queueTokens.patientId, patientId),
-        eq(queueTokens.doctorId, doctorId),
-        sql`${queueTokens.status} IN ('waiting', 'called')`
-      ))
+      .where(whereClause)
       .orderBy(desc(queueTokens.createdAt));
     
     return token || undefined;

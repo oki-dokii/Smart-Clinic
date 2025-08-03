@@ -337,8 +337,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/queue/position", authMiddleware, requireRole(['patient']), async (req, res) => {
     try {
       const { doctorId } = req.query;
+      // If no doctorId provided, get the latest queue position for the patient
       const position = await storage.getPatientQueuePosition(req.user!.id, doctorId as string);
-      res.json(position);
+      res.json(position || { tokenNumber: null, position: null, estimatedWaitTime: 0 });
     } catch (error: any) {
       res.status(400).json({ message: error.message });
     }

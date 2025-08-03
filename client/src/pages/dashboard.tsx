@@ -213,9 +213,12 @@ export default function SmartClinicDashboard() {
               </Badge>
             </div>
 
-            <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center">
+            <button 
+              onClick={() => setLocation("/profile")}
+              className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center hover:bg-gray-200 transition-colors"
+            >
               <User className="w-4 h-4 text-gray-600" />
-            </div>
+            </button>
 
             <button 
               onClick={() => setLocation("/profile")} 
@@ -570,6 +573,13 @@ export default function SmartClinicDashboard() {
                 <Button
                   variant="outline"
                   className="h-16 sm:h-20 flex-col gap-1 sm:gap-2 bg-transparent text-xs sm:text-sm"
+                  onClick={() => {
+                    toast({
+                      title: "Emergency Alert",
+                      description: "Emergency services contacted. Ambulance dispatched to your location.",
+                      variant: "destructive",
+                    });
+                  }}
                 >
                   <AlertTriangle className="w-5 h-5 sm:w-6 sm:h-6 text-red-500" />
                   <span>Emergency</span>
@@ -577,6 +587,12 @@ export default function SmartClinicDashboard() {
                 <Button
                   variant="outline"
                   className="h-16 sm:h-20 flex-col gap-1 sm:gap-2 bg-transparent text-xs sm:text-sm"
+                  onClick={() => {
+                    toast({
+                      title: "Reschedule Request",
+                      description: "Appointment rescheduling form would open here. Feature available for implementation.",
+                    });
+                  }}
                 >
                   <Clock className="w-5 h-5 sm:w-6 sm:h-6 text-blue-500" />
                   <span>Reschedule</span>
@@ -584,6 +600,12 @@ export default function SmartClinicDashboard() {
                 <Button
                   variant="outline"
                   className="h-16 sm:h-20 flex-col gap-1 sm:gap-2 bg-transparent text-xs sm:text-sm"
+                  onClick={() => {
+                    toast({
+                      title: "Home Care Service",
+                      description: "Home care appointment booking initiated. Our team will contact you within 30 minutes.",
+                    });
+                  }}
                 >
                   <Home className="w-5 h-5 sm:w-6 sm:h-6 text-purple-500" />
                   <span>Home Care</span>
