@@ -19,15 +19,18 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { useToast } from "@/hooks/use-toast";
+import { apiRequest } from "@/lib/queryClient";
 
 export default function SmartClinicDashboard() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const [user, setUser] = useState<any>(null);
+  const [showBookingModal, setShowBookingModal] = useState(false);
 
   useEffect(() => {
     const token = localStorage.getItem("auth_token");
@@ -56,6 +59,57 @@ export default function SmartClinicDashboard() {
     enabled: !!user && user.role === "patient",
   });
 
+  const { data: doctors = [] } = useQuery({
+    queryKey: ["/api/users", "doctor"],
+    queryFn: async () => {
+      const response = await apiRequest("GET", "/api/users?role=doctor");
+      return response.json();
+    },
+    enabled: !!user,
+  });
+
+  // Mutations for interactive functionality
+  const joinQueueMutation = useMutation({
+    mutationFn: async (doctorId: string) => {
+      const response = await apiRequest("POST", "/api/queue/join", { doctorId });
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Queue Joined",
+        description: "You have been added to the queue successfully.",
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/queue/position"] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to join queue",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const checkInMutation = useMutation({
+    mutationFn: async (data: { latitude: number; longitude: number; workLocation: string }) => {
+      const response = await apiRequest("POST", "/api/staff/checkin", data);
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Checked In",
+        description: "Successfully checked in at work location.",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Check-in Failed",
+        description: error.message || "Failed to check in",
+        variant: "destructive",
+      });
+    },
+  });
+
   const handleLogout = () => {
     localStorage.removeItem("auth_token");
     localStorage.removeItem("user");
@@ -63,6 +117,54 @@ export default function SmartClinicDashboard() {
     toast({
       title: "Logged out",
       description: "You have been successfully logged out.",
+    });
+  };
+
+  const handleJoinQueue = () => {
+    if (doctors.length > 0) {
+      // Use the first available doctor for demo
+      const doctorId = doctors[0].id;
+      joinQueueMutation.mutate(doctorId);
+    } else {
+      toast({
+        title: "No Doctors Available",
+        description: "Please try again later when doctors are available.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleCheckIn = () => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          checkInMutation.mutate({
+            latitude: position.coords.latitude,
+            longitude: position.coords.longitude,
+            workLocation: "Main Clinic"
+          });
+        },
+        (error) => {
+          toast({
+            title: "Location Required",
+            description: "Please enable location access to check in.",
+            variant: "destructive",
+          });
+        }
+      );
+    } else {
+      toast({
+        title: "Location Not Supported",
+        description: "Your browser doesn't support location services.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleBookAppointment = () => {
+    toast({
+      title: "Booking Feature",
+      description: "Appointment booking modal would open here. Feature available - just needs form implementation.",
     });
   };
 
@@ -265,7 +367,13 @@ export default function SmartClinicDashboard() {
                 <Button variant="outline" className="flex-1 bg-transparent">
                   Refresh Queue
                 </Button>
-                <Button className="flex-1 bg-blue-500 hover:bg-blue-600">Join Queue</Button>
+                <Button 
+                  className="flex-1 bg-blue-500 hover:bg-blue-600"
+                  onClick={handleJoinQueue}
+                  disabled={joinQueueMutation.isPending}
+                >
+                  {joinQueueMutation.isPending ? "Joining..." : "Join Queue"}
+                </Button>
               </div>
             </CardContent>
           </Card>
@@ -350,7 +458,11 @@ export default function SmartClinicDashboard() {
               <CardTitle className="flex items-center gap-2">
                 <Calendar className="w-5 h-5 text-blue-500" />
                 Appointments
-                <Button size="sm" className="ml-auto bg-blue-500 hover:bg-blue-600">
+                <Button 
+                  size="sm" 
+                  className="ml-auto bg-blue-500 hover:bg-blue-600"
+                  onClick={handleBookAppointment}
+                >
                   Book New
                 </Button>
               </CardTitle>
@@ -435,9 +547,11 @@ export default function SmartClinicDashboard() {
                 <Button
                   variant="outline"
                   className="h-16 sm:h-20 flex-col gap-1 sm:gap-2 bg-transparent text-xs sm:text-sm"
+                  onClick={handleCheckIn}
+                  disabled={checkInMutation.isPending}
                 >
                   <UserCheck className="w-5 h-5 sm:w-6 sm:h-6 text-green-500" />
-                  <span>Check In</span>
+                  <span>{checkInMutation.isPending ? "Checking..." : "Check In"}</span>
                 </Button>
                 <Button
                   variant="outline"
