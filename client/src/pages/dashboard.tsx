@@ -17,6 +17,7 @@ import {
 import BookingModal from "@/components/BookingModal";
 import EmergencyModal from "@/components/EmergencyModal";
 import CancelModal from "@/components/CancelModal";
+import AppointmentDetailsModal from "@/components/AppointmentDetailsModal";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -38,6 +39,7 @@ export default function SmartClinicDashboard() {
   const [showBookingModal, setShowBookingModal] = useState(false);
   const [showEmergencyModal, setShowEmergencyModal] = useState(false);
   const [showCancelModal, setShowCancelModal] = useState(false);
+  const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [selectedAppointment, setSelectedAppointment] = useState<any>(null);
 
   useEffect(() => {
@@ -476,14 +478,30 @@ export default function SmartClinicDashboard() {
                   : "None"
                 }
               </div>
-              <div className="text-sm text-gray-600 mb-4">
+              <div className="text-sm text-gray-600 mb-2">
                 {appointments?.length > 0 
                   ? `Dr. ${appointments[0].doctor.firstName} ${appointments[0].doctor.lastName} - ${appointments[0].type}`
                   : "No upcoming appointments"
                 }
               </div>
+              {appointments?.length > 0 && (
+                <div className="text-xs text-gray-500 mb-4">
+                  {new Date(appointments[0].appointmentDate).toLocaleDateString('en-US', { 
+                    weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' 
+                  })}
+                </div>
+              )}
               <div className="flex gap-2">
-                <Button className="flex-1 bg-blue-500 hover:bg-blue-600" size="sm">
+                <Button 
+                  className="flex-1 bg-blue-500 hover:bg-blue-600" 
+                  size="sm"
+                  onClick={() => {
+                    if (appointments?.length > 0) {
+                      setSelectedAppointment(appointments[0]);
+                      setShowDetailsModal(true);
+                    }
+                  }}
+                >
                   View Details
                 </Button>
                 {appointments?.length > 0 && (
@@ -932,6 +950,11 @@ export default function SmartClinicDashboard() {
       <CancelModal 
         isOpen={showCancelModal} 
         onClose={() => setShowCancelModal(false)}
+        appointment={selectedAppointment}
+      />
+      <AppointmentDetailsModal 
+        isOpen={showDetailsModal} 
+        onClose={() => setShowDetailsModal(false)}
         appointment={selectedAppointment}
       />
     </div>
