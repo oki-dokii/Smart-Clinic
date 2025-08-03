@@ -135,6 +135,15 @@ export default function SmartClinicDashboard() {
   };
 
   const handleCheckIn = () => {
+    // Check-in is only for staff/doctors, show appropriate message for patients
+    if (user.role === 'patient') {
+      toast({
+        title: "Patient Check-in",
+        description: "Patients check in at the reception desk. This feature is for staff members.",
+      });
+      return;
+    }
+
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
@@ -208,7 +217,12 @@ export default function SmartClinicDashboard() {
               <User className="w-4 h-4 text-gray-600" />
             </div>
 
-            <Settings className="w-5 h-5 text-gray-600" />
+            <button 
+              onClick={() => setLocation("/profile")} 
+              className="w-5 h-5 text-gray-600 hover:text-gray-800 transition-colors"
+            >
+              <Settings className="w-5 h-5" />
+            </button>
 
             <button onClick={handleLogout} className="w-5 h-5 text-gray-600">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">

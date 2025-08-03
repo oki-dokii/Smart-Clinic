@@ -112,11 +112,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/users", authMiddleware, requireRole(['admin']), async (req, res) => {
+  app.get("/api/users", authMiddleware, async (req, res) => {
     try {
       const { role } = req.query;
-      const users = role ? await storage.getUsersByRole(role as string) : [];
-      res.json(users);
+      
+      // Allow all authenticated users to view doctors (for appointment booking)
+      if (role === 'doctor') {
+        const users = await storage.getUsersByRole('doctor');
+        res.json(users);
+      } else {
+        // For other roles, require admin permissions
+        if (req.user!.role !== 'admin') {
+          return res.status(403).json({ message: "Access denied. Insufficient permissions" });
+        }
+        const users = await storage.getUsersByRole(role as string);
+        res.json(users);
+      }
     } catch (error: any) {
       res.status(400).json({ message: error.message });
     }
