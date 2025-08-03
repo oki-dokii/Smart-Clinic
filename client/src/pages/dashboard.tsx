@@ -13,6 +13,9 @@ import {
   UserCheck,
   Zap,
   User,
+  CheckCircle,
+  XCircle,
+  AlertCircle,
 } from "lucide-react";
 import BookingModal from "@/components/BookingModal";
 import EmergencyModal from "@/components/EmergencyModal";
@@ -132,6 +135,59 @@ export default function SmartClinicDashboard() {
   const handleSnoozeReminder = (reminderId: string) => {
     snoozeReminderMutation.mutate(reminderId);
   };
+
+  // Add new reminder action handlers
+  const handleSkipReminder = (reminderId: string) => {
+    skipReminderMutation.mutate(reminderId);
+  };
+
+  const handleResetReminder = (reminderId: string) => {
+    resetReminderMutation.mutate(reminderId);
+  };
+
+  // Skip reminder mutation
+  const skipReminderMutation = useMutation({
+    mutationFn: async (reminderId: string) => {
+      const response = await apiRequest("PUT", `/api/reminders/${reminderId}`, { status: 'skipped' });
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/reminders"] });
+      toast({
+        title: "Medicine Skipped",
+        description: "Medicine reminder has been marked as skipped."
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to skip reminder",
+        variant: "destructive"
+      });
+    }
+  });
+
+  // Reset reminder mutation for corrections
+  const resetReminderMutation = useMutation({
+    mutationFn: async (reminderId: string) => {
+      const response = await apiRequest("PUT", `/api/reminders/${reminderId}`, { status: 'not_taken' });
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/reminders"] });
+      toast({
+        title: "Reminder Reset",
+        description: "Medicine reminder has been reset. You can now mark it as taken or skipped again."
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to reset reminder",
+        variant: "destructive"
+      });
+    }
+  });
 
   // Mutations for interactive functionality
   const joinQueueMutation = useMutation({
@@ -715,42 +771,50 @@ export default function SmartClinicDashboard() {
                       <div className="text-sm text-gray-600 mb-2">{reminder.prescription.dosage}</div>
                       <div className="flex gap-2">
                         {!reminder.isTaken && !reminder.isSkipped ? (
-                          <Button 
-                            size="sm" 
-                            className="flex-1 bg-green-500 hover:bg-green-600"
-                            onClick={() => handleMarkTaken(reminder.id)}
-                          >
-                            Mark Taken
-                          </Button>
+                          <>
+                            <Button 
+                              size="sm" 
+                              className="flex-1 bg-green-500 hover:bg-green-600"
+                              onClick={() => handleMarkTaken(reminder.id)}
+                            >
+                              <CheckCircle className="w-3 h-3 mr-1" />
+                              Taken
+                            </Button>
+                            <Button 
+                              size="sm" 
+                              variant="outline" 
+                              className="flex-1 bg-transparent"
+                              onClick={() => handleSkipReminder(reminder.id)}
+                            >
+                              <XCircle className="w-3 h-3 mr-1" />
+                              Skip
+                            </Button>
+                          </>
                         ) : (
-                          <Button 
-                            size="sm" 
-                            className="flex-1 bg-gray-400 cursor-not-allowed"
-                            disabled
-                          >
-                            {reminder.isTaken ? "Taken" : "Skipped"}
-                          </Button>
-                        )}
-                        {!reminder.isTaken && !reminder.isSkipped ? (
-                          <Button 
-                            size="sm" 
-                            variant="outline" 
-                            className="flex-1 bg-transparent"
-                            onClick={() => handleSnoozeReminder(reminder.id)}
-                          >
-                            <Clock className="w-3 h-3 mr-2" />
-                            Snooze
-                          </Button>
-                        ) : (
-                          <Button 
-                            size="sm" 
-                            variant="outline" 
-                            className="flex-1 bg-gray-200 cursor-not-allowed"
-                            disabled
-                          >
-                            <Clock className="w-3 h-3 mr-2" />
-                            Snoozed
-                          </Button>
+                          <>
+                            <Badge className={reminder.isTaken ? "bg-green-500" : "bg-gray-500"}>
+                              {reminder.isTaken ? (
+                                <>
+                                  <CheckCircle className="w-3 h-3 mr-1" />
+                                  Taken
+                                </>
+                              ) : (
+                                <>
+                                  <XCircle className="w-3 h-3 mr-1" />
+                                  Skipped
+                                </>
+                              )}
+                            </Badge>
+                            <Button 
+                              size="sm" 
+                              variant="outline" 
+                              className="flex-1 bg-orange-500 hover:bg-orange-600 text-white"
+                              onClick={() => handleResetReminder(reminder.id)}
+                            >
+                              <AlertCircle className="w-3 h-3 mr-1" />
+                              Correct
+                            </Button>
+                          </>
                         )}
                       </div>
                     </div>

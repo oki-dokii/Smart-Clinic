@@ -443,18 +443,32 @@ Lisinopril 10mg - Once daily at 9:00 PM - For blood pressure"
                           </div>
                         )}
                         
-                        {reminder.isTaken && (
-                          <Badge className="bg-green-500">
-                            <CheckCircle className="w-3 h-3 mr-1" />
-                            Taken
-                          </Badge>
-                        )}
-                        
-                        {reminder.isSkipped && (
-                          <Badge variant="destructive">
-                            <XCircle className="w-3 h-3 mr-1" />
-                            Skipped
-                          </Badge>
+                        {(reminder.isTaken || reminder.isSkipped) && (
+                          <div className="flex gap-2 items-center">
+                            <Badge className={reminder.isTaken ? "bg-green-500" : "bg-gray-500"}>
+                              {reminder.isTaken ? (
+                                <>
+                                  <CheckCircle className="w-3 h-3 mr-1" />
+                                  Taken
+                                </>
+                              ) : (
+                                <>
+                                  <XCircle className="w-3 h-3 mr-1" />
+                                  Skipped
+                                </>
+                              )}
+                            </Badge>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="bg-orange-500 hover:bg-orange-600 text-white border-orange-500"
+                              onClick={() => updateReminderMutation.mutate({ id: reminder.id, status: 'not_taken' })}
+                              disabled={updateReminderMutation.isPending}
+                            >
+                              <AlertCircle className="w-3 h-3 mr-1" />
+                              Correct
+                            </Button>
+                          </div>
                         )}
                       </div>
                     </CardContent>

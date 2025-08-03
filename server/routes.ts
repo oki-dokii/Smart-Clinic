@@ -466,11 +466,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Custom medicine routes (simplified for now)
+  // Custom medicine routes - properly implemented
   app.post("/api/custom-medicines", authMiddleware, requireRole(['patient']), async (req, res) => {
     try {
-      // For now, return success - would need proper DB table
-      res.json({ success: true, message: "Custom medicine feature coming soon" });
+      const { name, dosage, frequency, instructions, startDate, endDate } = req.body;
+      
+      // First create a medicine entry
+      const medicine = await storage.createMedicine({
+        name,
+        description: `Custom medicine added by patient`,
+        dosageForm: 'custom',
+        strength: dosage,
+        manufacturer: 'Patient Added'
+      });
+
+      // Then create a prescription for this custom medicine
+      const prescription = await storage.createPrescription({
+        patientId: req.user!.id,
+        doctorId: req.user!.id, // Self-prescribed for custom medicines
+        medicineId: medicine.id,
+        dosage,
+        frequency,
+        instructions,
+        startDate: new Date(startDate),
+        endDate: endDate ? new Date(endDate) : undefined,
+        totalDoses: 30, // Default
+        status: 'active'
+      });
+
+      res.json({ success: true, medicine, prescription });
     } catch (error: any) {
       res.status(400).json({ message: error.message });
     }
@@ -478,8 +502,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/custom-medicines", authMiddleware, requireRole(['patient']), async (req, res) => {
     try {
-      // Return empty for now
-      res.json([]);
+      // Return patient's custom medicines (medicines they added themselves)
+      const prescriptions = await storage.getPatientPrescriptions(req.user!.id);
+      const customMedicines = prescriptions
+        .filter(p => p.medicine.manufacturer === 'Patient Added')
+        .map(p => ({
+          id: p.id,
+          name: p.medicine.name,
+          dosage: p.dosage,
+          frequency: p.frequency,
+          instructions: p.instructions,
+          startDate: p.startDate,
+          endDate: p.endDate,
+          status: p.status,
+          medicine: p.medicine
+        }));
+      
+      res.json(customMedicines);
     } catch (error: any) {
       res.status(400).json({ message: error.message });
     }
@@ -487,8 +526,55 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/medicines/upload", authMiddleware, requireRole(['patient']), async (req, res) => {
     try {
-      // For now, return success message
-      res.json({ success: true, message: "Medicine upload feature coming soon" });
+      const { medicineList } = req.body;
+      
+      if (!medicineList || typeof medicineList !== 'string') {
+        return res.status(400).json({ message: "Medicine list text is required" });
+      }
+
+      // Parse the medicine list (expecting format like "Medicine Name - Dosage - Frequency")
+      const lines = medicineList.split('\n').filter(line => line.trim());
+      const createdMedicines = [];
+
+      for (const line of lines) {
+        const parts = line.split('-').map(part => part.trim());
+        if (parts.length >= 2) {
+          const name = parts[0];
+          const dosage = parts[1] || '1 tablet';
+          const frequency = parts[2] || 'once_daily';
+          const instructions = parts[3] || 'Take as prescribed';
+
+          // Create medicine
+          const medicine = await storage.createMedicine({
+            name,
+            description: `Uploaded medicine by patient`,
+            dosageForm: 'tablet',
+            strength: dosage,
+            manufacturer: 'Patient Added'
+          });
+
+          // Create prescription
+          const prescription = await storage.createPrescription({
+            patientId: req.user!.id,
+            doctorId: req.user!.id,
+            medicineId: medicine.id,
+            dosage,
+            frequency,
+            instructions,
+            startDate: new Date(),
+            totalDoses: 30,
+            status: 'active'
+          });
+
+          createdMedicines.push({ medicine, prescription });
+        }
+      }
+
+      res.json({ 
+        success: true, 
+        message: `Added ${createdMedicines.length} medicines`,
+        medicines: createdMedicines
+      });
     } catch (error: any) {
       res.status(400).json({ message: error.message });
     }
