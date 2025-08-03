@@ -118,8 +118,12 @@ export class SchedulerService {
           const reminderDateTime = new Date(currentDate);
           reminderDateTime.setHours(time.hour, time.minute, 0, 0);
           
-          // Only create future reminders
-          if (reminderDateTime > new Date()) {
+          // Create reminders for today and future dates
+          // For custom medicines, create today's reminder even if the time has passed
+          const now = new Date();
+          const isToday = reminderDateTime.toDateString() === now.toDateString();
+          
+          if (reminderDateTime >= now || isToday) {
             await storage.createMedicineReminder({
               prescriptionId: prescription.id,
               scheduledAt: reminderDateTime
