@@ -8,35 +8,8 @@ import LoginPage from "@/pages/login";
 import Dashboard from "@/pages/dashboard";
 import NotFound from "@/pages/not-found";
 
-// Auth wrapper component
+// Auth wrapper component - simplified since auth is now handled in queryClient
 function AuthWrapper({ children }: { children: React.ReactNode }) {
-  useEffect(() => {
-    const token = localStorage.getItem("auth_token");
-    if (token) {
-      // Set authorization header for all API requests
-      queryClient.setMutationDefaults(["auth"], {
-        mutationFn: async (data: any) => {
-          const response = await fetch(data.url, {
-            method: data.method || "GET",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${token}`,
-              ...data.headers,
-            },
-            body: data.body ? JSON.stringify(data.body) : undefined,
-          });
-          
-          if (!response.ok) {
-            const error = await response.text();
-            throw new Error(error || response.statusText);
-          }
-          
-          return response.json();
-        },
-      });
-    }
-  }, []);
-
   return <>{children}</>;
 }
 

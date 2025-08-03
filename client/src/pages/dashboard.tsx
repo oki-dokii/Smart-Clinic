@@ -41,19 +41,19 @@ export default function SmartClinicDashboard() {
     setUser(JSON.parse(userData));
   }, [setLocation]);
 
-  const { data: appointments } = useQuery({
+  const { data: appointments = [] } = useQuery({
     queryKey: ["/api/appointments"],
     enabled: !!user,
   });
 
   const { data: queuePosition } = useQuery({
     queryKey: ["/api/queue/position"],
-    enabled: !!user?.role === "patient",
+    enabled: !!user && user.role === "patient",
   });
 
-  const { data: reminders } = useQuery({
+  const { data: reminders = [] } = useQuery({
     queryKey: ["/api/reminders"],
-    enabled: !!user?.role === "patient",
+    enabled: !!user && user.role === "patient",
   });
 
   const handleLogout = () => {
