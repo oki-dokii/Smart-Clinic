@@ -210,52 +210,50 @@ export default function ProfilePage() {
             </CardContent>
           </Card>
 
-          {/* Account Information Card */}
+          {/* Medical History Card */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Phone className="w-5 h-5 text-green-500" />
-                Account Information
+                <Heart className="w-5 h-5 text-red-500" />
+                Medical History
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
-                <Label htmlFor="firstName">First Name</Label>
+                <Label htmlFor="allergies">Known Allergies</Label>
                 <Input
-                  id="firstName"
-                  value={formData.firstName}
-                  onChange={(e) => handleInputChange("firstName", e.target.value)}
-                  placeholder="Enter your first name"
+                  id="allergies"
+                  value={formData.allergies || ""}
+                  onChange={(e) => handleInputChange("allergies", e.target.value)}
+                  placeholder="List any allergies (e.g., penicillin, peanuts)"
                 />
               </div>
               <div>
-                <Label htmlFor="lastName">Last Name</Label>
+                <Label htmlFor="chronicConditions">Chronic Conditions</Label>
                 <Input
-                  id="lastName"
-                  value={formData.lastName}
-                  onChange={(e) => handleInputChange("lastName", e.target.value)}
-                  placeholder="Enter your last name"
+                  id="chronicConditions"
+                  value={formData.chronicConditions || ""}
+                  onChange={(e) => handleInputChange("chronicConditions", e.target.value)}
+                  placeholder="List chronic conditions (e.g., diabetes, hypertension)"
                 />
               </div>
               <div>
-                <Label htmlFor="email">Email Address</Label>
+                <Label htmlFor="bloodType">Blood Type</Label>
                 <Input
-                  id="email"
-                  type="email"
-                  value={formData.email}
-                  onChange={(e) => handleInputChange("email", e.target.value)}
-                  placeholder="Enter your email address"
+                  id="bloodType"
+                  value={formData.bloodType || ""}
+                  onChange={(e) => handleInputChange("bloodType", e.target.value)}
+                  placeholder="Enter blood type (e.g., A+, B-, O+)"
                 />
               </div>
               <div>
-                <Label htmlFor="phoneNumber">Phone Number</Label>
+                <Label htmlFor="emergencyContact">Emergency Contact</Label>
                 <Input
-                  id="phoneNumber"
-                  value={user.phoneNumber}
-                  disabled
-                  className="bg-gray-100"
+                  id="emergencyContact"
+                  value={formData.emergencyContact || ""}
+                  onChange={(e) => handleInputChange("emergencyContact", e.target.value)}
+                  placeholder="Emergency contact name and phone"
                 />
-                <p className="text-xs text-gray-500 mt-1">Contact support to update your phone number.</p>
               </div>
               <div className="pt-4">
                 <Button
@@ -263,7 +261,7 @@ export default function ProfilePage() {
                   disabled={updateProfileMutation.isPending}
                   className="bg-blue-500 hover:bg-blue-600 w-full"
                 >
-                  {updateProfileMutation.isPending ? "Saving..." : "Save Changes"}
+                  {updateProfileMutation.isPending ? "Saving..." : "Save Medical Information"}
                 </Button>
               </div>
             </CardContent>
