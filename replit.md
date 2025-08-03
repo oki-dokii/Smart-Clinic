@@ -8,6 +8,14 @@ Preferred communication style: Simple, everyday language.
 
 # Recent Changes
 
+## 2025-08-04 - Medicine Reminders Correction Feature and Bug Fixes
+- Fixed JavaScript error in medicines page where medicine.timings was undefined by adding proper null checks
+- Enhanced medicine reminder system with "Correct" button functionality for users to undo mistakes
+- Added three-button medicine reminder system: Taken, Skip, and Correct
+- Fixed medicine interface to handle optional timings and proper fallback values
+- Updated dashboard and medicines pages with consistent reminder button styling and icons
+- Added comprehensive mutation handlers for skip and reset reminder functionality
+
 ## 2025-08-04 - Final UI/UX Enhancement and Bug Fixes
 - Created comprehensive appointment details modal with symptoms, consultation type, and full date display
 - Fixed next appointment display to show both date and time dynamically

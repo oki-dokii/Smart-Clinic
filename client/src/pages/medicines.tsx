@@ -22,11 +22,12 @@ interface CustomMedicine {
   name: string;
   dosage: string;
   frequency: string;
-  timings: string[];
+  timings?: string[];
   instructions: string;
   startDate: string;
-  endDate: string;
+  endDate?: string;
   status: 'active' | 'completed' | 'paused';
+  medicine?: any;
 }
 
 interface MedicineReminder {
@@ -368,13 +369,13 @@ Lisinopril 10mg - Once daily at 9:00 PM - For blood pressure"
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
                           <p className="text-sm text-gray-600">Dosage: <span className="font-medium">{medicine.dosage}</span></p>
-                          <p className="text-sm text-gray-600">Frequency: <span className="font-medium">{medicine.frequency.replace('_', ' ')}</span></p>
-                          <p className="text-sm text-gray-600">Instructions: <span className="font-medium">{medicine.instructions}</span></p>
+                          <p className="text-sm text-gray-600">Frequency: <span className="font-medium">{medicine.frequency?.replace('_', ' ') || 'Not specified'}</span></p>
+                          <p className="text-sm text-gray-600">Instructions: <span className="font-medium">{medicine.instructions || 'Take as prescribed'}</span></p>
                         </div>
                         <div>
                           <p className="text-sm text-gray-600 mb-2">Timings:</p>
                           <div className="flex flex-wrap gap-2">
-                            {medicine.timings.map((time, index) => (
+                            {(medicine.timings || []).map((time, index) => (
                               <Badge key={index} variant="outline" className="flex items-center gap-1">
                                 <Clock className="w-3 h-3" />
                                 {formatTime(time)}
