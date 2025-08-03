@@ -6,6 +6,15 @@ SmartClinic is a comprehensive healthcare management system built as a full-stac
 
 Preferred communication style: Simple, everyday language.
 
+# Recent Changes
+
+## 2025-08-03 - Database and SMS Setup
+- Fixed database connection issue by creating new PostgreSQL database
+- Fixed TypeScript error in delay notification service  
+- Pushed database schema with all required tables
+- Configured Twilio SMS service with proper credentials
+- Identified SMS delivery issue: "From" and "To" numbers cannot be the same in Twilio
+
 # System Architecture
 
 ## Frontend Architecture
