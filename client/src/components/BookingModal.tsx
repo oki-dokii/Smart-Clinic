@@ -65,7 +65,10 @@ export default function BookingModal({ isOpen, onClose }: BookingModalProps) {
 
   // Book appointment mutation
   const bookAppointmentMutation = useMutation({
-    mutationFn: (appointment: BookingData) => apiRequest('POST', '/api/appointments', appointment),
+    mutationFn: async (appointment: BookingData) => {
+      const response = await apiRequest('POST', '/api/appointments', appointment);
+      return response.json();
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/appointments'] });
       onClose();

@@ -41,8 +41,10 @@ export default function SettingsPage() {
 
   // Update settings mutation
   const updateSettingsMutation = useMutation({
-    mutationFn: (newSettings: Partial<UserSettings>) => 
-      apiRequest("/api/users/settings", "PUT", newSettings),
+    mutationFn: async (newSettings: Partial<UserSettings>) => {
+      const response = await apiRequest("PUT", "/api/users/settings", newSettings);
+      return response.json();
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/users/me'] });
       toast({
@@ -63,6 +65,34 @@ export default function SettingsPage() {
     const newSettings = { ...settings, [key]: value };
     setSettings(newSettings);
     updateSettingsMutation.mutate({ [key]: value });
+  };
+
+  const deleteAccountMutation = useMutation({
+    mutationFn: async () => {
+      const response = await apiRequest("DELETE", "/api/users/me");
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Account Deleted",
+        description: "Your account has been deactivated successfully.",
+      });
+      localStorage.removeItem("auth_token");
+      window.location.href = "/login";
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to delete account",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleDeleteAccount = () => {
+    if (confirm("Are you sure you want to delete your account? This action cannot be undone.")) {
+      deleteAccountMutation.mutate();
+    }
   };
 
   if (isLoading) {
@@ -235,8 +265,13 @@ export default function SettingsPage() {
                   <h3 className="font-medium text-red-800">Delete Account</h3>
                   <p className="text-sm text-red-600">Permanently delete your account and all associated data</p>
                 </div>
-                <Button variant="destructive" size="sm">
-                  Delete Account
+                <Button 
+                  variant="destructive" 
+                  size="sm"
+                  onClick={handleDeleteAccount}
+                  disabled={deleteAccountMutation.isPending}
+                >
+                  {deleteAccountMutation.isPending ? "Deleting..." : "Delete Account"}
                 </Button>
               </div>
             </CardContent>

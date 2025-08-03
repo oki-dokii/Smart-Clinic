@@ -189,9 +189,9 @@ export default function SmartClinicDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       {/* Header */}
-      <header className="bg-white border-b border-gray-200 px-4 sm:px-6 py-4">
+      <header className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-4 sm:px-6 py-4">
         <div className="flex items-center justify-between max-w-7xl mx-auto">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 sm:w-10 sm:h-10 bg-blue-500 rounded-lg flex items-center justify-center">
@@ -204,12 +204,20 @@ export default function SmartClinicDashboard() {
           </div>
 
           <div className="flex items-center gap-2 sm:gap-4">
-            <div className="relative">
-              <Bell className="w-5 h-5 text-gray-600" />
-              <div className="absolute -top-2 -right-2 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center font-medium">
+            <button 
+              onClick={() => {
+                toast({
+                  title: "Notifications",
+                  description: "You have 3 new notifications",
+                });
+              }}
+              className="relative hover:bg-gray-100 dark:hover:bg-gray-700 p-2 rounded-full transition-colors"
+            >
+              <Bell className="w-5 h-5 text-gray-600 dark:text-gray-300" />
+              <div className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center font-medium">
                 3
               </div>
-            </div>
+            </button>
 
             <div className="flex flex-col items-center gap-1">
               <span className="text-sm font-medium text-gray-900">

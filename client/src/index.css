@@ -55,6 +55,36 @@
   --radius: 0.5rem;
 }
 
+/* Fix dark mode visibility issues */
+.dark .bg-gray-50,
+.dark .bg-blue-50 {
+  background-color: hsl(var(--muted));
+}
+
+.dark .text-gray-600,
+.dark .text-gray-700,
+.dark .text-gray-800,
+.dark .text-gray-900 {
+  color: hsl(var(--muted-foreground));
+}
+
+.dark .text-blue-100 {
+  color: hsl(var(--accent-foreground));
+}
+
+.dark .border-gray-200,
+.dark .border-gray-300 {
+  border-color: hsl(var(--border));
+}
+
+.dark .bg-white {
+  background-color: hsl(var(--card));
+}
+
+.dark .text-black {
+  color: hsl(var(--card-foreground));
+}
+
 @layer base {
   * {
     @apply border-border;

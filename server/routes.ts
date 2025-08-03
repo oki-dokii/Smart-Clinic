@@ -523,10 +523,71 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const settings = req.body;
       
       // For now, return success - would store in user preferences table
-      res.json({ 
-        success: true, 
-        message: "Settings updated successfully" 
-      });
+      res.json({ success: true, message: "Settings updated successfully" });
+    } catch (error: any) {
+      res.status(400).json({ message: error.message });
+    }
+  });
+
+  // Delete account endpoint
+  app.delete("/api/users/me", authMiddleware, async (req, res) => {
+    try {
+      // Deactivate user instead of deleting to preserve data integrity
+      const user = await storage.deactivateUser(req.user!.id);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      // Invalidate all user sessions
+      await storage.invalidateUserSessions(req.user!.id);
+      
+      res.json({ success: true, message: "Account deactivated successfully" });
+    } catch (error: any) {
+      res.status(400).json({ message: error.message });
+    }
+  });
+
+  // Notification endpoints
+  app.get("/api/notifications", authMiddleware, async (req, res) => {
+    try {
+      // For now, return sample notifications
+      const notifications = [
+        {
+          id: "1",
+          title: "Appointment Reminder",
+          message: "You have an appointment with Dr. Sarah Johnson at 2:30 PM today",
+          type: "appointment",
+          read: false,
+          createdAt: new Date().toISOString()
+        },
+        {
+          id: "2", 
+          title: "Medicine Reminder",
+          message: "Time to take your medication - Aspirin 500mg",
+          type: "medicine",
+          read: false,
+          createdAt: new Date().toISOString()
+        },
+        {
+          id: "3",
+          title: "Queue Update", 
+          message: "You are now #2 in the queue for Dr. Kumar",
+          type: "queue",
+          read: true,
+          createdAt: new Date().toISOString()
+        }
+      ];
+      res.json(notifications);
+    } catch (error: any) {
+      res.status(400).json({ message: error.message });
+    }
+  });
+
+  app.put("/api/notifications/:id/read", authMiddleware, async (req, res) => {
+    try {
+      const { id } = req.params;
+      // For now, return success
+      res.json({ success: true, message: "Notification marked as read" });
     } catch (error: any) {
       res.status(400).json({ message: error.message });
     }

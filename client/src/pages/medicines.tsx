@@ -66,7 +66,10 @@ export default function MedicinesPage() {
 
   // Add custom medicine mutation
   const addMedicineMutation = useMutation({
-    mutationFn: (medicine: CustomMedicine) => apiRequest('/api/custom-medicines', 'POST', medicine),
+    mutationFn: async (medicine: CustomMedicine) => {
+      const response = await apiRequest('POST', '/api/custom-medicines', medicine);
+      return response.json();
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/custom-medicines'] });
       queryClient.invalidateQueries({ queryKey: ['/api/reminders'] });
@@ -82,7 +85,10 @@ export default function MedicinesPage() {
 
   // Upload medicines mutation
   const uploadMedicinesMutation = useMutation({
-    mutationFn: (text: string) => apiRequest('/api/medicines/upload', 'POST', { medicineList: text }),
+    mutationFn: async (text: string) => {
+      const response = await apiRequest('POST', '/api/medicines/upload', { medicineList: text });
+      return response.json();
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/custom-medicines'] });
       queryClient.invalidateQueries({ queryKey: ['/api/reminders'] });
@@ -94,8 +100,10 @@ export default function MedicinesPage() {
 
   // Update reminder status
   const updateReminderMutation = useMutation({
-    mutationFn: ({ id, status }: { id: string; status: 'taken' | 'skipped' }) => 
-      apiRequest(`/api/reminders/${id}`, 'PUT', { status }),
+    mutationFn: async ({ id, status }: { id: string; status: 'taken' | 'skipped' }) => {
+      const response = await apiRequest('PUT', `/api/reminders/${id}`, { status });
+      return response.json();
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/reminders'] });
       toast({ title: "Reminder Updated", description: "Medicine reminder status updated." });
