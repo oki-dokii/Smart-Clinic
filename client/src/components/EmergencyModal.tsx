@@ -49,13 +49,17 @@ export default function EmergencyModal({ isOpen, onClose }: EmergencyModalProps)
 
   // Fetch available doctors
   const { data: doctors = [], isLoading } = useQuery({
-    queryKey: ['/api/users', { role: 'doctor' }],
+    queryKey: ['/api/users', 'doctor'],
+    queryFn: async () => {
+      const response = await apiRequest('GET', '/api/users?role=doctor');
+      return response.json();
+    },
     enabled: isOpen,
   });
 
   // Emergency request mutation
   const emergencyMutation = useMutation({
-    mutationFn: (emergency: EmergencyData) => apiRequest("/api/emergency", "POST", emergency),
+    mutationFn: (emergency: EmergencyData) => apiRequest("POST", "/api/emergency", emergency),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/appointments'] });
       onClose();

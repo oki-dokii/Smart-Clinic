@@ -56,13 +56,16 @@ export default function BookingModal({ isOpen, onClose }: BookingModalProps) {
 
   // Fetch available doctors
   const { data: doctors = [], isLoading } = useQuery({
-    queryKey: ['/api/users', { role: 'doctor' }],
-    queryFn: () => apiRequest('/api/users?role=doctor'),
+    queryKey: ['/api/users', 'doctor'],
+    queryFn: async () => {
+      const response = await apiRequest('GET', '/api/users?role=doctor');
+      return response.json();
+    },
   });
 
   // Book appointment mutation
   const bookAppointmentMutation = useMutation({
-    mutationFn: (appointment: BookingData) => apiRequest('/api/appointments', 'POST', appointment),
+    mutationFn: (appointment: BookingData) => apiRequest('POST', '/api/appointments', appointment),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/appointments'] });
       onClose();

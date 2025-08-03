@@ -101,8 +101,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.put("/api/users/me", authMiddleware, async (req, res) => {
     try {
-      const userData = insertUserSchema.partial().parse(req.body);
-      const user = await storage.updateUser(req.user!.id, userData);
+      // Handle date conversion if dateOfBirth is provided as string
+      const { dateOfBirth, ...otherData } = req.body;
+      const userData = {
+        ...otherData,
+        ...(dateOfBirth && { dateOfBirth: new Date(dateOfBirth) })
+      };
+      
+      const validatedData = insertUserSchema.partial().parse(userData);
+      const user = await storage.updateUser(req.user!.id, validatedData);
       if (!user) {
         return res.status(404).json({ message: "User not found" });
       }
