@@ -22,18 +22,31 @@ export default function LoginPage() {
   const [step, setStep] = useState<"phone" | "otp">("phone");
   const [phoneNumber, setPhoneNumber] = useState("");
   const [otp, setOtp] = useState("");
+  const [developmentOtp, setDevelopmentOtp] = useState<string | null>(null);
 
   const sendOtpMutation = useMutation({
     mutationFn: async (phoneNumber: string) => {
       const response = await apiRequest("POST", "/api/auth/send-otp", { phoneNumber });
       return response.json();
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       setStep("otp");
-      toast({
-        title: "OTP Sent",
-        description: "Please check your phone for the verification code.",
-      });
+      
+      // Check if development OTP is provided (when SMS fails)
+      if (data.developmentOtp) {
+        setDevelopmentOtp(data.developmentOtp);
+        toast({
+          title: "SMS Failed - Development Mode",
+          description: `SMS delivery failed. Your OTP is: ${data.developmentOtp}`,
+          variant: "destructive",
+        });
+      } else {
+        setDevelopmentOtp(null);
+        toast({
+          title: "OTP Sent",
+          description: "Please check your phone for the verification code.",
+        });
+      }
     },
     onError: (error: any) => {
       toast({
@@ -160,16 +173,18 @@ export default function LoginPage() {
                 <div className="space-y-2">
                   <Label htmlFor="otp">Verification Code</Label>
                   
-                  {/* Development Helper - Show OTP hint */}
-                  <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mb-4">
-                    <div className="flex items-center space-x-2">
-                      <Shield className="w-4 h-4 text-yellow-600" />
-                      <span className="text-xs text-yellow-700 font-medium">Development Mode</span>
+                  {/* Development Helper - Show OTP hint when SMS fails */}
+                  {developmentOtp && (
+                    <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mb-4">
+                      <div className="flex items-center space-x-2">
+                        <Shield className="w-4 h-4 text-yellow-600" />
+                        <span className="text-xs text-yellow-700 font-medium">Development Mode</span>
+                      </div>
+                      <p className="text-xs text-yellow-600 mt-1">
+                        SMS delivery failed. Current OTP code: <strong>{developmentOtp}</strong>
+                      </p>
                     </div>
-                    <p className="text-xs text-yellow-600 mt-1">
-                      SMS delivery failed. Current OTP code: <strong>555690</strong>
-                    </p>
-                  </div>
+                  )}
                   
                   <div className="flex justify-center">
                     <InputOTP

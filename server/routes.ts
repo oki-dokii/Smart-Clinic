@@ -21,8 +21,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { phoneNumber } = z.object({ phoneNumber: z.string() }).parse(req.body);
       
-      await authService.sendOtp(phoneNumber);
-      res.json({ message: "OTP sent successfully" });
+      const result = await authService.sendOtp(phoneNumber);
+      
+      if (result.success) {
+        res.json({ message: "OTP sent successfully" });
+      } else {
+        // In development mode, return OTP for testing when SMS fails
+        if (process.env.NODE_ENV === 'development' && result.otp) {
+          res.json({ 
+            message: "SMS delivery failed, but OTP generated for testing", 
+            developmentOtp: result.otp,
+            error: result.error
+          });
+        } else {
+          res.json({ message: "OTP sent successfully" }); // Don't expose errors to client in production
+        }
+      }
     } catch (error: any) {
       res.status(400).json({ message: error.message });
     }

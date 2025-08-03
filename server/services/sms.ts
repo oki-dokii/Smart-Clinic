@@ -12,7 +12,7 @@ if (TWILIO_ACCOUNT_SID && TWILIO_AUTH_TOKEN) {
 }
 
 export class SmsService {
-  async sendOtp(phoneNumber: string, otp: string): Promise<void> {
+  async sendOtp(phoneNumber: string, otp: string): Promise<{ success: boolean; otp?: string; error?: string }> {
     const message = `Your SmartClinic verification code is: ${otp}. This code will expire in 5 minutes.`;
     
     // Always log the OTP for debugging
@@ -27,12 +27,25 @@ export class SmsService {
           to: phoneNumber
         });
         console.log(`SMS successfully sent to ${phoneNumber}`);
-      } catch (error) {
+        return { success: true };
+      } catch (error: any) {
         console.error('Failed to send SMS via Twilio:', error);
-        // Don't throw error - fallback to console logging for development
+        
+        // For development/testing, return the OTP when SMS fails
+        if (process.env.NODE_ENV === 'development') {
+          console.log(`Development mode: Returning OTP in response for testing`);
+          return { success: false, otp, error: error.message };
+        }
+        
+        return { success: false, error: error.message };
       }
     } else {
       console.log('Twilio not configured - OTP only available in console for development');
+      // For development, return the OTP
+      if (process.env.NODE_ENV === 'development') {
+        return { success: false, otp, error: 'Twilio not configured' };
+      }
+      return { success: false, error: 'SMS service not configured' };
     }
   }
 

@@ -9,7 +9,7 @@ const OTP_EXPIRY_MINUTES = 5;
 const MAX_OTP_ATTEMPTS = 3;
 
 export class AuthService {
-  async sendOtp(phoneNumber: string): Promise<void> {
+  async sendOtp(phoneNumber: string): Promise<{ success: boolean; otp?: string; error?: string }> {
     // Generate 6-digit OTP
     const otp = randomInt(100000, 999999).toString();
     const otpHash = await bcrypt.hash(otp, 10);
@@ -29,7 +29,8 @@ export class AuthService {
     });
     
     // Send SMS
-    await smsService.sendOtp(phoneNumber, otp);
+    const smsResult = await smsService.sendOtp(phoneNumber, otp);
+    return smsResult;
   }
 
   async verifyOtp(phoneNumber: string, otp: string, ipAddress?: string, userAgent?: string): Promise<{ token: string; user: any; isNewUser: boolean }> {
