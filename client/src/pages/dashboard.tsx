@@ -729,10 +729,10 @@ export default function SmartClinicDashboard() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="flex justify-center gap-8 mb-6">
+              <div className="flex justify-center gap-4 mb-6">
                 <div className="text-center">
                   <div className="text-2xl font-bold text-blue-600">
-                    {reminders?.filter((r: any) => !r.isTaken).length || 0}
+                    {reminders?.filter((r: any) => !r.isTaken && !r.isSkipped).length || 0}
                   </div>
                   <div className="text-xs text-gray-500">Due Today</div>
                 </div>
@@ -747,6 +747,16 @@ export default function SmartClinicDashboard() {
                     {reminders?.filter((r: any) => r.isSkipped).length || 0}
                   </div>
                   <div className="text-xs text-gray-500">Missed</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-orange-600">
+                    {reminders?.filter((r: any) => {
+                      const scheduledTime = new Date(r.scheduledAt);
+                      const now = new Date();
+                      return !r.isTaken && !r.isSkipped && scheduledTime < now;
+                    }).length || 0}
+                  </div>
+                  <div className="text-xs text-gray-500">Overdue</div>
                 </div>
               </div>
 

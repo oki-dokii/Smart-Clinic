@@ -646,6 +646,46 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get missed doses count for each medicine
+  app.get("/api/reminders/missed", authMiddleware, requireRole(['patient']), async (req, res) => {
+    try {
+      const reminders = await storage.getPatientReminders(req.user!.id);
+      const now = new Date();
+      
+      // Group by medicine and count missed doses
+      const missedDosesPerMedicine = reminders.reduce((acc: any, reminder: any) => {
+        const medicineName = reminder.prescription?.medicine?.name;
+        const scheduledTime = new Date(reminder.scheduledAt);
+        const isOverdue = !reminder.isTaken && !reminder.isSkipped && scheduledTime < now;
+        
+        if (!acc[medicineName]) {
+          acc[medicineName] = {
+            medicineName,
+            totalReminders: 0,
+            missedDoses: 0,
+            overdueToday: 0
+          };
+        }
+        
+        acc[medicineName].totalReminders++;
+        
+        if (reminder.isSkipped) {
+          acc[medicineName].missedDoses++;
+        }
+        
+        if (isOverdue) {
+          acc[medicineName].overdueToday++;
+        }
+        
+        return acc;
+      }, {});
+      
+      res.json(Object.values(missedDosesPerMedicine));
+    } catch (error: any) {
+      res.status(400).json({ message: error.message });
+    }
+  });
+
   // Emergency request endpoint
   app.post("/api/emergency", authMiddleware, requireRole(['patient']), async (req, res) => {
     try {

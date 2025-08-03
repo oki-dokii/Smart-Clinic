@@ -65,6 +65,11 @@ export default function MedicinesPage() {
     queryKey: ['/api/reminders'],
   });
 
+  // Fetch missed doses
+  const { data: missedDoses = [] } = useQuery({
+    queryKey: ['/api/reminders/missed'],
+  });
+
   // Add custom medicine mutation
   const addMedicineMutation = useMutation({
     mutationFn: async (medicine: CustomMedicine) => {
@@ -352,26 +357,42 @@ Lisinopril 10mg - Once daily at 9:00 PM - For blood pressure"
                   </CardContent>
                 </Card>
               ) : (
-                customMedicines.map((medicine: CustomMedicine) => (
-                  <Card key={medicine.id}>
-                    <CardHeader>
-                      <div className="flex items-center justify-between">
-                        <CardTitle className="flex items-center gap-2">
-                          <Pill className="w-5 h-5 text-blue-500" />
-                          {medicine.name}
-                        </CardTitle>
-                        <Badge className={getStatusColor(medicine.status)}>
-                          {medicine.status}
-                        </Badge>
-                      </div>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                          <p className="text-sm text-gray-600">Dosage: <span className="font-medium">{medicine.dosage}</span></p>
-                          <p className="text-sm text-gray-600">Frequency: <span className="font-medium">{medicine.frequency?.replace('_', ' ') || 'Not specified'}</span></p>
-                          <p className="text-sm text-gray-600">Instructions: <span className="font-medium">{medicine.instructions || 'Take as prescribed'}</span></p>
+                customMedicines.map((medicine: CustomMedicine) => {
+                  const medicineStats = missedDoses.find((md: any) => md.medicineName === medicine.name);
+                  return (
+                    <Card key={medicine.id}>
+                      <CardHeader>
+                        <div className="flex items-center justify-between">
+                          <CardTitle className="flex items-center gap-2">
+                            <Pill className="w-5 h-5 text-blue-500" />
+                            {medicine.name}
+                          </CardTitle>
+                          <Badge className={getStatusColor(medicine.status)}>
+                            {medicine.status}
+                          </Badge>
                         </div>
+                        {medicineStats && (medicineStats.missedDoses > 0 || medicineStats.overdueToday > 0) && (
+                          <div className="flex gap-2 mt-2">
+                            {medicineStats.missedDoses > 0 && (
+                              <Badge className="bg-red-100 text-red-800 text-xs">
+                                {medicineStats.missedDoses} missed doses
+                              </Badge>
+                            )}
+                            {medicineStats.overdueToday > 0 && (
+                              <Badge className="bg-orange-100 text-orange-800 text-xs">
+                                {medicineStats.overdueToday} overdue today
+                              </Badge>
+                            )}
+                          </div>
+                        )}
+                      </CardHeader>
+                      <CardContent>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div>
+                            <p className="text-sm text-gray-600">Dosage: <span className="font-medium">{medicine.dosage}</span></p>
+                            <p className="text-sm text-gray-600">Frequency: <span className="font-medium">{medicine.frequency?.replace('_', ' ') || 'Not specified'}</span></p>
+                            <p className="text-sm text-gray-600">Instructions: <span className="font-medium">{medicine.instructions || 'Take as prescribed'}</span></p>
+                          </div>
                         <div>
                           <p className="text-sm text-gray-600 mb-2">Timings:</p>
                           <div className="flex flex-wrap gap-2">
@@ -386,7 +407,8 @@ Lisinopril 10mg - Once daily at 9:00 PM - For blood pressure"
                       </div>
                     </CardContent>
                   </Card>
-                ))
+                  );
+                })
               )}
             </div>
           </TabsContent>
@@ -409,12 +431,16 @@ Lisinopril 10mg - Once daily at 9:00 PM - For blood pressure"
                         <div className="flex items-center gap-3">
                           <div className={`w-3 h-3 rounded-full ${
                             reminder.isTaken ? 'bg-green-500' : 
-                            reminder.isSkipped ? 'bg-red-500' : 'bg-yellow-500'
+                            reminder.isSkipped ? 'bg-red-500' : 
+                            new Date(reminder.scheduledAt) < new Date() ? 'bg-orange-500' : 'bg-yellow-500'
                           }`} />
                           <div>
                             <h4 className="font-medium">{reminder.prescription?.medicine?.name}</h4>
                             <p className="text-sm text-gray-600">
                               {reminder.prescription?.dosage} - {formatTime(new Date(reminder.scheduledAt).toTimeString().split(' ')[0])}
+                              {!reminder.isTaken && !reminder.isSkipped && new Date(reminder.scheduledAt) < new Date() && (
+                                <Badge className="bg-orange-100 text-orange-800 text-xs ml-2">Overdue</Badge>
+                              )}
                             </p>
                             {reminder.notes && (
                               <p className="text-sm text-gray-500">{reminder.notes}</p>
