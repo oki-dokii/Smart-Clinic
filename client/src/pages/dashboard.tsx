@@ -656,7 +656,19 @@ export default function SmartClinicDashboard() {
                 <span className="text-2xl font-bold">On Time</span>
               </div>
               <div className="text-sm text-gray-600 mb-4">All appointments on schedule</div>
-              <Button className="w-full bg-blue-500 hover:bg-blue-600">Get Updates</Button>
+              <Button 
+                className="w-full bg-blue-500 hover:bg-blue-600"
+                onClick={() => {
+                  queryClient.invalidateQueries({ queryKey: ["/api/appointments"] });
+                  queryClient.invalidateQueries({ queryKey: ["/api/queue/position"] });
+                  toast({
+                    title: "Updates Retrieved",
+                    description: "Doctor schedule and appointment status updated successfully.",
+                  });
+                }}
+              >
+                Get Updates
+              </Button>
             </CardContent>
           </Card>
         </div>
@@ -673,22 +685,34 @@ export default function SmartClinicDashboard() {
             </CardHeader>
             <CardContent>
               <div className="bg-blue-500 text-white rounded-lg p-6 text-center mb-6">
-                <div className="text-sm mb-2">Now Serving</div>
-                <div className="text-4xl font-bold mb-2">#12</div>
+                <div className="text-sm mb-2">
+                  {queuePosition?.status === 'waiting' ? 'Your Position' : 'Now Serving'}
+                </div>
+                <div className="text-4xl font-bold mb-2">
+                  #{queuePosition?.status === 'waiting' ? queuePosition.tokenNumber : '12'}
+                </div>
                 <div className="text-sm">Token Number</div>
               </div>
 
               <div className="space-y-3">
                 <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg">
                   <div className="flex items-center gap-3">
-                    <Badge className="bg-blue-500 text-white">#13</Badge>
+                    <Badge className="bg-blue-500 text-white">
+                      #{queuePosition?.status === 'waiting' ? (queuePosition.tokenNumber - 1) : '13'}
+                    </Badge>
                     <div>
-                      <div className="text-sm font-medium">Next Patient</div>
-                      <div className="text-xs text-gray-500">10:45 AM</div>
+                      <div className="text-sm font-medium">
+                        {queuePosition?.status === 'waiting' ? 'Before You' : 'Next Patient'}
+                      </div>
+                      <div className="text-xs text-gray-500">
+                        {new Date().toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'})}
+                      </div>
                     </div>
                   </div>
                   <div className="text-right">
-                    <div className="text-sm font-medium">0min</div>
+                    <div className="text-sm font-medium">
+                      {queuePosition?.estimatedWaitTime || 15}min
+                    </div>
                     <div className="text-xs text-gray-500">est. wait</div>
                   </div>
                 </div>
