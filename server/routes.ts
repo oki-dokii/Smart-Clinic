@@ -497,7 +497,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.put("/api/reminders/:id", authMiddleware, requireRole(['patient']), async (req, res) => {
     try {
       const { id } = req.params;
-      const { status } = z.object({ status: z.enum(['taken', 'skipped', 'snoozed']) }).parse(req.body);
+      const { status } = z.object({ status: z.enum(['taken', 'skipped']) }).parse(req.body);
       
       const reminder = await storage.updateReminderStatus(id, status);
       if (!reminder) {
