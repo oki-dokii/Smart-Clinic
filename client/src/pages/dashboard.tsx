@@ -15,6 +15,7 @@ import {
   User,
 } from "lucide-react";
 import BookingModal from "@/components/BookingModal";
+import EmergencyModal from "@/components/EmergencyModal";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -32,6 +33,7 @@ export default function SmartClinicDashboard() {
   const queryClient = useQueryClient();
   const [user, setUser] = useState<any>(null);
   const [showBookingModal, setShowBookingModal] = useState(false);
+  const [showEmergencyModal, setShowEmergencyModal] = useState(false);
 
   useEffect(() => {
     const token = localStorage.getItem("auth_token");
@@ -221,7 +223,7 @@ export default function SmartClinicDashboard() {
             </button>
 
             <button 
-              onClick={() => setLocation("/profile")} 
+              onClick={() => setLocation("/settings")} 
               className="w-5 h-5 text-gray-600 hover:text-gray-800 transition-colors"
             >
               <Settings className="w-5 h-5" />
@@ -578,13 +580,7 @@ export default function SmartClinicDashboard() {
                 <Button
                   variant="outline"
                   className="h-16 sm:h-20 flex-col gap-1 sm:gap-2 bg-transparent text-xs sm:text-sm"
-                  onClick={() => {
-                    toast({
-                      title: "Emergency Alert",
-                      description: "Emergency services contacted. Ambulance dispatched to your location.",
-                      variant: "destructive",
-                    });
-                  }}
+                  onClick={() => setShowEmergencyModal(true)}
                 >
                   <AlertTriangle className="w-5 h-5 sm:w-6 sm:h-6 text-red-500" />
                   <span>Emergency</span>
@@ -621,10 +617,14 @@ export default function SmartClinicDashboard() {
         </div>
       </main>
 
-      {/* Booking Modal */}
+      {/* Modals */}
       <BookingModal 
-        isOpen={isBookingModalOpen} 
-        onClose={() => setIsBookingModalOpen(false)} 
+        isOpen={showBookingModal} 
+        onClose={() => setShowBookingModal(false)} 
+      />
+      <EmergencyModal 
+        isOpen={showEmergencyModal} 
+        onClose={() => setShowEmergencyModal(false)} 
       />
     </div>
   );

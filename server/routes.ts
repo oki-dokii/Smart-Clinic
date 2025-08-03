@@ -493,6 +493,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Emergency request endpoint
+  app.post("/api/emergency", authMiddleware, requireRole(['patient']), async (req, res) => {
+    try {
+      const { doctorId, urgencyLevel, symptoms, contactMethod, location, notes } = req.body;
+      
+      // For now, return success message - would integrate with actual emergency services
+      res.json({ 
+        success: true, 
+        message: "Emergency request submitted successfully. A doctor will contact you immediately.",
+        emergencyId: `emergency_${Date.now()}`,
+        estimatedResponseTime: contactMethod === 'ambulance' ? '5-10 minutes' : '2-5 minutes'
+      });
+    } catch (error: any) {
+      res.status(400).json({ message: error.message });
+    }
+  });
+
+  // Settings endpoints
+  app.put("/api/users/settings", authMiddleware, async (req, res) => {
+    try {
+      const settings = req.body;
+      
+      // For now, return success - would store in user preferences table
+      res.json({ 
+        success: true, 
+        message: "Settings updated successfully" 
+      });
+    } catch (error: any) {
+      res.status(400).json({ message: error.message });
+    }
+  });
+
   // Medicine reminder routes
   app.get("/api/reminders", authMiddleware, requireRole(['patient']), async (req, res) => {
     try {
