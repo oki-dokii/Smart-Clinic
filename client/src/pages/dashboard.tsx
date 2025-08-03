@@ -76,6 +76,61 @@ export default function SmartClinicDashboard() {
     enabled: !!user,
   });
 
+  // Medicine reminder handlers
+  const markTakenMutation = useMutation({
+    mutationFn: async (reminderId: string) => {
+      const response = await apiRequest("PUT", `/api/reminders/${reminderId}`, {
+        status: "taken"
+      });
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/reminders"] });
+      toast({
+        title: "Medicine Marked as Taken",
+        description: "Your medicine reminder has been updated.",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to update reminder",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const snoozeReminderMutation = useMutation({
+    mutationFn: async (reminderId: string) => {
+      const response = await apiRequest("PUT", `/api/reminders/${reminderId}`, {
+        status: "snoozed"
+      });
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/reminders"] });
+      toast({
+        title: "Reminder Snoozed",
+        description: "Medicine reminder snoozed for 15 minutes.",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to snooze reminder",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleMarkTaken = (reminderId: string) => {
+    markTakenMutation.mutate(reminderId);
+  };
+
+  const handleSnoozeReminder = (reminderId: string) => {
+    snoozeReminderMutation.mutate(reminderId);
+  };
+
   // Mutations for interactive functionality
   const joinQueueMutation = useMutation({
     mutationFn: async (doctorId: string) => {
@@ -182,6 +237,54 @@ export default function SmartClinicDashboard() {
 
   const handleBookAppointment = () => {
     setIsBookingModalOpen(true);
+  };
+
+  const [bookingData, setBookingData] = useState({
+    doctorId: "",
+    appointmentDate: "",
+    appointmentTime: "",
+    type: "clinic",
+    notes: ""
+  });
+
+  const bookNowMutation = useMutation({
+    mutationFn: async () => {
+      if (doctors.length === 0) throw new Error("No doctors available");
+      
+      const doctor = doctors[0];
+      const now = new Date();
+      const tomorrow = new Date(now);
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      
+      const appointmentData = {
+        doctorId: doctor.id,
+        appointmentDate: tomorrow.toISOString().split('T')[0],
+        appointmentTime: "09:00",
+        type: "clinic",
+        notes: "Quick booking for next available slot"
+      };
+      
+      const response = await apiRequest("POST", "/api/appointments", appointmentData);
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/appointments"] });
+      toast({
+        title: "Appointment Booked",
+        description: "Your appointment has been scheduled for tomorrow at 9:00 AM.",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Booking Failed",
+        description: error.message || "Failed to book appointment",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleBookNow = () => {
+    bookNowMutation.mutate();
   };
 
   if (!user) {
@@ -495,10 +598,21 @@ export default function SmartClinicDashboard() {
                       </div>
                       <div className="text-sm text-gray-600 mb-2">{reminder.prescription.dosage}</div>
                       <div className="flex gap-2">
-                        <Button size="sm" className="flex-1 bg-green-500 hover:bg-green-600">
-                          Mark Taken
+                        <Button 
+                          size="sm" 
+                          className="flex-1 bg-green-500 hover:bg-green-600"
+                          onClick={() => handleMarkTaken(reminder.id)}
+                          disabled={reminder.isTaken}
+                        >
+                          {reminder.isTaken ? "Taken" : "Mark Taken"}
                         </Button>
-                        <Button size="sm" variant="outline" className="flex-1 bg-transparent">
+                        <Button 
+                          size="sm" 
+                          variant="outline" 
+                          className="flex-1 bg-transparent"
+                          onClick={() => handleSnoozeReminder(reminder.id)}
+                          disabled={reminder.isTaken}
+                        >
                           <Clock className="w-3 h-3 mr-2" />
                           Snooze
                         </Button>
@@ -512,7 +626,10 @@ export default function SmartClinicDashboard() {
                 </div>
               )}
 
-              <Button className="w-full mt-4 bg-blue-500 hover:bg-blue-600">
+              <Button 
+                className="w-full mt-4 bg-blue-500 hover:bg-blue-600"
+                onClick={() => setLocation("/medicines")}
+              >
                 <Calendar className="w-4 h-4 mr-2" />
                 View Full Schedule
               </Button>

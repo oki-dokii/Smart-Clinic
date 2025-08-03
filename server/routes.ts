@@ -273,7 +273,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.put("/api/appointments/:id", authMiddleware, async (req, res) => {
     try {
       const { id } = req.params;
-      const appointmentData = insertAppointmentSchema.partial().parse(req.body);
+      // Handle date conversion if appointmentDate is provided as string
+      const { appointmentDate, ...otherData } = req.body;
+      const appointmentData = {
+        ...otherData,
+        ...(appointmentDate && { appointmentDate: new Date(appointmentDate) })
+      };
+      
+      const validatedData = insertAppointmentSchema.partial().parse(appointmentData);
       
       const existingAppointment = await storage.getAppointment(id);
       if (!existingAppointment) {
@@ -288,7 +295,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "Access denied" });
       }
 
-      const appointment = await storage.updateAppointment(id, appointmentData);
+      const appointment = await storage.updateAppointment(id, validatedData);
       res.json(appointment);
     } catch (error: any) {
       res.status(400).json({ message: error.message });
@@ -490,7 +497,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.put("/api/reminders/:id", authMiddleware, requireRole(['patient']), async (req, res) => {
     try {
       const { id } = req.params;
-      const { status } = z.object({ status: z.enum(['taken', 'skipped']) }).parse(req.body);
+      const { status } = z.object({ status: z.enum(['taken', 'skipped', 'snoozed']) }).parse(req.body);
       
       const reminder = await storage.updateReminderStatus(id, status);
       if (!reminder) {
