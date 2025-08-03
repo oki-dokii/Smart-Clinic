@@ -14,6 +14,7 @@ import {
   Zap,
   User,
 } from "lucide-react";
+import BookingModal from "@/components/BookingModal";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -170,11 +171,10 @@ export default function SmartClinicDashboard() {
     }
   };
 
+  const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
+
   const handleBookAppointment = () => {
-    toast({
-      title: "Booking Feature",
-      description: "Appointment booking modal would open here. Feature available - just needs form implementation.",
-    });
+    setIsBookingModalOpen(true);
   };
 
   if (!user) {
@@ -325,7 +325,12 @@ export default function SmartClinicDashboard() {
               <div className="text-sm text-gray-600 mb-4">
                 {reminders?.filter((r: any) => !r.isTaken && new Date(r.scheduledAt) < new Date()).length || 0} dose(s) overdue
               </div>
-              <Button className="w-full bg-orange-500 hover:bg-orange-600">Take Medicine</Button>
+              <Button 
+                className="w-full bg-orange-500 hover:bg-orange-600"
+                onClick={() => setLocation("/medicines")}
+              >
+                Manage Medicines
+              </Button>
             </CardContent>
           </Card>
 
@@ -615,6 +620,12 @@ export default function SmartClinicDashboard() {
           </Card>
         </div>
       </main>
+
+      {/* Booking Modal */}
+      <BookingModal 
+        isOpen={isBookingModalOpen} 
+        onClose={() => setIsBookingModalOpen(false)} 
+      />
     </div>
   );
 }

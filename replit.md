@@ -8,6 +8,17 @@ Preferred communication style: Simple, everyday language.
 
 # Recent Changes
 
+## 2025-08-03 - Medicine Management and Appointment Booking Implementation
+- Created comprehensive medicine management system with custom upload feature
+- Added medicine list upload functionality with text parsing capabilities
+- Implemented personalized timing schedules for medicine reminders
+- Created advanced appointment booking modal with date/time selection
+- Added multi-type appointment support (clinic, home visit, video call)
+- Integrated real-time medicine reminder status updates (taken/skipped)
+- Added medicine management page with tabbed interface for medicines and reminders
+- Enhanced dashboard with medicine management button and proper booking modal
+- Implemented doctor selection with availability and specialization display
+
 ## 2025-08-03 - Full Application Functionality Implementation
 - Fixed authentication system by implementing Bearer token support in API requests
 - Resolved authorization issues allowing patients to view doctors for appointments

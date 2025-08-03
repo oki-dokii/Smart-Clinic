@@ -947,6 +947,25 @@ export class DatabaseStorage implements IStorage {
     return updatedReminder || undefined;
   }
 
+  async updateReminderStatus(id: string, status: 'taken' | 'skipped'): Promise<MedicineReminder | undefined> {
+    const updateData: any = {};
+    
+    if (status === 'taken') {
+      updateData.isTaken = true;
+      updateData.takenAt = new Date();
+    } else if (status === 'skipped') {
+      updateData.isSkipped = true;
+      updateData.skippedAt = new Date();
+    }
+    
+    const [updatedReminder] = await db.update(medicineReminders)
+      .set(updateData)
+      .where(eq(medicineReminders.id, id))
+      .returning();
+    
+    return updatedReminder || undefined;
+  }
+
   // Delay Notifications
   async createDelayNotification(notification: InsertDelayNotification): Promise<DelayNotification> {
     const [newNotification] = await db.insert(delayNotifications).values(notification).returning();

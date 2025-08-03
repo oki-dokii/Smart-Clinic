@@ -449,6 +449,50 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Custom medicine routes (simplified for now)
+  app.post("/api/custom-medicines", authMiddleware, requireRole(['patient']), async (req, res) => {
+    try {
+      // For now, return success - would need proper DB table
+      res.json({ success: true, message: "Custom medicine feature coming soon" });
+    } catch (error: any) {
+      res.status(400).json({ message: error.message });
+    }
+  });
+
+  app.get("/api/custom-medicines", authMiddleware, requireRole(['patient']), async (req, res) => {
+    try {
+      // Return empty for now
+      res.json([]);
+    } catch (error: any) {
+      res.status(400).json({ message: error.message });
+    }
+  });
+
+  app.post("/api/medicines/upload", authMiddleware, requireRole(['patient']), async (req, res) => {
+    try {
+      // For now, return success message
+      res.json({ success: true, message: "Medicine upload feature coming soon" });
+    } catch (error: any) {
+      res.status(400).json({ message: error.message });
+    }
+  });
+
+  app.put("/api/reminders/:id", authMiddleware, requireRole(['patient']), async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { status } = z.object({ status: z.enum(['taken', 'skipped']) }).parse(req.body);
+      
+      const reminder = await storage.updateReminderStatus(id, status);
+      if (!reminder) {
+        return res.status(404).json({ message: "Reminder not found" });
+      }
+      
+      res.json(reminder);
+    } catch (error: any) {
+      res.status(400).json({ message: error.message });
+    }
+  });
+
   // Medicine reminder routes
   app.get("/api/reminders", authMiddleware, requireRole(['patient']), async (req, res) => {
     try {

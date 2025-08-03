@@ -7,6 +7,7 @@ import { useEffect } from "react";
 import LoginPage from "@/pages/login";
 import Dashboard from "@/pages/dashboard";
 import ProfilePage from "@/pages/profile";
+import MedicinesPage from "@/pages/medicines";
 import NotFound from "@/pages/not-found";
 
 // Auth wrapper component - simplified since auth is now handled in queryClient
@@ -20,6 +21,7 @@ function Router() {
       <Route path="/login" component={LoginPage} />
       <Route path="/dashboard" component={Dashboard} />
       <Route path="/profile" component={ProfilePage} />
+      <Route path="/medicines" component={MedicinesPage} />
       <Route path="/">
         {() => {
           const token = localStorage.getItem("auth_token");
