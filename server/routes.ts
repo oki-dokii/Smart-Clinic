@@ -497,14 +497,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.put("/api/reminders/:id", authMiddleware, requireRole(['patient']), async (req, res) => {
     try {
       const { id } = req.params;
-      const { status } = z.object({ status: z.enum(['taken', 'skipped']) }).parse(req.body);
+      const { status } = z.object({ status: z.enum(['taken', 'skipped', 'not_taken']) }).parse(req.body);
       
-      const reminder = await storage.updateReminderStatus(id, status);
-      if (!reminder) {
-        return res.status(404).json({ message: "Reminder not found" });
+      if (status === 'not_taken') {
+        // Reset the reminder status to not taken
+        const reminder = await storage.resetReminderStatus(id);
+        if (!reminder) {
+          return res.status(404).json({ message: "Reminder not found" });
+        }
+        res.json(reminder);
+      } else {
+        const reminder = await storage.updateReminderStatus(id, status);
+        if (!reminder) {
+          return res.status(404).json({ message: "Reminder not found" });
+        }
+        res.json(reminder);
       }
-      
-      res.json(reminder);
     } catch (error: any) {
       res.status(400).json({ message: error.message });
     }

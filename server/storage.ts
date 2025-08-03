@@ -84,6 +84,7 @@ export interface IStorage {
   markReminderTaken(id: string): Promise<MedicineReminder | undefined>;
   markReminderSkipped(id: string): Promise<MedicineReminder | undefined>;
   updateReminderStatus(id: string, status: 'taken' | 'skipped'): Promise<MedicineReminder | undefined>;
+  resetReminderStatus(id: string): Promise<MedicineReminder | undefined>;
   
   // Delay Notifications
   createDelayNotification(notification: InsertDelayNotification): Promise<DelayNotification>;
@@ -543,54 +544,104 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getPatientReminders(patientId: string, date?: Date): Promise<any[]> {
-    let whereConditions = [eq(prescriptions.patientId, patientId)];
-    
+    const baseConditions = [];
     if (date) {
       const startOfDay = new Date(date);
       startOfDay.setHours(0, 0, 0, 0);
       const endOfDay = new Date(date);
       endOfDay.setHours(23, 59, 59, 999);
       
-      whereConditions.push(
+      baseConditions.push(
         gte(medicineReminders.scheduledAt, startOfDay),
         lte(medicineReminders.scheduledAt, endOfDay)
       );
     }
     
-    return await db.query.medicineReminders.findMany({
-      where: and(...whereConditions),
-      with: {
-        prescription: {
-          with: {
-            medicine: true
-          }
+    return await db.select({
+      id: medicineReminders.id,
+      prescriptionId: medicineReminders.prescriptionId,
+      scheduledAt: medicineReminders.scheduledAt,
+      takenAt: medicineReminders.takenAt,
+      skippedAt: medicineReminders.skippedAt,
+      isTaken: medicineReminders.isTaken,
+      isSkipped: medicineReminders.isSkipped,
+      smsReminderSent: medicineReminders.smsReminderSent,
+      notes: medicineReminders.notes,
+      createdAt: medicineReminders.createdAt,
+      prescription: {
+        id: prescriptions.id,
+        dosage: prescriptions.dosage,
+        frequency: prescriptions.frequency,
+        instructions: prescriptions.instructions,
+        startDate: prescriptions.startDate,
+        endDate: prescriptions.endDate,
+        status: prescriptions.status,
+        medicine: {
+          id: medicines.id,
+          name: medicines.name,
+          description: medicines.description,
+          dosageForm: medicines.dosageForm,
+          strength: medicines.strength,
+          manufacturer: medicines.manufacturer
         }
-      },
-      orderBy: asc(medicineReminders.scheduledAt)
-    });
+      }
+    })
+    .from(medicineReminders)
+    .innerJoin(prescriptions, eq(medicineReminders.prescriptionId, prescriptions.id))
+    .innerJoin(medicines, eq(prescriptions.medicineId, medicines.id))
+    .where(and(
+      eq(prescriptions.patientId, patientId),
+      ...baseConditions
+    ))
+    .orderBy(asc(medicineReminders.scheduledAt));
   }
 
   async getDueReminders(): Promise<any[]> {
     const now = new Date();
     const fiveMinutesAgo = new Date(now.getTime() - 5 * 60 * 1000);
     
-    return await db.query.medicineReminders.findMany({
-      where: and(
-        lte(medicineReminders.scheduledAt, now),
-        gte(medicineReminders.scheduledAt, fiveMinutesAgo),
-        eq(medicineReminders.isTaken, false),
-        eq(medicineReminders.isSkipped, false),
-        eq(medicineReminders.smsReminderSent, false)
-      ),
-      with: {
-        prescription: {
-          with: {
-            medicine: true,
-            patient: true
-          }
+    return await db.select({
+      id: medicineReminders.id,
+      prescriptionId: medicineReminders.prescriptionId,
+      scheduledAt: medicineReminders.scheduledAt,
+      takenAt: medicineReminders.takenAt,
+      skippedAt: medicineReminders.skippedAt,
+      isTaken: medicineReminders.isTaken,
+      isSkipped: medicineReminders.isSkipped,
+      smsReminderSent: medicineReminders.smsReminderSent,
+      notes: medicineReminders.notes,
+      createdAt: medicineReminders.createdAt,
+      prescription: {
+        id: prescriptions.id,
+        dosage: prescriptions.dosage,
+        frequency: prescriptions.frequency,
+        instructions: prescriptions.instructions,
+        medicine: {
+          id: medicines.id,
+          name: medicines.name,
+          description: medicines.description,
+          dosageForm: medicines.dosageForm,
+          strength: medicines.strength
+        },
+        patient: {
+          id: users.id,
+          phoneNumber: users.phoneNumber,
+          firstName: users.firstName,
+          lastName: users.lastName
         }
       }
-    });
+    })
+    .from(medicineReminders)
+    .innerJoin(prescriptions, eq(medicineReminders.prescriptionId, prescriptions.id))
+    .innerJoin(medicines, eq(prescriptions.medicineId, medicines.id))
+    .innerJoin(users, eq(prescriptions.patientId, users.id))
+    .where(and(
+      lte(medicineReminders.scheduledAt, now),
+      gte(medicineReminders.scheduledAt, fiveMinutesAgo),
+      eq(medicineReminders.isTaken, false),
+      eq(medicineReminders.isSkipped, false),
+      eq(medicineReminders.smsReminderSent, false)
+    ));
   }
 
   async markReminderTaken(id: string): Promise<MedicineReminder | undefined> {
@@ -615,13 +666,31 @@ export class DatabaseStorage implements IStorage {
     if (status === 'taken') {
       updateData.isTaken = true;
       updateData.takenAt = new Date();
+      updateData.isSkipped = false;
+      updateData.skippedAt = null;
     } else if (status === 'skipped') {
       updateData.isSkipped = true;
       updateData.skippedAt = new Date();
+      updateData.isTaken = false;
+      updateData.takenAt = null;
     }
     
     const [updatedReminder] = await db.update(medicineReminders)
       .set(updateData)
+      .where(eq(medicineReminders.id, id))
+      .returning();
+    
+    return updatedReminder || undefined;
+  }
+
+  async resetReminderStatus(id: string): Promise<MedicineReminder | undefined> {
+    const [updatedReminder] = await db.update(medicineReminders)
+      .set({ 
+        isTaken: false, 
+        isSkipped: false, 
+        takenAt: null, 
+        skippedAt: null 
+      })
       .where(eq(medicineReminders.id, id))
       .returning();
     
