@@ -474,7 +474,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const notification = await storage.createDelayNotification(delayData);
       
       // Send SMS notifications to affected patients
-      await smsService.sendDelayNotifications(notification.doctorId, notification.delayMinutes, notification.reason);
+      await smsService.sendDelayNotifications(notification.doctorId, notification.delayMinutes, notification.reason || undefined);
       
       res.json(notification);
     } catch (error: any) {
