@@ -15,6 +15,24 @@ import { smsService } from "./services/sms";
 import { queueService } from "./services/queue";
 import { schedulerService } from "./services/scheduler";
 
+// Helper function to generate timings from frequency
+function generateTimingsFromFrequency(frequency: string): string[] {
+  switch (frequency) {
+    case 'once_daily':
+      return ['08:00'];
+    case 'twice_daily':
+      return ['08:00', '20:00'];
+    case 'three_times_daily':
+      return ['08:00', '14:00', '20:00'];
+    case 'four_times_daily':
+      return ['08:00', '12:00', '16:00', '20:00'];
+    case 'as_needed':
+      return ['08:00'];
+    default:
+      return ['08:00'];
+  }
+}
+
 export async function registerRoutes(app: Express): Promise<Server> {
   // Authentication routes
   app.post("/api/auth/send-otp", async (req, res) => {
@@ -469,7 +487,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Custom medicine routes - properly implemented
   app.post("/api/custom-medicines", authMiddleware, requireRole(['patient']), async (req, res) => {
     try {
-      const { name, dosage, frequency, instructions, startDate, endDate } = req.body;
+      const { name, dosage, frequency, instructions, startDate, endDate, timings } = req.body;
       
       // First create a medicine entry
       const medicine = await storage.createMedicine({
@@ -494,7 +512,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         status: 'active'
       });
 
-      res.json({ success: true, medicine, prescription });
+      // Create reminders for this prescription
+      if (schedulerService) {
+        try {
+          await schedulerService.createMedicineReminders(prescription.id);
+        } catch (error) {
+          console.error('Failed to create reminders for custom medicine:', error);
+        }
+      }
+
+      res.json({ success: true, medicine, prescription, timings });
     } catch (error: any) {
       res.status(400).json({ message: error.message });
     }
@@ -506,17 +533,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const prescriptions = await storage.getPatientPrescriptions(req.user!.id);
       const customMedicines = prescriptions
         .filter(p => p.medicine.manufacturer === 'Patient Added')
-        .map(p => ({
-          id: p.id,
-          name: p.medicine.name,
-          dosage: p.dosage,
-          frequency: p.frequency,
-          instructions: p.instructions,
-          startDate: p.startDate,
-          endDate: p.endDate,
-          status: p.status,
-          medicine: p.medicine
-        }));
+        .map(p => {
+          // Generate timings based on frequency
+          const timings = generateTimingsFromFrequency(p.frequency);
+          
+          return {
+            id: p.id,
+            name: p.medicine.name,
+            dosage: p.dosage,
+            frequency: p.frequency,
+            instructions: p.instructions,
+            startDate: p.startDate,
+            endDate: p.endDate,
+            status: p.status,
+            medicine: p.medicine,
+            timings
+          };
+        });
       
       res.json(customMedicines);
     } catch (error: any) {
@@ -565,6 +598,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
             totalDoses: 30,
             status: 'active'
           });
+
+          // Create reminders for this prescription
+          if (schedulerService) {
+            try {
+              await schedulerService.createMedicineReminders(prescription.id);
+            } catch (error) {
+              console.error('Failed to create reminders for uploaded medicine:', error);
+            }
+          }
 
           createdMedicines.push({ medicine, prescription });
         }
