@@ -213,14 +213,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Appointment routes
   app.post("/api/appointments", authMiddleware, async (req, res) => {
     try {
-      const appointmentData = insertAppointmentSchema.parse(req.body);
+      // Handle date conversion if appointmentDate is provided as string
+      const { appointmentDate, ...otherData } = req.body;
+      const appointmentData = {
+        ...otherData,
+        ...(appointmentDate && { appointmentDate: new Date(appointmentDate) }),
+        patientId: req.user!.id  // Always set to current user for patients
+      };
       
-      // Ensure patient can only book for themselves
-      if (req.user!.role === 'patient' && appointmentData.patientId !== req.user!.id) {
-        return res.status(403).json({ message: "Patients can only book appointments for themselves" });
-      }
-
-      const appointment = await storage.createAppointment(appointmentData);
+      const validatedData = insertAppointmentSchema.parse(appointmentData);
+      
+      const appointment = await storage.createAppointment(validatedData);
       res.json(appointment);
     } catch (error: any) {
       res.status(400).json({ message: error.message });
