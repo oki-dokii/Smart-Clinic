@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import BookingModal from "@/components/BookingModal";
 import EmergencyModal from "@/components/EmergencyModal";
+import CancelModal from "@/components/CancelModal";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -26,14 +27,18 @@ import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
+import { useTheme } from "@/components/ThemeProvider";
 
 export default function SmartClinicDashboard() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
+  const { theme, toggleTheme } = useTheme();
   const queryClient = useQueryClient();
   const [user, setUser] = useState<any>(null);
   const [showBookingModal, setShowBookingModal] = useState(false);
   const [showEmergencyModal, setShowEmergencyModal] = useState(false);
+  const [showCancelModal, setShowCancelModal] = useState(false);
+  const [selectedAppointment, setSelectedAppointment] = useState<any>(null);
 
   useEffect(() => {
     const token = localStorage.getItem("auth_token");
@@ -251,7 +256,10 @@ export default function SmartClinicDashboard() {
           </div>
 
           <div className="flex flex-col sm:flex-row gap-4 items-stretch sm:items-center">
-            <Button className="bg-green-500 hover:bg-green-600 text-white px-4 sm:px-6 py-3 w-full sm:w-auto">
+            <Button 
+              className="bg-green-500 hover:bg-green-600 text-white px-4 sm:px-6 py-3 w-full sm:w-auto"
+              onClick={() => setShowBookingModal(true)}
+            >
               <Calendar className="w-4 h-4 mr-2" />
               Book Appointment
             </Button>
@@ -284,7 +292,24 @@ export default function SmartClinicDashboard() {
               <div className="text-sm text-gray-600 mb-4">
                 {appointments?.length > 0 ? "Dr. Sarah Wilson - Cardiology" : "No upcoming appointments"}
               </div>
-              <Button className="w-full bg-blue-500 hover:bg-blue-600">View Details</Button>
+              <div className="flex gap-2">
+                <Button className="flex-1 bg-blue-500 hover:bg-blue-600" size="sm">
+                  View Details
+                </Button>
+                {appointments?.length > 0 && (
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => {
+                      setSelectedAppointment(appointments[0]);
+                      setShowCancelModal(true);
+                    }}
+                    className="text-red-600 hover:text-red-700 border-red-200 hover:border-red-300"
+                  >
+                    Cancel
+                  </Button>
+                )}
+              </div>
             </CardContent>
           </Card>
 
@@ -388,7 +413,17 @@ export default function SmartClinicDashboard() {
               </div>
 
               <div className="flex gap-2 mt-4">
-                <Button variant="outline" className="flex-1 bg-transparent">
+                <Button 
+                  variant="outline" 
+                  className="flex-1 bg-transparent"
+                  onClick={() => {
+                    queryClient.invalidateQueries({ queryKey: ["/api/queue/position"] });
+                    toast({
+                      title: "Queue Refreshed",
+                      description: "Queue information has been updated.",
+                    });
+                  }}
+                >
                   Refresh Queue
                 </Button>
                 <Button 
@@ -589,10 +624,19 @@ export default function SmartClinicDashboard() {
                   variant="outline"
                   className="h-16 sm:h-20 flex-col gap-1 sm:gap-2 bg-transparent text-xs sm:text-sm"
                   onClick={() => {
-                    toast({
-                      title: "Reschedule Request",
-                      description: "Appointment rescheduling form would open here. Feature available for implementation.",
-                    });
+                    if (appointments?.length > 0) {
+                      setShowBookingModal(true);
+                      toast({
+                        title: "Reschedule Mode",
+                        description: "Select a new date and time for your appointment.",
+                      });
+                    } else {
+                      toast({
+                        title: "No Appointments",
+                        description: "You don't have any appointments to reschedule.",
+                        variant: "destructive",
+                      });
+                    }
                   }}
                 >
                   <Clock className="w-5 h-5 sm:w-6 sm:h-6 text-blue-500" />
@@ -625,6 +669,16 @@ export default function SmartClinicDashboard() {
       <EmergencyModal 
         isOpen={showEmergencyModal} 
         onClose={() => setShowEmergencyModal(false)} 
+      />
+      <CancelModal 
+        isOpen={showCancelModal} 
+        onClose={() => setShowCancelModal(false)}
+        appointment={selectedAppointment}
+      />
+      <CancelModal 
+        isOpen={showCancelModal} 
+        onClose={() => setShowCancelModal(false)}
+        appointment={selectedAppointment}
       />
     </div>
   );

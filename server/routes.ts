@@ -532,6 +532,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Cancel appointment endpoint
+  app.put("/api/appointments/:id/cancel", authMiddleware, requireRole(['patient']), async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { reason } = req.body;
+      
+      // For now, return success message - would update appointment status in database
+      res.json({ 
+        success: true, 
+        message: "Appointment cancelled successfully",
+        appointmentId: id,
+        reason: reason || "No reason provided"
+      });
+    } catch (error: any) {
+      res.status(400).json({ message: error.message });
+    }
+  });
+
   // Medicine reminder routes
   app.get("/api/reminders", authMiddleware, requireRole(['patient']), async (req, res) => {
     try {

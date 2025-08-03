@@ -90,6 +90,8 @@ export default function EmergencyModal({ isOpen, onClose }: EmergencyModalProps)
   };
 
   const handleSubmit = () => {
+    console.log('Emergency data:', emergencyData);
+    
     if (!emergencyData.symptoms.trim()) {
       toast({
         title: "Missing Information",
@@ -103,6 +105,15 @@ export default function EmergencyModal({ isOpen, onClose }: EmergencyModalProps)
       toast({
         title: "Doctor Required",
         description: "Please select a doctor for your emergency request.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if ((emergencyData.contactMethod === 'home_visit' || emergencyData.contactMethod === 'ambulance') && !emergencyData.location.trim()) {
+      toast({
+        title: "Location Required",
+        description: "Please provide your current location for home visit or ambulance services.",
         variant: "destructive",
       });
       return;

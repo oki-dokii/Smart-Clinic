@@ -9,6 +9,7 @@ import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
+import { useTheme } from "@/components/ThemeProvider";
 import { ArrowLeft, User, Bell, Shield, Moon, Sun } from "lucide-react";
 
 interface UserSettings {
@@ -23,6 +24,7 @@ interface UserSettings {
 export default function SettingsPage() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
+  const { theme, toggleTheme } = useTheme();
   const [settings, setSettings] = useState<UserSettings>({
     notifications: true,
     smsReminders: true,
@@ -215,8 +217,8 @@ export default function SettingsPage() {
                   <p className="text-sm text-gray-500">Switch to dark theme for better viewing in low light</p>
                 </div>
                 <Switch
-                  checked={settings.darkMode}
-                  onCheckedChange={(checked) => handleSettingChange('darkMode', checked)}
+                  checked={theme === 'dark'}
+                  onCheckedChange={toggleTheme}
                 />
               </div>
             </CardContent>

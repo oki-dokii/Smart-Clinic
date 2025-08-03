@@ -370,11 +370,32 @@ export default function BookingModal({ isOpen, onClose }: BookingModalProps) {
               Cancel
             </Button>
             <Button 
-              onClick={() => bookAppointmentMutation.mutate(bookingData)}
-              disabled={!canSubmit || bookAppointmentMutation.isPending}
-              className="flex-1"
+              onClick={() => {
+                console.log('Booking data:', bookingData);
+                if (canSubmit) {
+                  bookAppointmentMutation.mutate(bookingData);
+                } else {
+                  toast({
+                    title: "Incomplete Information",
+                    description: "Please fill in all required fields: doctor, date/time, and symptoms.",
+                    variant: "destructive",
+                  });
+                }
+              }}
+              disabled={bookAppointmentMutation.isPending}
+              className="flex-1 bg-blue-500 hover:bg-blue-600"
             >
-              {bookAppointmentMutation.isPending ? "Booking..." : "Book Appointment"}
+              {bookAppointmentMutation.isPending ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                  Booking...
+                </>
+              ) : (
+                <>
+                  <CalendarIcon className="w-4 h-4 mr-2" />
+                  Book Appointment
+                </>
+              )}
             </Button>
           </div>
         </div>
