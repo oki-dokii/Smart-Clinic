@@ -541,7 +541,7 @@ export class DatabaseStorage implements IStorage {
     return reminder || undefined;
   }
 
-  async getPatientReminders(patientId: string, date?: Date): Promise<(MedicineReminder & { prescription: Prescription & { medicine: Medicine } })[]> {
+  async getPatientReminders(patientId: string, date?: Date): Promise<any[]> {
     let whereConditions = [eq(prescriptions.patientId, patientId)];
     
     if (date) {
@@ -583,7 +583,14 @@ export class DatabaseStorage implements IStorage {
         status: prescriptions.status,
         createdAt: prescriptions.createdAt,
         updatedAt: prescriptions.updatedAt,
-        medicine: medicines
+        medicine: {
+          id: medicines.id,
+          name: medicines.name,
+          description: medicines.description,
+          dosageForm: medicines.dosageForm,
+          manufacturer: medicines.manufacturer,
+          createdAt: medicines.createdAt
+        }
       }
     })
     .from(medicineReminders)
@@ -593,7 +600,7 @@ export class DatabaseStorage implements IStorage {
     .orderBy(asc(medicineReminders.scheduledAt));
   }
 
-  async getDueReminders(): Promise<(MedicineReminder & { prescription: Prescription & { medicine: Medicine; patient: User } })[]> {
+  async getDueReminders(): Promise<any[]> {
     const now = new Date();
     const fiveMinutesAgo = new Date(now.getTime() - 5 * 60 * 1000);
     
@@ -624,28 +631,35 @@ export class DatabaseStorage implements IStorage {
         status: prescriptions.status,
         createdAt: prescriptions.createdAt,
         updatedAt: prescriptions.updatedAt,
-        medicine: medicines,
+        medicine: {
+          id: medicines.id,
+          name: medicines.name,
+          description: medicines.description,
+          dosageForm: medicines.dosageForm,
+          manufacturer: medicines.manufacturer,
+          createdAt: medicines.createdAt
+        },
         patient: {
-          id: sql`patient.id`,
-          phoneNumber: sql`patient.phone_number`,
-          role: sql`patient.role`,
-          firstName: sql`patient.first_name`,
-          lastName: sql`patient.last_name`,
-          email: sql`patient.email`,
-          dateOfBirth: sql`patient.date_of_birth`,
-          address: sql`patient.address`,
-          emergencyContact: sql`patient.emergency_contact`,
-          isActive: sql`patient.is_active`,
-          isApproved: sql`patient.is_approved`,
-          createdAt: sql`patient.created_at`,
-          updatedAt: sql`patient.updated_at`,
+          id: users.id,
+          phoneNumber: users.phoneNumber,
+          role: users.role,
+          firstName: users.firstName,
+          lastName: users.lastName,
+          email: users.email,
+          dateOfBirth: users.dateOfBirth,
+          address: users.address,
+          emergencyContact: users.emergencyContact,
+          isActive: users.isActive,
+          isApproved: users.isApproved,
+          createdAt: users.createdAt,
+          updatedAt: users.updatedAt,
         }
       }
     })
     .from(medicineReminders)
     .innerJoin(prescriptions, eq(medicineReminders.prescriptionId, prescriptions.id))
     .innerJoin(medicines, eq(prescriptions.medicineId, medicines.id))
-    .innerJoin(sql`${users} AS patient`, sql`${prescriptions.patientId} = patient.id`)
+    .innerJoin(users, eq(prescriptions.patientId, users.id))
     .where(and(
       lte(medicineReminders.scheduledAt, now),
       gte(medicineReminders.scheduledAt, fiveMinutesAgo),
@@ -724,7 +738,7 @@ export class DatabaseStorage implements IStorage {
     return visit || undefined;
   }
 
-  async getHomeVisitWithDetails(id: string): Promise<(HomeVisit & { appointment: Appointment; patient: User; doctor: User }) | undefined> {
+  async getHomeVisitWithDetails(id: string): Promise<any | undefined> {
     const [result] = await db.select({
       id: homeVisits.id,
       appointmentId: homeVisits.appointmentId,
@@ -782,8 +796,8 @@ export class DatabaseStorage implements IStorage {
     return result || undefined;
   }
 
-  async getDoctorHomeVisits(doctorId: string, date?: Date): Promise<(HomeVisit & { appointment: Appointment; patient: User })[]> {
-    let whereClause = eq(homeVisits.doctorId, doctorId);
+  async getDoctorHomeVisits(doctorId: string, date?: Date): Promise<any[]> {
+    let whereConditions = [eq(homeVisits.doctorId, doctorId)];
     
     if (date) {
       const startOfDay = new Date(date);
@@ -791,8 +805,7 @@ export class DatabaseStorage implements IStorage {
       const endOfDay = new Date(date);
       endOfDay.setHours(23, 59, 59, 999);
       
-      whereClause = and(
-        whereClause,
+      whereConditions.push(
         gte(appointments.appointmentDate, startOfDay),
         lte(appointments.appointmentDate, endOfDay)
       );
@@ -814,13 +827,45 @@ export class DatabaseStorage implements IStorage {
       travelDuration: homeVisits.travelDuration,
       visitNotes: homeVisits.visitNotes,
       createdAt: homeVisits.createdAt,
-      appointment: appointments,
-      patient: users
+      appointment: {
+        id: appointments.id,
+        patientId: appointments.patientId,
+        doctorId: appointments.doctorId,
+        appointmentDate: appointments.appointmentDate,
+        duration: appointments.duration,
+        type: appointments.type,
+        status: appointments.status,
+        location: appointments.location,
+        notes: appointments.notes,
+        symptoms: appointments.symptoms,
+        diagnosis: appointments.diagnosis,
+        treatmentPlan: appointments.treatmentPlan,
+        isDelayed: appointments.isDelayed,
+        delayMinutes: appointments.delayMinutes,
+        delayReason: appointments.delayReason,
+        createdAt: appointments.createdAt,
+        updatedAt: appointments.updatedAt
+      },
+      patient: {
+        id: users.id,
+        phoneNumber: users.phoneNumber,
+        role: users.role,
+        firstName: users.firstName,
+        lastName: users.lastName,
+        email: users.email,
+        dateOfBirth: users.dateOfBirth,
+        address: users.address,
+        emergencyContact: users.emergencyContact,
+        isActive: users.isActive,
+        isApproved: users.isApproved,
+        createdAt: users.createdAt,
+        updatedAt: users.updatedAt
+      }
     })
     .from(homeVisits)
     .innerJoin(appointments, eq(homeVisits.appointmentId, appointments.id))
     .innerJoin(users, eq(homeVisits.patientId, users.id))
-    .where(whereClause)
+    .where(and(...whereConditions))
     .orderBy(asc(appointments.appointmentDate));
   }
 
