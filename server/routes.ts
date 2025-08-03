@@ -604,18 +604,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Cancel appointment endpoint
-  app.put("/api/appointments/:id/cancel", authMiddleware, requireRole(['patient']), async (req, res) => {
+  app.put("/api/appointments/:id/cancel", authMiddleware, async (req, res) => {
     try {
       const { id } = req.params;
       const { reason } = req.body;
       
-      // For now, return success message - would update appointment status in database
-      res.json({ 
-        success: true, 
-        message: "Appointment cancelled successfully",
-        appointmentId: id,
-        reason: reason || "No reason provided"
-      });
+      const appointment = await storage.cancelAppointment(id);
+      if (!appointment) {
+        return res.status(404).json({ message: "Appointment not found" });
+      }
+      
+      res.json(appointment);
     } catch (error: any) {
       res.status(400).json({ message: error.message });
     }

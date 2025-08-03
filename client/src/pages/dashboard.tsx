@@ -184,6 +184,16 @@ export default function SmartClinicDashboard() {
   };
 
   const handleJoinQueue = () => {
+    // Check if user is already in queue
+    if (queuePosition && queuePosition.status === 'waiting') {
+      toast({
+        title: "Already in Queue",
+        description: `You are already in the queue at position #${queuePosition.tokenNumber}`,
+        variant: "destructive",
+      });
+      return;
+    }
+
     if (doctors.length > 0) {
       // Use the first available doctor for demo
       const doctorId = doctors[0].id;
@@ -285,6 +295,69 @@ export default function SmartClinicDashboard() {
 
   const handleBookNow = () => {
     bookNowMutation.mutate();
+  };
+
+  // Reschedule and cancel handlers
+  const rescheduleAppointmentMutation = useMutation({
+    mutationFn: async ({ appointmentId, appointmentData }: { appointmentId: string, appointmentData: any }) => {
+      const response = await apiRequest("PUT", `/api/appointments/${appointmentId}`, appointmentData);
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/appointments"] });
+      setShowBookingModal(false);
+      toast({
+        title: "Appointment Rescheduled",
+        description: "Your appointment has been successfully rescheduled.",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Reschedule Failed",
+        description: error.message || "Failed to reschedule appointment",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const cancelAppointmentMutation = useMutation({
+    mutationFn: async (appointmentId: string) => {
+      const response = await apiRequest("PUT", `/api/appointments/${appointmentId}/cancel`, {
+        reason: "Cancelled by patient"
+      });
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/appointments"] });
+      toast({
+        title: "Appointment Cancelled",
+        description: "Your appointment has been cancelled successfully.",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Cancellation Failed",
+        description: error.message || "Failed to cancel appointment",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleRescheduleAppointment = (appointment: any) => {
+    setSelectedAppointment(appointment);
+    setBookingData({
+      doctorId: appointment.doctorId,
+      appointmentDate: appointment.appointmentDate.split('T')[0],
+      appointmentTime: new Date(appointment.appointmentDate).toLocaleTimeString('en-US', {hour12: false, hour: '2-digit', minute: '2-digit'}),
+      type: appointment.type,
+      notes: appointment.notes || ""
+    });
+    setShowBookingModal(true);
+  };
+
+  const handleCancelAppointment = (appointment: any) => {
+    setSelectedAppointment(appointment);
+    setShowCancelModal(true);
   };
 
   if (!user) {
@@ -398,10 +471,16 @@ export default function SmartClinicDashboard() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold mb-1">
-                {appointments?.length > 0 ? "2:30 PM" : "None"}
+                {appointments?.length > 0 
+                  ? new Date(appointments[0].appointmentDate).toLocaleTimeString('en-US', {hour: 'numeric', minute: '2-digit', hour12: true})
+                  : "None"
+                }
               </div>
               <div className="text-sm text-gray-600 mb-4">
-                {appointments?.length > 0 ? "Dr. Sarah Wilson - Cardiology" : "No upcoming appointments"}
+                {appointments?.length > 0 
+                  ? `Dr. ${appointments[0].doctor.firstName} ${appointments[0].doctor.lastName} - ${appointments[0].type}`
+                  : "No upcoming appointments"
+                }
               </div>
               <div className="flex gap-2">
                 <Button className="flex-1 bg-blue-500 hover:bg-blue-600" size="sm">
@@ -439,7 +518,25 @@ export default function SmartClinicDashboard() {
               <div className="text-sm text-gray-600 mb-4">
                 {queuePosition ? "Estimated wait: 45 minutes" : "Join queue when you arrive"}
               </div>
-              <Button className="w-full bg-green-500 hover:bg-green-600">Track Live</Button>
+              <Button 
+                className="w-full bg-green-500 hover:bg-green-600"
+                onClick={() => {
+                  if (queuePosition) {
+                    toast({
+                      title: "Queue Status",
+                      description: `You are #${queuePosition.tokenNumber} in queue. ${queuePosition.estimatedWaitTime} minutes remaining.`,
+                    });
+                  } else {
+                    toast({
+                      title: "Not in Queue",
+                      description: "Join the queue first to track your position.",
+                      variant: "destructive",
+                    });
+                  }
+                }}
+              >
+                Track Live
+              </Button>
             </CardContent>
           </Card>
 
@@ -540,9 +637,10 @@ export default function SmartClinicDashboard() {
                 <Button 
                   className="flex-1 bg-blue-500 hover:bg-blue-600"
                   onClick={handleJoinQueue}
-                  disabled={joinQueueMutation.isPending}
+                  disabled={joinQueueMutation.isPending || (queuePosition && queuePosition.status === 'waiting')}
                 >
-                  {joinQueueMutation.isPending ? "Joining..." : "Join Queue"}
+                  {joinQueueMutation.isPending ? "Joining..." : 
+                   (queuePosition && queuePosition.status === 'waiting') ? "Already in Queue" : "Join Queue"}
                 </Button>
               </div>
             </CardContent>
@@ -598,24 +696,44 @@ export default function SmartClinicDashboard() {
                       </div>
                       <div className="text-sm text-gray-600 mb-2">{reminder.prescription.dosage}</div>
                       <div className="flex gap-2">
-                        <Button 
-                          size="sm" 
-                          className="flex-1 bg-green-500 hover:bg-green-600"
-                          onClick={() => handleMarkTaken(reminder.id)}
-                          disabled={reminder.isTaken}
-                        >
-                          {reminder.isTaken ? "Taken" : "Mark Taken"}
-                        </Button>
-                        <Button 
-                          size="sm" 
-                          variant="outline" 
-                          className="flex-1 bg-transparent"
-                          onClick={() => handleSnoozeReminder(reminder.id)}
-                          disabled={reminder.isTaken}
-                        >
-                          <Clock className="w-3 h-3 mr-2" />
-                          Snooze
-                        </Button>
+                        {!reminder.isTaken && !reminder.isSkipped ? (
+                          <Button 
+                            size="sm" 
+                            className="flex-1 bg-green-500 hover:bg-green-600"
+                            onClick={() => handleMarkTaken(reminder.id)}
+                          >
+                            Mark Taken
+                          </Button>
+                        ) : (
+                          <Button 
+                            size="sm" 
+                            className="flex-1 bg-gray-400 cursor-not-allowed"
+                            disabled
+                          >
+                            {reminder.isTaken ? "Taken" : "Skipped"}
+                          </Button>
+                        )}
+                        {!reminder.isTaken && !reminder.isSkipped ? (
+                          <Button 
+                            size="sm" 
+                            variant="outline" 
+                            className="flex-1 bg-transparent"
+                            onClick={() => handleSnoozeReminder(reminder.id)}
+                          >
+                            <Clock className="w-3 h-3 mr-2" />
+                            Snooze
+                          </Button>
+                        ) : (
+                          <Button 
+                            size="sm" 
+                            variant="outline" 
+                            className="flex-1 bg-gray-200 cursor-not-allowed"
+                            disabled
+                          >
+                            <Clock className="w-3 h-3 mr-2" />
+                            Snoozed
+                          </Button>
+                        )}
                       </div>
                     </div>
                   ))}
@@ -642,13 +760,7 @@ export default function SmartClinicDashboard() {
               <CardTitle className="flex items-center gap-2">
                 <Calendar className="w-5 h-5 text-blue-500" />
                 Appointments
-                <Button 
-                  size="sm" 
-                  className="ml-auto bg-blue-500 hover:bg-blue-600"
-                  onClick={handleBookAppointment}
-                >
-                  Book New
-                </Button>
+
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -695,10 +807,20 @@ export default function SmartClinicDashboard() {
                         </span>
                       </div>
                       <div className="flex gap-2">
-                        <Button size="sm" variant="outline" className="flex-1 bg-transparent">
+                        <Button 
+                          size="sm" 
+                          variant="outline" 
+                          className="flex-1 bg-transparent"
+                          onClick={() => handleRescheduleAppointment(appointment)}
+                        >
                           Reschedule
                         </Button>
-                        <Button size="sm" variant="outline" className="flex-1 text-red-600 border-red-200 bg-transparent">
+                        <Button 
+                          size="sm" 
+                          variant="outline" 
+                          className="flex-1 text-red-600 border-red-200 bg-transparent"
+                          onClick={() => handleCancelAppointment(appointment)}
+                        >
                           Cancel
                         </Button>
                         <Button size="sm" className="bg-green-500 hover:bg-green-600">
@@ -789,16 +911,23 @@ export default function SmartClinicDashboard() {
       {/* Modals */}
       <BookingModal 
         isOpen={showBookingModal} 
-        onClose={() => setShowBookingModal(false)} 
+        onClose={() => {
+          setShowBookingModal(false);
+          setSelectedAppointment(null);
+        }}
+        selectedAppointment={selectedAppointment}
+        rescheduleData={selectedAppointment ? {
+          appointmentId: selectedAppointment.id,
+          doctorId: selectedAppointment.doctorId,
+          appointmentDate: selectedAppointment.appointmentDate.split('T')[0],
+          appointmentTime: new Date(selectedAppointment.appointmentDate).toLocaleTimeString('en-US', {hour12: false, hour: '2-digit', minute: '2-digit'}),
+          type: selectedAppointment.type,
+          notes: selectedAppointment.notes || ""
+        } : null}
       />
       <EmergencyModal 
         isOpen={showEmergencyModal} 
         onClose={() => setShowEmergencyModal(false)} 
-      />
-      <CancelModal 
-        isOpen={showCancelModal} 
-        onClose={() => setShowCancelModal(false)}
-        appointment={selectedAppointment}
       />
       <CancelModal 
         isOpen={showCancelModal} 

@@ -20,6 +20,8 @@ import { format } from "date-fns";
 interface BookingModalProps {
   isOpen: boolean;
   onClose: () => void;
+  selectedAppointment?: any;
+  rescheduleData?: any;
 }
 
 interface Doctor {
@@ -40,7 +42,7 @@ interface BookingData {
   symptoms: string;
 }
 
-export default function BookingModal({ isOpen, onClose }: BookingModalProps) {
+export default function BookingModal({ isOpen, onClose, selectedAppointment, rescheduleData }: BookingModalProps) {
   const { toast } = useToast();
   const [selectedDate, setSelectedDate] = useState<Date>();
   const [selectedTime, setSelectedTime] = useState("");
@@ -63,11 +65,18 @@ export default function BookingModal({ isOpen, onClose }: BookingModalProps) {
     },
   });
 
-  // Book appointment mutation
+  // Book or reschedule appointment mutation
   const bookAppointmentMutation = useMutation({
     mutationFn: async (appointment: BookingData) => {
-      const response = await apiRequest('POST', '/api/appointments', appointment);
-      return response.json();
+      if (rescheduleData) {
+        // Reschedule existing appointment
+        const response = await apiRequest('PUT', `/api/appointments/${rescheduleData.appointmentId}`, appointment);
+        return response.json();
+      } else {
+        // Book new appointment
+        const response = await apiRequest('POST', '/api/appointments', appointment);
+        return response.json();
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/appointments'] });
