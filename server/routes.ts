@@ -990,6 +990,66 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Admin routes
+  app.get("/api/appointments/admin", authMiddleware, async (req, res) => {
+    try {
+      if (req.user!.role !== 'admin') {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const appointments = await storage.getAppointments();
+      res.json(appointments);
+    } catch (error: any) {
+      res.status(400).json({ message: error.message });
+    }
+  });
+
+  app.get("/api/queue/admin", authMiddleware, async (req, res) => {
+    try {
+      if (req.user!.role !== 'admin') {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const tokens = await storage.getQueueTokens();
+      res.json(tokens);
+    } catch (error: any) {
+      res.status(400).json({ message: error.message });
+    }
+  });
+
+  app.get("/api/patients", authMiddleware, async (req, res) => {
+    try {
+      if (req.user!.role !== 'admin') {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const patients = await storage.getPatients();
+      res.json(patients);
+    } catch (error: any) {
+      res.status(400).json({ message: error.message });
+    }
+  });
+
+  app.put("/api/users/:userId/approve", authMiddleware, async (req, res) => {
+    try {
+      if (req.user!.role !== 'admin') {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const { userId } = req.params;
+      const { isApproved } = req.body;
+      
+      const user = await storage.updateUserApproval(userId, isApproved);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      res.json({ message: "User approval status updated successfully" });
+    } catch (error: any) {
+      res.status(400).json({ message: error.message });
+    }
+  });
+
   app.get("/api/queue/admin", authMiddleware, async (req, res) => {
     try {
       if (req.user!.role !== 'admin' && req.user!.role !== 'staff') {

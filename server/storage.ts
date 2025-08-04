@@ -21,6 +21,9 @@ export interface IStorage {
   approveUser(id: string): Promise<User | undefined>;
   deactivateUser(id: string): Promise<User | undefined>;
   getUsersByRole(role: string): Promise<User[]>;
+  getPatients(): Promise<User[]>;
+  getActiveStaffCount(): Promise<number>;
+  updateUserApproval(id: string, isApproved: boolean): Promise<User | undefined>;
   
   // OTP Sessions
   createOtpSession(session: InsertOtpSession): Promise<OtpSession>;
@@ -50,6 +53,8 @@ export interface IStorage {
   getAppointmentsByDate(date: Date, doctorId?: string): Promise<(Appointment & { patient: User; doctor: User })[]>;
   updateAppointment(id: string, appointment: Partial<InsertAppointment>): Promise<Appointment | undefined>;
   cancelAppointment(id: string): Promise<Appointment | undefined>;
+  getAppointments(userId?: string): Promise<(Appointment & { patient: User; doctor: User })[]>;
+  getAppointmentsByDateRange(startDate: Date, endDate: Date): Promise<(Appointment & { patient: User; doctor: User })[]>;
   
   // Queue Management
   createQueueToken(token: InsertQueueToken): Promise<QueueToken>;
@@ -60,6 +65,7 @@ export interface IStorage {
   getNextTokenNumber(doctorId: string): Promise<number>;
   updateQueueTokenStatus(id: string, status: string, timestamp?: Date): Promise<QueueToken | undefined>;
   getPatientQueuePosition(patientId: string, doctorId: string): Promise<QueueToken | undefined>;
+  getQueueTokens(): Promise<(QueueToken & { patient: User; doctor: User })[]>;
   
   // Medicines
   createMedicine(medicine: InsertMedicine): Promise<Medicine>;
@@ -156,6 +162,28 @@ export class DatabaseStorage implements IStorage {
 
   async getUsersByRole(role: string): Promise<User[]> {
     return await db.select().from(users).where(eq(users.role, role as any));
+  }
+
+  async getPatients(): Promise<User[]> {
+    return await db.select().from(users).where(eq(users.role, 'patient'));
+  }
+
+  async getActiveStaffCount(): Promise<number> {
+    const result = await db.select({ count: sql<number>`count(*)` })
+      .from(users)
+      .where(and(
+        sql`role IN ('doctor', 'staff')`,
+        eq(users.isActive, true)
+      ));
+    return result[0]?.count || 0;
+  }
+
+  async updateUserApproval(id: string, isApproved: boolean): Promise<User | undefined> {
+    const [updatedUser] = await db.update(users)
+      .set({ isApproved, updatedAt: new Date() })
+      .where(eq(users.id, id))
+      .returning();
+    return updatedUser || undefined;
   }
 
   // OTP Sessions
@@ -359,6 +387,30 @@ export class DatabaseStorage implements IStorage {
     return cancelledAppointment || undefined;
   }
 
+  async getAppointments(userId?: string): Promise<(Appointment & { patient: User; doctor: User })[]> {
+    return await db.query.appointments.findMany({
+      with: {
+        patient: true,
+        doctor: true,
+      },
+      orderBy: asc(appointments.appointmentDate),
+    });
+  }
+
+  async getAppointmentsByDateRange(startDate: Date, endDate: Date): Promise<(Appointment & { patient: User; doctor: User })[]> {
+    return await db.query.appointments.findMany({
+      where: and(
+        gte(appointments.appointmentDate, startDate),
+        lte(appointments.appointmentDate, endDate)
+      ),
+      with: {
+        patient: true,
+        doctor: true,
+      },
+      orderBy: asc(appointments.appointmentDate),
+    });
+  }
+
   // Queue Management
   async createQueueToken(token: InsertQueueToken): Promise<QueueToken> {
     const [newToken] = await db.insert(queueTokens).values(token).returning();
@@ -457,6 +509,16 @@ export class DatabaseStorage implements IStorage {
       .orderBy(desc(queueTokens.createdAt));
     
     return token || undefined;
+  }
+
+  async getQueueTokens(): Promise<(QueueToken & { patient: User; doctor: User })[]> {
+    return await db.query.queueTokens.findMany({
+      with: {
+        patient: true,
+        doctor: true,
+      },
+      orderBy: [asc(queueTokens.createdAt)],
+    });
   }
 
   // Medicines

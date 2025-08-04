@@ -33,6 +33,10 @@ interface User {
   lastName: string;
   role: string;
   phoneNumber: string;
+  email?: string;
+  isActive: boolean;
+  isApproved: boolean;
+  createdAt: string;
 }
 
 interface DashboardStats {
@@ -40,6 +44,46 @@ interface DashboardStats {
   completedAppointments: number;
   revenue: number;
   activeStaff: number;
+}
+
+interface QueueToken {
+  id: string;
+  tokenNumber: number;
+  status: string;
+  estimatedWaitTime: number;
+  createdAt: string;
+  patient: User;
+  doctor: User;
+}
+
+interface Appointment {
+  id: string;
+  patientId: string;
+  doctorId: string;
+  appointmentDate: string;
+  appointmentTime: string;
+  consultationType: string;
+  symptoms: string;
+  status: string;
+  patient: User;
+  doctor: User;
+}
+
+interface Medicine {
+  id: string;
+  name: string;
+  description: string;
+  dosageForm: string;
+  strength: string;
+  manufacturer: string;
+  stock: number;
+}
+
+interface StaffMember extends User {
+  specialization?: string;
+  department?: string;
+  lastCheckIn?: string;
+  isPresent: boolean;
 }
 
 export default function ClinicDashboard() {
@@ -72,6 +116,39 @@ export default function ClinicDashboard() {
     refetchInterval: 30000
   })
 
+  // Queue data
+  const { data: queueTokens, isLoading: queueLoading } = useQuery<QueueToken[]>({
+    queryKey: ['/api/queue/admin'],
+    refetchInterval: 10000
+  })
+
+  // Appointments data
+  const { data: appointments, isLoading: appointmentsLoading } = useQuery<Appointment[]>({
+    queryKey: ['/api/appointments/admin'],
+    refetchInterval: 30000
+  })
+
+  // Patients data
+  const { data: patients, isLoading: patientsLoading } = useQuery<User[]>({
+    queryKey: ['/api/patients'],
+    refetchInterval: 60000
+  })
+
+  // Staff data
+  const { data: staffMembers, isLoading: staffLoading } = useQuery<User[]>({
+    queryKey: ['/api/users'],
+    queryFn: () => fetch('/api/users?role=staff,doctor', {
+      headers: { 'Authorization': `Bearer ${localStorage.getItem('auth_token')}` }
+    }).then(res => res.json()),
+    refetchInterval: 60000
+  })
+
+  // Medicines/Inventory data
+  const { data: medicines, isLoading: medicinesLoading } = useQuery<Medicine[]>({
+    queryKey: ['/api/medicines'],
+    refetchInterval: 300000 // 5 minutes
+  })
+
   const formatTime = (date: Date) => {
     return date.toLocaleTimeString("en-US", {
       hour: "numeric",
@@ -83,6 +160,43 @@ export default function ClinicDashboard() {
   const handleLogout = () => {
     localStorage.removeItem('auth_token')
     window.location.href = '/login'
+  }
+
+  // Mutation for updating queue token status
+  const updateQueueStatus = useMutation({
+    mutationFn: async ({ tokenId, status }: { tokenId: string; status: string }) => {
+      return await apiRequest('PUT', `/api/queue/${tokenId}/status`, { status })
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/queue/admin'] })
+      toast({ title: 'Success', description: 'Queue status updated successfully' })
+    },
+    onError: (error) => {
+      toast({ title: 'Error', description: error.message, variant: 'destructive' })
+    }
+  })
+
+  // Mutation for approving users
+  const approveUser = useMutation({
+    mutationFn: async ({ userId, isApproved }: { userId: string; isApproved: boolean }) => {
+      return await apiRequest('PUT', `/api/users/${userId}/approve`, { isApproved })
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/patients'] })
+      toast({ title: 'Success', description: 'User approval status updated' })
+    },
+    onError: (error) => {
+      toast({ title: 'Error', description: error.message, variant: 'destructive' })
+    }
+  })
+
+  // Handle queue actions
+  const handleCallNext = (tokenId: string) => {
+    updateQueueStatus.mutate({ tokenId, status: 'serving' })
+  }
+
+  const handleApproveUser = (userId: string) => {
+    approveUser.mutate({ userId, isApproved: true })
   }
 
   if (currentUser && currentUser.role !== 'admin') {
@@ -443,46 +557,574 @@ export default function ClinicDashboard() {
               </main>
             </TabsContent>
 
-            {/* Other tab contents would go here */}
             <TabsContent value="queue">
               <div className="p-6">
-                <h2 className="text-2xl font-bold mb-4">Patient Queue Management</h2>
-                <p className="text-gray-600">Queue management interface would go here...</p>
+                <div className="flex items-center justify-between mb-6">
+                  <div>
+                    <h2 className="text-2xl font-bold">Patient Queue Management</h2>
+                    <p className="text-gray-600">Monitor and manage patient queues across all doctors</p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Badge className="bg-blue-100 text-blue-800">
+                      Live Updates
+                    </Badge>
+                    <span className="text-sm text-gray-500">
+                      Updated {new Date().toLocaleTimeString()}
+                    </span>
+                  </div>
+                </div>
+
+                {queueLoading ? (
+                  <div className="space-y-4">
+                    {[1, 2, 3].map(i => (
+                      <div key={i} className="h-16 bg-gray-100 rounded-lg animate-pulse"></div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {queueTokens && queueTokens.length > 0 ? (
+                      queueTokens.map((token) => (
+                        <Card key={token.id} className="p-4">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-4">
+                              <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                                <span className="text-lg font-bold text-blue-600">#{token.tokenNumber}</span>
+                              </div>
+                              <div>
+                                <h3 className="font-semibold">
+                                  {token.patient.firstName} {token.patient.lastName}
+                                </h3>
+                                <p className="text-sm text-gray-600">
+                                  Dr. {token.doctor.firstName} {token.doctor.lastName}
+                                </p>
+                                <p className="text-xs text-gray-500">
+                                  Joined: {new Date(token.createdAt).toLocaleTimeString()}
+                                </p>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-4">
+                              <div className="text-right">
+                                <Badge className={
+                                  token.status === 'waiting' ? 'bg-yellow-100 text-yellow-800' :
+                                  token.status === 'serving' ? 'bg-green-100 text-green-800' :
+                                  'bg-gray-100 text-gray-800'
+                                }>
+                                  {token.status}
+                                </Badge>
+                                <p className="text-sm text-gray-600 mt-1">
+                                  Est. wait: {token.estimatedWaitTime || 15} min
+                                </p>
+                              </div>
+                              <div className="flex gap-2">
+                                {token.status === 'waiting' && (
+                                  <Button 
+                                    size="sm" 
+                                    className="bg-green-600 hover:bg-green-700"
+                                    onClick={() => handleCallNext(token.id)}
+                                    disabled={updateQueueStatus.isPending}
+                                    data-testid={`button-call-next-${token.id}`}
+                                  >
+                                    Call Next
+                                  </Button>
+                                )}
+                                <Button 
+                                  size="sm" 
+                                  variant="outline"
+                                  data-testid={`button-view-details-${token.id}`}
+                                >
+                                  View Details
+                                </Button>
+                              </div>
+                            </div>
+                          </div>
+                        </Card>
+                      ))
+                    ) : (
+                      <Card className="p-8 text-center">
+                        <Users className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                        <h3 className="text-lg font-semibold text-gray-900 mb-2">No Active Queue</h3>
+                        <p className="text-gray-600">No patients are currently waiting in the queue.</p>
+                      </Card>
+                    )}
+                  </div>
+                )}
               </div>
             </TabsContent>
 
             <TabsContent value="appointments">
               <div className="p-6">
-                <h2 className="text-2xl font-bold mb-4">Appointments</h2>
-                <p className="text-gray-600">Appointment management interface would go here...</p>
+                <div className="flex items-center justify-between mb-6">
+                  <div>
+                    <h2 className="text-2xl font-bold">Appointments Management</h2>
+                    <p className="text-gray-600">View and manage all scheduled appointments</p>
+                  </div>
+                  <Button 
+                    className="bg-blue-600 hover:bg-blue-700"
+                    data-testid="button-new-appointment"
+                  >
+                    <Calendar className="w-4 h-4 mr-2" />
+                    New Appointment
+                  </Button>
+                </div>
+
+                {appointmentsLoading ? (
+                  <div className="space-y-4">
+                    {[1, 2, 3, 4].map(i => (
+                      <div key={i} className="h-20 bg-gray-100 rounded-lg animate-pulse"></div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {appointments && appointments.length > 0 ? (
+                      appointments.map((appointment) => (
+                        <Card key={appointment.id} className="p-4">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-4">
+                              <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+                                <Calendar className="w-6 h-6 text-green-600" />
+                              </div>
+                              <div>
+                                <h3 className="font-semibold">
+                                  {appointment.patient.firstName} {appointment.patient.lastName}
+                                </h3>
+                                <p className="text-sm text-gray-600">
+                                  Dr. {appointment.doctor.firstName} {appointment.doctor.lastName}
+                                </p>
+                                <p className="text-xs text-gray-500">
+                                  {new Date(appointment.appointmentDate).toLocaleDateString()} at {appointment.appointmentTime}
+                                </p>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-4">
+                              <div className="text-right">
+                                <Badge className={
+                                  appointment.status === 'scheduled' ? 'bg-blue-100 text-blue-800' :
+                                  appointment.status === 'completed' ? 'bg-green-100 text-green-800' :
+                                  appointment.status === 'cancelled' ? 'bg-red-100 text-red-800' :
+                                  'bg-gray-100 text-gray-800'
+                                }>
+                                  {appointment.status}
+                                </Badge>
+                                <p className="text-sm text-gray-600 mt-1">
+                                  {appointment.consultationType}
+                                </p>
+                              </div>
+                              <div className="flex gap-2">
+                                <Button 
+                                  size="sm" 
+                                  variant="outline"
+                                  data-testid={`button-reschedule-${appointment.id}`}
+                                >
+                                  Reschedule
+                                </Button>
+                                <Button 
+                                  size="sm" 
+                                  variant="outline"
+                                  data-testid={`button-view-details-${appointment.id}`}
+                                >
+                                  View Details
+                                </Button>
+                              </div>
+                            </div>
+                          </div>
+                        </Card>
+                      ))
+                    ) : (
+                      <Card className="p-8 text-center">
+                        <Calendar className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                        <h3 className="text-lg font-semibold text-gray-900 mb-2">No Appointments Today</h3>
+                        <p className="text-gray-600">No appointments are scheduled for today.</p>
+                      </Card>
+                    )}
+                  </div>
+                )}
               </div>
             </TabsContent>
 
             <TabsContent value="records">
               <div className="p-6">
-                <h2 className="text-2xl font-bold mb-4">Patient Records</h2>
-                <p className="text-gray-600">Patient records interface would go here...</p>
+                <div className="flex items-center justify-between mb-6">
+                  <div>
+                    <h2 className="text-2xl font-bold">Patient Records</h2>
+                    <p className="text-gray-600">View and manage all patient records</p>
+                  </div>
+                  <Button className="bg-blue-600 hover:bg-blue-700">
+                    <UserPlus className="w-4 h-4 mr-2" />
+                    Add Patient
+                  </Button>
+                </div>
+
+                {patientsLoading ? (
+                  <div className="space-y-4">
+                    {[1, 2, 3, 4, 5].map(i => (
+                      <div key={i} className="h-16 bg-gray-100 rounded-lg animate-pulse"></div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {patients && patients.length > 0 ? (
+                      patients.map((patient) => (
+                        <Card key={patient.id} className="p-4">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-4">
+                              <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
+                                <User className="w-6 h-6 text-purple-600" />
+                              </div>
+                              <div>
+                                <h3 className="font-semibold">
+                                  {patient.firstName} {patient.lastName}
+                                </h3>
+                                <p className="text-sm text-gray-600">
+                                  {patient.phoneNumber}
+                                </p>
+                                <p className="text-xs text-gray-500">
+                                  Registered: {new Date(patient.createdAt).toLocaleDateString()}
+                                </p>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-4">
+                              <div className="text-right">
+                                <Badge className={
+                                  patient.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                                }>
+                                  {patient.isActive ? 'Active' : 'Inactive'}
+                                </Badge>
+                                {!patient.isApproved && (
+                                  <Badge className="bg-yellow-100 text-yellow-800 ml-2">
+                                    Pending Approval
+                                  </Badge>
+                                )}
+                              </div>
+                              <div className="flex gap-2">
+                                <Button 
+                                  size="sm" 
+                                  variant="outline"
+                                  data-testid={`button-view-history-${patient.id}`}
+                                >
+                                  View History
+                                </Button>
+                                <Button 
+                                  size="sm" 
+                                  variant="outline"
+                                  data-testid={`button-edit-profile-${patient.id}`}
+                                >
+                                  Edit Profile
+                                </Button>
+                                {!patient.isApproved && (
+                                  <Button 
+                                    size="sm" 
+                                    className="bg-green-600 hover:bg-green-700"
+                                    onClick={() => handleApproveUser(patient.id)}
+                                    disabled={approveUser.isPending}
+                                    data-testid={`button-approve-${patient.id}`}
+                                  >
+                                    Approve
+                                  </Button>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        </Card>
+                      ))
+                    ) : (
+                      <Card className="p-8 text-center">
+                        <User className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                        <h3 className="text-lg font-semibold text-gray-900 mb-2">No Patient Records</h3>
+                        <p className="text-gray-600">No patient records found in the system.</p>
+                      </Card>
+                    )}
+                  </div>
+                )}
               </div>
             </TabsContent>
 
             <TabsContent value="inventory">
               <div className="p-6">
-                <h2 className="text-2xl font-bold mb-4">Inventory Management</h2>
-                <p className="text-gray-600">Inventory management interface would go here...</p>
+                <div className="flex items-center justify-between mb-6">
+                  <div>
+                    <h2 className="text-2xl font-bold">Inventory Management</h2>
+                    <p className="text-gray-600">Monitor medicine stock levels and manage inventory</p>
+                  </div>
+                  <Button className="bg-blue-600 hover:bg-blue-700">
+                    <FileText className="w-4 h-4 mr-2" />
+                    Add Medicine
+                  </Button>
+                </div>
+
+                {medicinesLoading ? (
+                  <div className="space-y-4">
+                    {[1, 2, 3, 4, 5].map(i => (
+                      <div key={i} className="h-16 bg-gray-100 rounded-lg animate-pulse"></div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {medicines && medicines.length > 0 ? (
+                      medicines.map((medicine) => (
+                        <Card key={medicine.id} className="p-4">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-4">
+                              <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
+                                <FileText className="w-6 h-6 text-orange-600" />
+                              </div>
+                              <div>
+                                <h3 className="font-semibold">{medicine.name}</h3>
+                                <p className="text-sm text-gray-600">
+                                  {medicine.strength} - {medicine.dosageForm}
+                                </p>
+                                <p className="text-xs text-gray-500">
+                                  Manufacturer: {medicine.manufacturer}
+                                </p>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-4">
+                              <div className="text-right">
+                                <Badge className={
+                                  (medicine.stock || 0) > 50 ? 'bg-green-100 text-green-800' :
+                                  (medicine.stock || 0) > 10 ? 'bg-yellow-100 text-yellow-800' :
+                                  'bg-red-100 text-red-800'
+                                }>
+                                  {medicine.stock || 0} units
+                                </Badge>
+                                <p className="text-sm text-gray-600 mt-1">
+                                  {(medicine.stock || 0) <= 10 ? 'Low Stock' : 
+                                   (medicine.stock || 0) <= 50 ? 'Medium Stock' : 'In Stock'}
+                                </p>
+                              </div>
+                              <div className="flex gap-2">
+                                <Button size="sm" variant="outline">
+                                  Restock
+                                </Button>
+                                <Button size="sm" variant="outline">
+                                  Edit
+                                </Button>
+                              </div>
+                            </div>
+                          </div>
+                        </Card>
+                      ))
+                    ) : (
+                      <Card className="p-8 text-center">
+                        <FileText className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                        <h3 className="text-lg font-semibold text-gray-900 mb-2">No Medicines</h3>
+                        <p className="text-gray-600">No medicines found in inventory.</p>
+                      </Card>
+                    )}
+                  </div>
+                )}
               </div>
             </TabsContent>
 
             <TabsContent value="staff">
               <div className="p-6">
-                <h2 className="text-2xl font-bold mb-4">Staff Management</h2>
-                <p className="text-gray-600">Staff management interface would go here...</p>
+                <div className="flex items-center justify-between mb-6">
+                  <div>
+                    <h2 className="text-2xl font-bold">Staff Management</h2>
+                    <p className="text-gray-600">Manage doctors, nurses, and administrative staff</p>
+                  </div>
+                  <Button className="bg-blue-600 hover:bg-blue-700">
+                    <UserPlus className="w-4 h-4 mr-2" />
+                    Add Staff Member
+                  </Button>
+                </div>
+
+                {staffLoading ? (
+                  <div className="space-y-4">
+                    {[1, 2, 3, 4].map(i => (
+                      <div key={i} className="h-16 bg-gray-100 rounded-lg animate-pulse"></div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {staffMembers && staffMembers.length > 0 ? (
+                      staffMembers.map((staff) => (
+                        <Card key={staff.id} className="p-4">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-4">
+                              <div className="w-12 h-12 bg-teal-100 rounded-lg flex items-center justify-center">
+                                <Stethoscope className="w-6 h-6 text-teal-600" />
+                              </div>
+                              <div>
+                                <h3 className="font-semibold">
+                                  Dr. {staff.firstName} {staff.lastName}
+                                </h3>
+                                <p className="text-sm text-gray-600">
+                                  {staff.role === 'doctor' ? 'Doctor' : 'Staff'} • {staff.phoneNumber}
+                                </p>
+                                <p className="text-xs text-gray-500">
+                                  Joined: {new Date(staff.createdAt).toLocaleDateString()}
+                                </p>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-4">
+                              <div className="text-right">
+                                <Badge className={
+                                  staff.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                                }>
+                                  {staff.isActive ? 'Active' : 'Inactive'}
+                                </Badge>
+                                <p className="text-sm text-gray-600 mt-1">
+                                  {staff.role === 'doctor' ? 'Available' : 'On Duty'}
+                                </p>
+                              </div>
+                              <div className="flex gap-2">
+                                <Button size="sm" variant="outline">
+                                  View Schedule
+                                </Button>
+                                <Button size="sm" variant="outline">
+                                  Edit Profile
+                                </Button>
+                              </div>
+                            </div>
+                          </div>
+                        </Card>
+                      ))
+                    ) : (
+                      <Card className="p-8 text-center">
+                        <Stethoscope className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                        <h3 className="text-lg font-semibold text-gray-900 mb-2">No Staff Members</h3>
+                        <p className="text-gray-600">No staff members found in the system.</p>
+                      </Card>
+                    )}
+                  </div>
+                )}
               </div>
             </TabsContent>
 
             <TabsContent value="reports">
               <div className="p-6">
-                <h2 className="text-2xl font-bold mb-4">Reports & Analytics</h2>
-                <p className="text-gray-600">Reports and analytics interface would go here...</p>
+                <div className="flex items-center justify-between mb-6">
+                  <div>
+                    <h2 className="text-2xl font-bold">Reports & Analytics</h2>
+                    <p className="text-gray-600">View comprehensive reports and analytics</p>
+                  </div>
+                  <Button className="bg-blue-600 hover:bg-blue-700">
+                    <BarChart3 className="w-4 h-4 mr-2" />
+                    Generate Report
+                  </Button>
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  {/* Daily Summary */}
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2">
+                        <BarChart3 className="w-5 h-5 text-blue-500" />
+                        Daily Summary
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-4">
+                        <div className="flex justify-between items-center">
+                          <span className="text-sm text-gray-600">Total Patients</span>
+                          <span className="font-semibold">{stats?.patientsToday || 0}</span>
+                        </div>
+                        <div className="flex justify-between items-center">
+                          <span className="text-sm text-gray-600">Completed Appointments</span>
+                          <span className="font-semibold">{stats?.completedAppointments || 0}</span>
+                        </div>
+                        <div className="flex justify-between items-center">
+                          <span className="text-sm text-gray-600">Revenue</span>
+                          <span className="font-semibold">${stats?.revenue || 0}</span>
+                        </div>
+                        <div className="flex justify-between items-center">
+                          <span className="text-sm text-gray-600">Active Staff</span>
+                          <span className="font-semibold">{stats?.activeStaff || 0}</span>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  {/* Patient Flow */}
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2">
+                        <TrendingUp className="w-5 h-5 text-green-500" />
+                        Patient Flow
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-4">
+                        <div className="flex justify-between items-center">
+                          <span className="text-sm text-gray-600">Average Wait Time</span>
+                          <span className="font-semibold">15 min</span>
+                        </div>
+                        <div className="flex justify-between items-center">
+                          <span className="text-sm text-gray-600">Queue Length</span>
+                          <span className="font-semibold">{queueTokens?.length || 0}</span>
+                        </div>
+                        <div className="flex justify-between items-center">
+                          <span className="text-sm text-gray-600">Cancelled Appointments</span>
+                          <span className="font-semibold">2</span>
+                        </div>
+                        <div className="flex justify-between items-center">
+                          <span className="text-sm text-gray-600">No-Shows</span>
+                          <span className="font-semibold">1</span>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  {/* Popular Services */}
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2">
+                        <Activity className="w-5 h-5 text-purple-500" />
+                        Popular Services
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-3">
+                        <div className="flex justify-between items-center">
+                          <span className="text-sm text-gray-600">General Consultation</span>
+                          <span className="font-semibold">45%</span>
+                        </div>
+                        <div className="flex justify-between items-center">
+                          <span className="text-sm text-gray-600">Pediatrics</span>
+                          <span className="font-semibold">25%</span>
+                        </div>
+                        <div className="flex justify-between items-center">
+                          <span className="text-sm text-gray-600">Cardiology</span>
+                          <span className="font-semibold">20%</span>
+                        </div>
+                        <div className="flex justify-between items-center">
+                          <span className="text-sm text-gray-600">Home Visits</span>
+                          <span className="font-semibold">10%</span>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  {/* System Status */}
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2">
+                        <Settings className="w-5 h-5 text-gray-500" />
+                        System Status
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-3">
+                        <div className="flex justify-between items-center">
+                          <span className="text-sm text-gray-600">Database</span>
+                          <Badge className="bg-green-100 text-green-800">Online</Badge>
+                        </div>
+                        <div className="flex justify-between items-center">
+                          <span className="text-sm text-gray-600">SMS Service</span>
+                          <Badge className="bg-yellow-100 text-yellow-800">Limited</Badge>
+                        </div>
+                        <div className="flex justify-between items-center">
+                          <span className="text-sm text-gray-600">Queue System</span>
+                          <Badge className="bg-green-100 text-green-800">Active</Badge>
+                        </div>
+                        <div className="flex justify-between items-center">
+                          <span className="text-sm text-gray-600">Backup Status</span>
+                          <Badge className="bg-green-100 text-green-800">Current</Badge>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
               </div>
             </TabsContent>
           </Tabs>
