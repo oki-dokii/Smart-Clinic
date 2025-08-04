@@ -1,6 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
+import { WebSocketServer } from 'ws';
 import { 
   insertUserSchema, insertAppointmentSchema, insertQueueTokenSchema, 
   insertMedicineSchema, insertPrescriptionSchema, insertMedicineReminderSchema,
@@ -958,9 +959,161 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Admin-specific routes
+  app.get("/api/admin/dashboard-stats", authMiddleware, async (req, res) => {
+    try {
+      if (req.user!.role !== 'admin') {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      // Get today's date for filtering
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const tomorrow = new Date(today);
+      tomorrow.setDate(tomorrow.getDate() + 1);
+
+      // Fetch basic stats
+      const todayAppointments = await storage.getAppointmentsByDateRange(today, tomorrow);
+      const completedAppointments = todayAppointments.filter((apt: any) => apt.status === 'completed');
+      const revenue = completedAppointments.length * 150; // Assuming $150 per consultation
+
+      const stats = {
+        patientsToday: todayAppointments.length,
+        completedAppointments: completedAppointments.length,
+        revenue: revenue,
+        activeStaff: await storage.getActiveStaffCount(),
+      };
+
+      res.json(stats);
+    } catch (error: any) {
+      res.status(400).json({ message: error.message });
+    }
+  });
+
+  app.get("/api/queue/admin", authMiddleware, async (req, res) => {
+    try {
+      if (req.user!.role !== 'admin' && req.user!.role !== 'staff') {
+        return res.status(403).json({ message: "Admin or staff access required" });
+      }
+
+      const queueTokens = await storage.getAllQueueTokens();
+      res.json(queueTokens);
+    } catch (error: any) {
+      res.status(400).json({ message: error.message });
+    }
+  });
+
+  app.get("/api/appointments/admin", authMiddleware, async (req, res) => {
+    try {
+      if (req.user!.role !== 'admin' && req.user!.role !== 'staff') {
+        return res.status(403).json({ message: "Admin or staff access required" });
+      }
+
+      const appointments = await storage.getAllAppointments();
+      res.json(appointments);
+    } catch (error: any) {
+      res.status(400).json({ message: error.message });
+    }
+  });
+
+  app.get("/api/patients", authMiddleware, async (req, res) => {
+    try {
+      if (req.user!.role !== 'admin' && req.user!.role !== 'staff') {
+        return res.status(403).json({ message: "Admin or staff access required" });
+      }
+
+      const patients = await storage.getAllPatients();
+      res.json(patients);
+    } catch (error: any) {
+      res.status(400).json({ message: error.message });
+    }
+  });
+
+  app.put("/api/queue/:tokenId/status", authMiddleware, async (req, res) => {
+    try {
+      if (req.user!.role !== 'admin' && req.user!.role !== 'staff') {
+        return res.status(403).json({ message: "Admin or staff access required" });
+      }
+
+      const { tokenId } = req.params;
+      const { status } = z.object({ status: z.string() }).parse(req.body);
+      
+      const result = await storage.updateQueueTokenStatus(tokenId, status);
+      res.json(result);
+    } catch (error: any) {
+      res.status(400).json({ message: error.message });
+    }
+  });
+
+  app.put("/api/appointments/:appointmentId/status", authMiddleware, async (req, res) => {
+    try {
+      if (req.user!.role !== 'admin' && req.user!.role !== 'staff') {
+        return res.status(403).json({ message: "Admin or staff access required" });
+      }
+
+      const { appointmentId } = req.params;
+      const { status } = z.object({ status: z.string() }).parse(req.body);
+      
+      const result = await storage.updateAppointmentStatus(appointmentId, status);
+      res.json(result);
+    } catch (error: any) {
+      res.status(400).json({ message: error.message });
+    }
+  });
+
+  app.put("/api/users/:userId/approve", authMiddleware, async (req, res) => {
+    try {
+      if (req.user!.role !== 'admin') {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const { userId } = req.params;
+      const { isApproved } = z.object({ isApproved: z.boolean() }).parse(req.body);
+      
+      const result = await storage.updateUserApproval(userId, isApproved);
+      res.json(result);
+    } catch (error: any) {
+      res.status(400).json({ message: error.message });
+    }
+  });
+
   // Start background services
   schedulerService.start();
 
   const httpServer = createServer(app);
+  
+  // WebSocket server for real-time updates
+  const wss = new WebSocketServer({ server: httpServer, path: '/ws' });
+  
+  wss.on('connection', (ws) => {
+    console.log('WebSocket client connected');
+    
+    ws.on('message', (message) => {
+      try {
+        const data = JSON.parse(message.toString());
+        
+        // Handle different message types
+        switch (data.type) {
+          case 'subscribe':
+            // Subscribe to real-time updates
+            ws.send(JSON.stringify({ type: 'subscribed', channel: data.channel }));
+            break;
+          case 'ping':
+            ws.send(JSON.stringify({ type: 'pong' }));
+            break;
+        }
+      } catch (error) {
+        console.error('WebSocket message error:', error);
+      }
+    });
+    
+    ws.on('close', () => {
+      console.log('WebSocket client disconnected');
+    });
+    
+    // Send initial connection confirmation
+    ws.send(JSON.stringify({ type: 'connected', timestamp: new Date().toISOString() }));
+  });
+
   return httpServer;
 }

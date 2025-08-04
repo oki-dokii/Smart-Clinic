@@ -73,6 +73,15 @@ export interface IStorage {
   getPrescription(id: string): Promise<Prescription | undefined>;
   getPrescriptionWithDetails(id: string): Promise<(Prescription & { medicine: Medicine; patient: User; doctor: User }) | undefined>;
   getPatientPrescriptions(patientId: string): Promise<(Prescription & { medicine: Medicine; doctor: User })[]>;
+  
+  // Admin-specific methods
+  getAllQueueTokens(): Promise<(QueueToken & { patient: User; doctor: User })[]>;
+  getAllAppointments(): Promise<(Appointment & { patient: User; doctor: User })[]>;
+  getAllPatients(): Promise<User[]>;
+  getAppointmentsByDateRange(startDate: Date, endDate: Date): Promise<(Appointment & { patient: User; doctor: User })[]>;
+  getActiveStaffCount(): Promise<number>;
+  updateAppointmentStatus(id: string, status: string): Promise<Appointment | undefined>;
+  updateUserApproval(id: string, isApproved: boolean): Promise<User | undefined>;
   getActivePrescriptions(patientId: string): Promise<(Prescription & { medicine: Medicine })[]>;
   updatePrescription(id: string, prescription: Partial<InsertPrescription>): Promise<Prescription | undefined>;
   
@@ -905,6 +914,163 @@ export class DatabaseStorage implements IStorage {
     const [history] = await db.select().from(medicalHistory)
       .where(eq(medicalHistory.appointmentId, appointmentId));
     return history || undefined;
+  }
+
+  // Admin-specific methods implementation
+  async getAllQueueTokens(): Promise<any[]> {
+    return await db.select({
+      id: queueTokens.id,
+      tokenNumber: queueTokens.tokenNumber,
+      patientId: queueTokens.patientId,
+      doctorId: queueTokens.doctorId,
+      appointmentId: queueTokens.appointmentId,
+      status: queueTokens.status,
+      estimatedWaitTime: queueTokens.estimatedWaitTime,
+      calledAt: queueTokens.calledAt,
+      completedAt: queueTokens.completedAt,
+      priority: queueTokens.priority,
+      createdAt: queueTokens.createdAt,
+      patient: {
+        id: sql`patient.id`,
+        firstName: sql`patient.first_name`,
+        lastName: sql`patient.last_name`,
+        phoneNumber: sql`patient.phone_number`,
+        email: sql`patient.email`,
+        role: sql`patient.role`,
+      },
+      doctor: {
+        id: sql`doctor.id`,
+        firstName: sql`doctor.first_name`,
+        lastName: sql`doctor.last_name`,
+        phoneNumber: sql`doctor.phone_number`,
+        email: sql`doctor.email`,
+        role: sql`doctor.role`,
+      }
+    })
+    .from(queueTokens)
+    .innerJoin(sql`${users} AS patient`, sql`${queueTokens.patientId} = patient.id`)
+    .innerJoin(sql`${users} AS doctor`, sql`${queueTokens.doctorId} = doctor.id`)
+    .orderBy(desc(queueTokens.createdAt));
+  }
+
+  async getAllAppointments(): Promise<any[]> {
+    return await db.select({
+      id: appointments.id,
+      patientId: appointments.patientId,
+      doctorId: appointments.doctorId,
+      appointmentDate: appointments.appointmentDate,
+      duration: appointments.duration,
+      type: appointments.type,
+      status: appointments.status,
+      location: appointments.location,
+      notes: appointments.notes,
+      symptoms: appointments.symptoms,
+      diagnosis: appointments.diagnosis,
+      treatmentPlan: appointments.treatmentPlan,
+      isDelayed: appointments.isDelayed,
+      delayMinutes: appointments.delayMinutes,
+      delayReason: appointments.delayReason,
+      createdAt: appointments.createdAt,
+      updatedAt: appointments.updatedAt,
+      patient: {
+        id: sql`patient.id`,
+        firstName: sql`patient.first_name`,
+        lastName: sql`patient.last_name`,
+        phoneNumber: sql`patient.phone_number`,
+        email: sql`patient.email`,
+        role: sql`patient.role`,
+      },
+      doctor: {
+        id: sql`doctor.id`,
+        firstName: sql`doctor.first_name`,
+        lastName: sql`doctor.last_name`,
+        phoneNumber: sql`doctor.phone_number`,
+        email: sql`doctor.email`,
+        role: sql`doctor.role`,
+      }
+    })
+    .from(appointments)
+    .innerJoin(sql`${users} AS patient`, sql`${appointments.patientId} = patient.id`)
+    .innerJoin(sql`${users} AS doctor`, sql`${appointments.doctorId} = doctor.id`)
+    .orderBy(desc(appointments.appointmentDate));
+  }
+
+  async getAllPatients(): Promise<User[]> {
+    return await db.select().from(users).where(eq(users.role, 'patient')).orderBy(asc(users.firstName));
+  }
+
+  async getAppointmentsByDateRange(startDate: Date, endDate: Date): Promise<any[]> {
+    return await db.select({
+      id: appointments.id,
+      patientId: appointments.patientId,
+      doctorId: appointments.doctorId,
+      appointmentDate: appointments.appointmentDate,
+      duration: appointments.duration,
+      type: appointments.type,
+      status: appointments.status,
+      location: appointments.location,
+      notes: appointments.notes,
+      symptoms: appointments.symptoms,
+      diagnosis: appointments.diagnosis,
+      treatmentPlan: appointments.treatmentPlan,
+      isDelayed: appointments.isDelayed,
+      delayMinutes: appointments.delayMinutes,
+      delayReason: appointments.delayReason,
+      createdAt: appointments.createdAt,
+      updatedAt: appointments.updatedAt,
+      patient: {
+        id: sql`patient.id`,
+        firstName: sql`patient.first_name`,
+        lastName: sql`patient.last_name`,
+        phoneNumber: sql`patient.phone_number`,
+        email: sql`patient.email`,
+        role: sql`patient.role`,
+      },
+      doctor: {
+        id: sql`doctor.id`,
+        firstName: sql`doctor.first_name`,
+        lastName: sql`doctor.last_name`,
+        phoneNumber: sql`doctor.phone_number`,
+        email: sql`doctor.email`,
+        role: sql`doctor.role`,
+      }
+    })
+    .from(appointments)
+    .innerJoin(sql`${users} AS patient`, sql`${appointments.patientId} = patient.id`)
+    .innerJoin(sql`${users} AS doctor`, sql`${appointments.doctorId} = doctor.id`)
+    .where(and(
+      gte(appointments.appointmentDate, startDate),
+      lte(appointments.appointmentDate, endDate)
+    ))
+    .orderBy(desc(appointments.appointmentDate));
+  }
+
+  async getActiveStaffCount(): Promise<number> {
+    const result = await db.select({ count: sql<number>`COUNT(*)` })
+      .from(users)
+      .where(and(
+        eq(users.isActive, true),
+        eq(users.isApproved, true),
+        sql`${users.role} IN ('doctor', 'staff', 'admin')`
+      ));
+    
+    return result[0]?.count || 0;
+  }
+
+  async updateAppointmentStatus(id: string, status: string): Promise<Appointment | undefined> {
+    const [updatedAppointment] = await db.update(appointments)
+      .set({ status: status as any, updatedAt: new Date() })
+      .where(eq(appointments.id, id))
+      .returning();
+    return updatedAppointment || undefined;
+  }
+
+  async updateUserApproval(id: string, isApproved: boolean): Promise<User | undefined> {
+    const [updatedUser] = await db.update(users)
+      .set({ isApproved, updatedAt: new Date() })
+      .where(eq(users.id, id))
+      .returning();
+    return updatedUser || undefined;
   }
 }
 

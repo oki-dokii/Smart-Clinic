@@ -7,6 +7,7 @@ import { ThemeProvider } from "@/components/ThemeProvider";
 import { useEffect } from "react";
 import LoginPage from "@/pages/login";
 import Dashboard from "@/pages/dashboard";
+import AdminDashboard from "@/pages/admin-dashboard";
 import ProfilePage from "@/pages/profile";
 import SettingsPage from "@/pages/settings";
 import MedicinesPage from "@/pages/medicines";
@@ -22,6 +23,7 @@ function Router() {
     <Switch>
       <Route path="/login" component={LoginPage} />
       <Route path="/dashboard" component={Dashboard} />
+      <Route path="/admin" component={AdminDashboard} />
       <Route path="/profile" component={ProfilePage} />
       <Route path="/settings" component={SettingsPage} />
       <Route path="/medicines" component={MedicinesPage} />
