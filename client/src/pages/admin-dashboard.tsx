@@ -1,103 +1,43 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
+import {
+  Bell,
+  Calendar,
+  Clock,
+  Users,
+  DollarSign,
+  AlertTriangle,
+  Activity,
+  UserPlus,
+  FileText,
+  LogOut,
+  Settings,
+  BarChart3,
+  Stethoscope,
+  User,
+  TrendingUp,
+} from "lucide-react"
 import { Badge } from "@/components/ui/badge"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Progress } from "@/components/ui/progress"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
-import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Textarea } from "@/components/ui/textarea"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { apiRequest } from "@/lib/queryClient"
 import { useToast } from "@/hooks/use-toast"
-import { 
-  Users, 
-  Calendar, 
-  Clock, 
-  DollarSign, 
-  Activity, 
-  UserCheck, 
-  UserX, 
-  CheckCircle, 
-  XCircle,
-  RefreshCw,
-  Eye,
-  Edit,
-  Settings,
-  LogOut,
-  BarChart3,
-  AlertTriangle
-} from "lucide-react"
-import { format } from "date-fns"
 
-interface DashboardStats {
-  patientsToday: number;
-  completedAppointments: number;
-  revenue: number;
-  activeStaff: number;
-}
-
-interface QueueToken {
-  id: string;
-  tokenNumber: number;
-  status: string;
-  estimatedWaitTime: number;
-  priority: number;
-  createdAt: string;
-  patient: {
-    id: string;
-    firstName: string;
-    lastName: string;
-    phoneNumber: string;
-  };
-  doctor: {
-    id: string;
-    firstName: string;
-    lastName: string;
-  };
-}
-
-interface Appointment {
-  id: string;
-  appointmentDate: string;
-  duration: number;
-  type: string;
-  status: string;
-  symptoms?: string;
-  notes?: string;
-  patient: {
-    id: string;
-    firstName: string;
-    lastName: string;
-    phoneNumber: string;
-  };
-  doctor: {
-    id: string;
-    firstName: string;
-    lastName: string;
-  };
-}
-
-interface Patient {
-  id: string;
-  firstName: string;
-  lastName: string;
-  phoneNumber: string;
-  email?: string;
-  isActive: boolean;
-  isApproved: boolean;
-  createdAt: string;
-}
-
-export default function AdminDashboard() {
+export default function ClinicDashboard() {
+  const [currentTime, setCurrentTime] = useState(new Date())
   const { toast } = useToast()
   const queryClient = useQueryClient()
-  const [selectedQueueToken, setSelectedQueueToken] = useState<QueueToken | null>(null)
-  const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null)
-  const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null)
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTime(new Date())
+    }, 1000)
+    return () => clearInterval(timer)
+  }, [])
 
   // Check if user is admin
   const { data: currentUser } = useQuery({
@@ -113,79 +53,18 @@ export default function AdminDashboard() {
   }, [currentUser])
 
   // Dashboard stats
-  const { data: stats, isLoading: statsLoading } = useQuery<DashboardStats>({
+  const { data: stats, isLoading: statsLoading } = useQuery({
     queryKey: ['/api/admin/dashboard-stats'],
     queryFn: () => apiRequest('/api/admin/dashboard-stats'),
-    refetchInterval: 30000 // Refresh every 30 seconds
-  })
-
-  // Queue management
-  const { data: queueTokens, isLoading: queueLoading } = useQuery<QueueToken[]>({
-    queryKey: ['/api/queue/admin'],
-    queryFn: () => apiRequest('/api/queue/admin'),
-    refetchInterval: 10000 // Refresh every 10 seconds
-  })
-
-  const updateQueueTokenMutation = useMutation({
-    mutationFn: ({ tokenId, status }: { tokenId: string; status: string }) =>
-      apiRequest(`/api/queue/${tokenId}/status`, { method: 'PUT', body: { status } }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/queue/admin'] })
-      toast({ title: "Queue token updated successfully" })
-    },
-    onError: () => {
-      toast({ title: "Failed to update queue token", variant: "destructive" })
-    }
-  })
-
-  // Appointments management
-  const { data: appointments, isLoading: appointmentsLoading } = useQuery<Appointment[]>({
-    queryKey: ['/api/appointments/admin'],
-    queryFn: () => apiRequest('/api/appointments/admin'),
     refetchInterval: 30000
   })
 
-  const updateAppointmentMutation = useMutation({
-    mutationFn: ({ appointmentId, status }: { appointmentId: string; status: string }) =>
-      apiRequest(`/api/appointments/${appointmentId}/status`, { method: 'PUT', body: { status } }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/appointments/admin'] })
-      toast({ title: "Appointment updated successfully" })
-    },
-    onError: () => {
-      toast({ title: "Failed to update appointment", variant: "destructive" })
-    }
-  })
-
-  // Patients management
-  const { data: patients, isLoading: patientsLoading } = useQuery<Patient[]>({
-    queryKey: ['/api/patients'],
-    queryFn: () => apiRequest('/api/patients'),
-    refetchInterval: 60000
-  })
-
-  const updatePatientApprovalMutation = useMutation({
-    mutationFn: ({ userId, isApproved }: { userId: string; isApproved: boolean }) =>
-      apiRequest(`/api/users/${userId}/approve`, { method: 'PUT', body: { isApproved } }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/patients'] })
-      toast({ title: "Patient approval updated successfully" })
-    },
-    onError: () => {
-      toast({ title: "Failed to update patient approval", variant: "destructive" })
-    }
-  })
-
-  const getStatusColor = (status: string) => {
-    switch (status.toLowerCase()) {
-      case 'waiting': return 'bg-yellow-500'
-      case 'called': return 'bg-blue-500'
-      case 'completed': return 'bg-green-500'
-      case 'cancelled': return 'bg-red-500'
-      case 'confirmed': return 'bg-green-500'
-      case 'scheduled': return 'bg-blue-500'
-      default: return 'bg-gray-500'
-    }
+  const formatTime = (date: Date) => {
+    return date.toLocaleTimeString("en-US", {
+      hour: "numeric",
+      minute: "2-digit",
+      hour12: true,
+    })
   }
 
   const handleLogout = () => {
@@ -209,415 +88,393 @@ export default function AdminDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <div className="bg-white dark:bg-gray-800 shadow">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-6">
-            <div className="flex items-center">
-              <Activity className="h-8 w-8 text-blue-600 mr-3" />
+      <header className="bg-white border-b border-gray-200 px-6 py-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
+                <Stethoscope className="w-5 h-5 text-white" />
+              </div>
               <div>
-                <h1 className="text-2xl font-bold text-gray-900 dark:text-white">SmartClinic Admin</h1>
-                <p className="text-sm text-gray-500 dark:text-gray-400">Healthcare Management Dashboard</p>
+                <h1 className="text-xl font-semibold text-gray-900">SmartClinic Medical Center</h1>
+                <p className="text-sm text-gray-500">Healthcare Management System</p>
               </div>
             </div>
-            <div className="flex items-center space-x-4">
-              <Button variant="ghost" size="sm" onClick={() => queryClient.invalidateQueries()}>
-                <RefreshCw className="h-4 w-4 mr-2" />
-                Refresh
-              </Button>
-              <Button variant="outline" size="sm" onClick={handleLogout}>
-                <LogOut className="h-4 w-4 mr-2" />
-                Logout
-              </Button>
+          </div>
+
+          <div className="flex items-center gap-6">
+            <div className="flex items-center gap-4 text-sm text-gray-600">
+              <div className="flex items-center gap-2">
+                <Clock className="w-4 h-4" />
+                <span>{formatTime(currentTime)}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Users className="w-4 h-4" />
+                <span>{statsLoading ? '...' : stats?.patientsToday || 0} Patients Today</span>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <div className="relative">
+                <Bell className="w-5 h-5 text-gray-600" />
+                <div className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full flex items-center justify-center">
+                  <span className="text-xs text-white font-medium">1</span>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center">
+                  <User className="w-4 h-4 text-gray-600" />
+                </div>
+                <span className="text-sm font-medium text-gray-900">
+                  {currentUser?.firstName} {currentUser?.lastName}
+                </span>
+                <Badge className="bg-blue-600 text-white text-xs px-2 py-1">Admin</Badge>
+              </div>
+
+              <Settings className="w-5 h-5 text-gray-600 cursor-pointer" />
+              <LogOut className="w-5 h-5 text-gray-600 cursor-pointer" onClick={handleLogout} />
             </div>
           </div>
         </div>
-      </div>
+      </header>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Stats Overview */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Patients Today</CardTitle>
-              <Users className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{statsLoading ? '...' : stats?.patientsToday || 0}</div>
-              <p className="text-xs text-muted-foreground">Scheduled appointments</p>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Completed</CardTitle>
-              <CheckCircle className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{statsLoading ? '...' : stats?.completedAppointments || 0}</div>
-              <p className="text-xs text-muted-foreground">Today's completions</p>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Revenue</CardTitle>
-              <DollarSign className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">${statsLoading ? '...' : stats?.revenue || 0}</div>
-              <p className="text-xs text-muted-foreground">Today's earnings</p>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Active Staff</CardTitle>
-              <Activity className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{statsLoading ? '...' : stats?.activeStaff || 0}</div>
-              <p className="text-xs text-muted-foreground">Currently working</p>
-            </CardContent>
-          </Card>
+      {/* Navigation Tabs */}
+      <div className="bg-white border-b border-gray-200">
+        <div className="px-6">
+          <Tabs defaultValue="dashboard" className="w-full">
+            <TabsList className="grid w-full grid-cols-7 bg-transparent border-0 h-auto p-0">
+              <TabsTrigger
+                value="dashboard"
+                className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-blue-600 data-[state=active]:text-blue-600 rounded-none py-4 px-6"
+              >
+                Dashboard
+              </TabsTrigger>
+              <TabsTrigger
+                value="queue"
+                className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-blue-600 data-[state=active]:text-blue-600 rounded-none py-4 px-6"
+              >
+                Patient Queue
+              </TabsTrigger>
+              <TabsTrigger
+                value="appointments"
+                className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-blue-600 data-[state=active]:text-blue-600 rounded-none py-4 px-6"
+              >
+                Appointments
+              </TabsTrigger>
+              <TabsTrigger
+                value="records"
+                className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-blue-600 data-[state=active]:text-blue-600 rounded-none py-4 px-6"
+              >
+                Patient Records
+              </TabsTrigger>
+              <TabsTrigger
+                value="inventory"
+                className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-blue-600 data-[state=active]:text-blue-600 rounded-none py-4 px-6"
+              >
+                Inventory
+              </TabsTrigger>
+              <TabsTrigger
+                value="staff"
+                className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-blue-600 data-[state=active]:text-blue-600 rounded-none py-4 px-6"
+              >
+                Staff
+              </TabsTrigger>
+              <TabsTrigger
+                value="reports"
+                className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-blue-600 data-[state=active]:text-blue-600 rounded-none py-4 px-6"
+              >
+                Reports
+              </TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="dashboard" className="mt-0">
+              <main className="p-6">
+                {/* Key Metrics */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                  {/* Patients Today */}
+                  <Card>
+                    <CardHeader className="pb-3">
+                      <CardTitle className="text-sm font-medium text-gray-600 flex items-center gap-2">
+                        <Users className="w-4 h-4 text-blue-500" />
+                        Patients Today
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="text-3xl font-bold">{statsLoading ? '...' : stats?.patientsToday || 24}</span>
+                        <Badge className="bg-blue-100 text-blue-800 text-xs flex items-center gap-1">
+                          <TrendingUp className="w-3 h-3" />
+                          +12.94%
+                        </Badge>
+                      </div>
+                      <p className="text-sm text-gray-600">8 completed, 16 pending</p>
+                    </CardContent>
+                  </Card>
+
+                  {/* Queue Length */}
+                  <Card className="border-orange-200 bg-orange-50">
+                    <CardHeader className="pb-3">
+                      <CardTitle className="text-sm font-medium text-gray-600 flex items-center gap-2">
+                        <Clock className="w-4 h-4 text-orange-500" />
+                        Queue Length
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="text-3xl font-bold">6</span>
+                        <Badge className="bg-red-500 text-white text-xs">Urgent</Badge>
+                      </div>
+                      <p className="text-sm text-gray-600">Current waiting patients</p>
+                    </CardContent>
+                  </Card>
+
+                  {/* Revenue Today */}
+                  <Card>
+                    <CardHeader className="pb-3">
+                      <CardTitle className="text-sm font-medium text-gray-600 flex items-center gap-2">
+                        <DollarSign className="w-4 h-4 text-green-500" />
+                        Revenue Today
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="text-3xl font-bold">${statsLoading ? '...' : stats?.revenue || 2450}</span>
+                        <Badge className="bg-green-100 text-green-800 text-xs flex items-center gap-1">
+                          <TrendingUp className="w-3 h-3" />
+                          +5.8%
+                        </Badge>
+                      </div>
+                      <p className="text-sm text-gray-600">18 consultations completed</p>
+                    </CardContent>
+                  </Card>
+
+                  {/* Staff Present */}
+                  <Card>
+                    <CardHeader className="pb-3">
+                      <CardTitle className="text-sm font-medium text-gray-600 flex items-center gap-2">
+                        <Activity className="w-4 h-4 text-purple-500" />
+                        Staff Present
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="text-3xl font-bold">{statsLoading ? '...' : stats?.activeStaff || 12}/15</span>
+                      </div>
+                      <p className="text-sm text-gray-600">3 doctors, 8 nurses, 3 admin</p>
+                    </CardContent>
+                  </Card>
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                  {/* Emergency Alerts */}
+                  <Card className="border-red-200 bg-red-50">
+                    <CardHeader>
+                      <CardTitle className="text-red-700 flex items-center gap-2">
+                        <AlertTriangle className="w-5 h-5" />
+                        Emergency Alerts
+                      </CardTitle>
+                      <p className="text-sm text-red-600">Urgent notifications requiring immediate attention</p>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-4">
+                        <div className="flex items-center justify-between p-3 bg-white rounded-lg border border-red-200">
+                          <div className="flex items-center gap-3">
+                            <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+                            <span className="text-sm font-medium">Patient in Room 3 needs immediate attention</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs text-gray-500">2 min ago</span>
+                            <Button size="sm" variant="outline" className="text-xs bg-transparent">
+                              Resolve
+                            </Button>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center justify-between p-3 bg-white rounded-lg border border-orange-200">
+                          <div className="flex items-center gap-3">
+                            <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
+                            <span className="text-sm font-medium">Low stock: Paracetamol (5 units left)</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs text-gray-500">15 min ago</span>
+                            <Button size="sm" variant="outline" className="text-xs bg-transparent">
+                              Resolve
+                            </Button>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center justify-between p-3 bg-white rounded-lg border border-blue-200">
+                          <div className="flex items-center gap-3">
+                            <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                            <span className="text-sm font-medium">Dr. Johnson's next appointment is delayed</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs text-gray-500">30 min ago</span>
+                            <Button size="sm" variant="outline" className="text-xs bg-transparent">
+                              Resolve
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  {/* Quick Actions */}
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2">
+                        <BarChart3 className="w-5 h-5 text-blue-500" />
+                        Quick Actions
+                      </CardTitle>
+                      <p className="text-sm text-gray-600">Common administrative tasks</p>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="grid grid-cols-2 gap-4">
+                        <Button className="h-20 flex-col gap-2 bg-blue-600 hover:bg-blue-700">
+                          <UserPlus className="w-6 h-6" />
+                          <span>Add Patient</span>
+                        </Button>
+                        <Button variant="outline" className="h-20 flex-col gap-2 bg-transparent">
+                          <Calendar className="w-6 h-6" />
+                          <span>Schedule</span>
+                        </Button>
+                        <Button variant="outline" className="h-20 flex-col gap-2 bg-transparent">
+                          <FileText className="w-6 h-6" />
+                          <span>Prescriptions</span>
+                        </Button>
+                        <Button variant="outline" className="h-20 flex-col gap-2 bg-transparent">
+                          <LogOut className="w-6 h-6" />
+                          <span>Discharge</span>
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+
+                {/* Department Status */}
+                <Card className="mt-8">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Activity className="w-5 h-5 text-blue-500" />
+                      Department Status
+                    </CardTitle>
+                    <p className="text-sm text-gray-600">Current patient load by department</p>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-6">
+                      {/* Emergency */}
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <span className="font-medium">Emergency</span>
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm text-gray-600">3/5 patients</span>
+                            <Badge className="bg-green-100 text-green-800 text-xs">Low</Badge>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Progress value={60} className="flex-1 h-2" />
+                          <span className="text-sm text-gray-500">60% capacity</span>
+                        </div>
+                      </div>
+
+                      {/* General */}
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <span className="font-medium">General</span>
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm text-gray-600">8/10 patients</span>
+                            <Badge className="bg-yellow-100 text-yellow-800 text-xs">Medium</Badge>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Progress value={80} className="flex-1 h-2" />
+                          <span className="text-sm text-gray-500">80% capacity</span>
+                        </div>
+                      </div>
+
+                      {/* Pediatrics */}
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <span className="font-medium">Pediatrics</span>
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm text-gray-600">4/6 patients</span>
+                            <Badge className="bg-yellow-100 text-yellow-800 text-xs">Medium</Badge>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Progress value={67} className="flex-1 h-2" />
+                          <span className="text-sm text-gray-500">67% capacity</span>
+                        </div>
+                      </div>
+
+                      {/* Cardiology */}
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <span className="font-medium">Cardiology</span>
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm text-gray-600">2/4 patients</span>
+                            <Badge className="bg-green-100 text-green-800 text-xs">Low</Badge>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Progress value={50} className="flex-1 h-2" />
+                          <span className="text-sm text-gray-500">50% capacity</span>
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </main>
+            </TabsContent>
+
+            {/* Other tab contents would go here */}
+            <TabsContent value="queue">
+              <div className="p-6">
+                <h2 className="text-2xl font-bold mb-4">Patient Queue Management</h2>
+                <p className="text-gray-600">Queue management interface would go here...</p>
+              </div>
+            </TabsContent>
+
+            <TabsContent value="appointments">
+              <div className="p-6">
+                <h2 className="text-2xl font-bold mb-4">Appointments</h2>
+                <p className="text-gray-600">Appointment management interface would go here...</p>
+              </div>
+            </TabsContent>
+
+            <TabsContent value="records">
+              <div className="p-6">
+                <h2 className="text-2xl font-bold mb-4">Patient Records</h2>
+                <p className="text-gray-600">Patient records interface would go here...</p>
+              </div>
+            </TabsContent>
+
+            <TabsContent value="inventory">
+              <div className="p-6">
+                <h2 className="text-2xl font-bold mb-4">Inventory Management</h2>
+                <p className="text-gray-600">Inventory management interface would go here...</p>
+              </div>
+            </TabsContent>
+
+            <TabsContent value="staff">
+              <div className="p-6">
+                <h2 className="text-2xl font-bold mb-4">Staff Management</h2>
+                <p className="text-gray-600">Staff management interface would go here...</p>
+              </div>
+            </TabsContent>
+
+            <TabsContent value="reports">
+              <div className="p-6">
+                <h2 className="text-2xl font-bold mb-4">Reports & Analytics</h2>
+                <p className="text-gray-600">Reports and analytics interface would go here...</p>
+              </div>
+            </TabsContent>
+          </Tabs>
         </div>
-
-        {/* Main Content Tabs */}
-        <Tabs defaultValue="queue" className="space-y-4">
-          <TabsList className="grid w-full grid-cols-4">
-            <TabsTrigger value="queue">Queue Management</TabsTrigger>
-            <TabsTrigger value="appointments">Appointments</TabsTrigger>
-            <TabsTrigger value="patients">Patients</TabsTrigger>
-            <TabsTrigger value="analytics">Analytics</TabsTrigger>
-          </TabsList>
-
-          {/* Queue Management Tab */}
-          <TabsContent value="queue" className="space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle>Current Queue Status</CardTitle>
-                <CardDescription>Manage patient queue tokens and wait times</CardDescription>
-              </CardHeader>
-              <CardContent>
-                {queueLoading ? (
-                  <div className="flex justify-center py-8">
-                    <RefreshCw className="h-8 w-8 animate-spin" />
-                  </div>
-                ) : (
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Token #</TableHead>
-                        <TableHead>Patient</TableHead>
-                        <TableHead>Doctor</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead>Wait Time</TableHead>
-                        <TableHead>Priority</TableHead>
-                        <TableHead>Actions</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {queueTokens?.map((token) => (
-                        <TableRow key={token.id}>
-                          <TableCell className="font-medium">#{token.tokenNumber}</TableCell>
-                          <TableCell>{token.patient.firstName} {token.patient.lastName}</TableCell>
-                          <TableCell>{token.doctor.firstName} {token.doctor.lastName}</TableCell>
-                          <TableCell>
-                            <Badge className={getStatusColor(token.status)}>
-                              {token.status}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>{token.estimatedWaitTime} min</TableCell>
-                          <TableCell>
-                            <Badge variant={token.priority === 1 ? "destructive" : "secondary"}>
-                              {token.priority === 1 ? 'High' : 'Normal'}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex space-x-2">
-                              <Select
-                                value={token.status}
-                                onValueChange={(status) => 
-                                  updateQueueTokenMutation.mutate({ tokenId: token.id, status })
-                                }
-                              >
-                                <SelectTrigger className="w-24">
-                                  <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="waiting">Waiting</SelectItem>
-                                  <SelectItem value="called">Called</SelectItem>
-                                  <SelectItem value="completed">Completed</SelectItem>
-                                  <SelectItem value="cancelled">Cancelled</SelectItem>
-                                </SelectContent>
-                              </Select>
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          {/* Appointments Tab */}
-          <TabsContent value="appointments" className="space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle>Appointment Management</CardTitle>
-                <CardDescription>View and manage all appointments</CardDescription>
-              </CardHeader>
-              <CardContent>
-                {appointmentsLoading ? (
-                  <div className="flex justify-center py-8">
-                    <RefreshCw className="h-8 w-8 animate-spin" />
-                  </div>
-                ) : (
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Date & Time</TableHead>
-                        <TableHead>Patient</TableHead>
-                        <TableHead>Doctor</TableHead>
-                        <TableHead>Type</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead>Duration</TableHead>
-                        <TableHead>Actions</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {appointments?.map((appointment) => (
-                        <TableRow key={appointment.id}>
-                          <TableCell>
-                            {format(new Date(appointment.appointmentDate), 'MMM dd, HH:mm')}
-                          </TableCell>
-                          <TableCell>{appointment.patient.firstName} {appointment.patient.lastName}</TableCell>
-                          <TableCell>{appointment.doctor.firstName} {appointment.doctor.lastName}</TableCell>
-                          <TableCell className="capitalize">{appointment.type}</TableCell>
-                          <TableCell>
-                            <Badge className={getStatusColor(appointment.status)}>
-                              {appointment.status}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>{appointment.duration} min</TableCell>
-                          <TableCell>
-                            <div className="flex space-x-2">
-                              <Button 
-                                variant="outline" 
-                                size="sm"
-                                onClick={() => setSelectedAppointment(appointment)}
-                              >
-                                <Eye className="h-4 w-4" />
-                              </Button>
-                              <Select
-                                value={appointment.status}
-                                onValueChange={(status) => 
-                                  updateAppointmentMutation.mutate({ appointmentId: appointment.id, status })
-                                }
-                              >
-                                <SelectTrigger className="w-24">
-                                  <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="scheduled">Scheduled</SelectItem>
-                                  <SelectItem value="confirmed">Confirmed</SelectItem>
-                                  <SelectItem value="completed">Completed</SelectItem>
-                                  <SelectItem value="cancelled">Cancelled</SelectItem>
-                                </SelectContent>
-                              </Select>
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          {/* Patients Tab */}
-          <TabsContent value="patients" className="space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle>Patient Management</CardTitle>
-                <CardDescription>View and manage patient accounts</CardDescription>
-              </CardHeader>
-              <CardContent>
-                {patientsLoading ? (
-                  <div className="flex justify-center py-8">
-                    <RefreshCw className="h-8 w-8 animate-spin" />
-                  </div>
-                ) : (
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Name</TableHead>
-                        <TableHead>Phone</TableHead>
-                        <TableHead>Email</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead>Joined</TableHead>
-                        <TableHead>Actions</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {patients?.map((patient) => (
-                        <TableRow key={patient.id}>
-                          <TableCell className="font-medium">
-                            {patient.firstName} {patient.lastName}
-                          </TableCell>
-                          <TableCell>{patient.phoneNumber}</TableCell>
-                          <TableCell>{patient.email || 'N/A'}</TableCell>
-                          <TableCell>
-                            <div className="flex space-x-2">
-                              <Badge variant={patient.isActive ? "default" : "secondary"}>
-                                {patient.isActive ? 'Active' : 'Inactive'}
-                              </Badge>
-                              <Badge variant={patient.isApproved ? "default" : "destructive"}>
-                                {patient.isApproved ? 'Approved' : 'Pending'}
-                              </Badge>
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            {format(new Date(patient.createdAt), 'MMM dd, yyyy')}
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex space-x-2">
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => 
-                                  updatePatientApprovalMutation.mutate({ 
-                                    userId: patient.id, 
-                                    isApproved: !patient.isApproved 
-                                  })
-                                }
-                              >
-                                {patient.isApproved ? <UserX className="h-4 w-4" /> : <UserCheck className="h-4 w-4" />}
-                              </Button>
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          {/* Analytics Tab */}
-          <TabsContent value="analytics" className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle>System Overview</CardTitle>
-                  <CardDescription>Key performance metrics</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm font-medium">Total Patients</span>
-                      <span className="text-2xl font-bold">{patients?.length || 0}</span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm font-medium">Active Queue Tokens</span>
-                      <span className="text-2xl font-bold">
-                        {queueTokens?.filter(t => t.status === 'waiting' || t.status === 'called').length || 0}
-                      </span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm font-medium">Today's Appointments</span>
-                      <span className="text-2xl font-bold">{stats?.patientsToday || 0}</span>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle>Quick Actions</CardTitle>
-                  <CardDescription>Administrative shortcuts</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-3">
-                    <Button className="w-full justify-start" variant="outline">
-                      <BarChart3 className="h-4 w-4 mr-2" />
-                      Generate Report
-                    </Button>
-                    <Button className="w-full justify-start" variant="outline">
-                      <Settings className="h-4 w-4 mr-2" />
-                      System Settings
-                    </Button>
-                    <Button className="w-full justify-start" variant="outline">
-                      <Users className="h-4 w-4 mr-2" />
-                      Manage Staff
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          </TabsContent>
-        </Tabs>
       </div>
-
-      {/* Appointment Details Modal */}
-      <Dialog open={!!selectedAppointment} onOpenChange={() => setSelectedAppointment(null)}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>Appointment Details</DialogTitle>
-            <DialogDescription>
-              View complete appointment information
-            </DialogDescription>
-          </DialogHeader>
-          {selectedAppointment && (
-            <div className="space-y-4">
-              <div>
-                <Label className="text-sm font-medium">Patient</Label>
-                <p className="text-sm">{selectedAppointment.patient.firstName} {selectedAppointment.patient.lastName}</p>
-              </div>
-              <div>
-                <Label className="text-sm font-medium">Doctor</Label>
-                <p className="text-sm">{selectedAppointment.doctor.firstName} {selectedAppointment.doctor.lastName}</p>
-              </div>
-              <div>
-                <Label className="text-sm font-medium">Date & Time</Label>
-                <p className="text-sm">{format(new Date(selectedAppointment.appointmentDate), 'MMMM dd, yyyy at HH:mm')}</p>
-              </div>
-              <div>
-                <Label className="text-sm font-medium">Type & Duration</Label>
-                <p className="text-sm capitalize">{selectedAppointment.type} - {selectedAppointment.duration} minutes</p>
-              </div>
-              {selectedAppointment.symptoms && (
-                <div>
-                  <Label className="text-sm font-medium">Symptoms</Label>
-                  <p className="text-sm">{selectedAppointment.symptoms}</p>
-                </div>
-              )}
-              {selectedAppointment.notes && (
-                <div>
-                  <Label className="text-sm font-medium">Notes</Label>
-                  <p className="text-sm">{selectedAppointment.notes}</p>
-                </div>
-              )}
-              <div>
-                <Label className="text-sm font-medium">Status</Label>
-                <Badge className={getStatusColor(selectedAppointment.status)}>
-                  {selectedAppointment.status}
-                </Badge>
-              </div>
-            </div>
-          )}
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setSelectedAppointment(null)}>
-              Close
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   )
 }
