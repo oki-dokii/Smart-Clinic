@@ -27,6 +27,21 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { apiRequest } from "@/lib/queryClient"
 import { useToast } from "@/hooks/use-toast"
 
+interface User {
+  id: string;
+  firstName: string;
+  lastName: string;
+  role: string;
+  phoneNumber: string;
+}
+
+interface DashboardStats {
+  patientsToday: number;
+  completedAppointments: number;
+  revenue: number;
+  activeStaff: number;
+}
+
 export default function ClinicDashboard() {
   const [currentTime, setCurrentTime] = useState(new Date())
   const { toast } = useToast()
@@ -40,9 +55,8 @@ export default function ClinicDashboard() {
   }, [])
 
   // Check if user is admin
-  const { data: currentUser } = useQuery({
-    queryKey: ['/api/users/me'],
-    queryFn: () => apiRequest('/api/users/me')
+  const { data: currentUser } = useQuery<User>({
+    queryKey: ['/api/users/me']
   })
 
   // Redirect if not admin
@@ -53,9 +67,8 @@ export default function ClinicDashboard() {
   }, [currentUser])
 
   // Dashboard stats
-  const { data: stats, isLoading: statsLoading } = useQuery({
+  const { data: stats, isLoading: statsLoading } = useQuery<DashboardStats>({
     queryKey: ['/api/admin/dashboard-stats'],
-    queryFn: () => apiRequest('/api/admin/dashboard-stats'),
     refetchInterval: 30000
   })
 
@@ -72,7 +85,7 @@ export default function ClinicDashboard() {
     window.location.href = '/login'
   }
 
-  if (currentUser?.role !== 'admin') {
+  if (currentUser && currentUser.role !== 'admin') {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
@@ -112,7 +125,7 @@ export default function ClinicDashboard() {
               </div>
               <div className="flex items-center gap-2">
                 <Users className="w-4 h-4" />
-                <span>{statsLoading ? '...' : stats?.patientsToday || 0} Patients Today</span>
+                <span>{statsLoading ? '...' : (stats?.patientsToday || 0)} Patients Today</span>
               </div>
             </div>
 
@@ -204,7 +217,7 @@ export default function ClinicDashboard() {
                     </CardHeader>
                     <CardContent>
                       <div className="flex items-center gap-2 mb-2">
-                        <span className="text-3xl font-bold">{statsLoading ? '...' : stats?.patientsToday || 24}</span>
+                        <span className="text-3xl font-bold">{statsLoading ? '...' : (stats?.patientsToday || 24)}</span>
                         <Badge className="bg-blue-100 text-blue-800 text-xs flex items-center gap-1">
                           <TrendingUp className="w-3 h-3" />
                           +12.94%
@@ -241,7 +254,7 @@ export default function ClinicDashboard() {
                     </CardHeader>
                     <CardContent>
                       <div className="flex items-center gap-2 mb-2">
-                        <span className="text-3xl font-bold">${statsLoading ? '...' : stats?.revenue || 2450}</span>
+                        <span className="text-3xl font-bold">${statsLoading ? '...' : (stats?.revenue || 2450)}</span>
                         <Badge className="bg-green-100 text-green-800 text-xs flex items-center gap-1">
                           <TrendingUp className="w-3 h-3" />
                           +5.8%
@@ -261,7 +274,7 @@ export default function ClinicDashboard() {
                     </CardHeader>
                     <CardContent>
                       <div className="flex items-center gap-2 mb-2">
-                        <span className="text-3xl font-bold">{statsLoading ? '...' : stats?.activeStaff || 12}/15</span>
+                        <span className="text-3xl font-bold">{statsLoading ? '...' : (stats?.activeStaff || 12)}/15</span>
                       </div>
                       <p className="text-sm text-gray-600">3 doctors, 8 nurses, 3 admin</p>
                     </CardContent>
