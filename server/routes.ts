@@ -998,9 +998,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const appointments = await storage.getAppointments();
-      res.json(appointments);
+      res.json(appointments || []);
     } catch (error: any) {
-      res.status(400).json({ message: error.message });
+      console.error('Error fetching admin appointments:', error);
+      res.status(500).json({ message: "Failed to fetch appointments" });
     }
   });
 
@@ -1045,6 +1046,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       res.json({ message: "User approval status updated successfully" });
+    } catch (error: any) {
+      res.status(400).json({ message: error.message });
+    }
+  });
+
+  app.put("/api/queue/:tokenId/status", authMiddleware, async (req, res) => {
+    try {
+      if (req.user!.role !== 'admin') {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const { tokenId } = req.params;
+      const { status } = req.body;
+      
+      const updatedToken = await storage.updateQueueTokenStatus(tokenId, status, new Date());
+      if (!updatedToken) {
+        return res.status(404).json({ message: "Queue token not found" });
+      }
+
+      res.json({ message: "Queue status updated successfully", token: updatedToken });
     } catch (error: any) {
       res.status(400).json({ message: error.message });
     }

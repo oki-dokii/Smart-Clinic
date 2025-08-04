@@ -192,7 +192,7 @@ export default function ClinicDashboard() {
 
   // Handle queue actions
   const handleCallNext = (tokenId: string) => {
-    updateQueueStatus.mutate({ tokenId, status: 'serving' })
+    updateQueueStatus.mutate({ tokenId, status: 'in_progress' })
   }
 
   const handleApproveUser = (userId: string) => {
@@ -606,7 +606,8 @@ export default function ClinicDashboard() {
                               <div className="text-right">
                                 <Badge className={
                                   token.status === 'waiting' ? 'bg-yellow-100 text-yellow-800' :
-                                  token.status === 'serving' ? 'bg-green-100 text-green-800' :
+                                  token.status === 'in_progress' ? 'bg-green-100 text-green-800' :
+                                  token.status === 'completed' ? 'bg-blue-100 text-blue-800' :
                                   'bg-gray-100 text-gray-800'
                                 }>
                                   {token.status}
@@ -624,7 +625,18 @@ export default function ClinicDashboard() {
                                     disabled={updateQueueStatus.isPending}
                                     data-testid={`button-call-next-${token.id}`}
                                   >
-                                    Call Next
+                                    {updateQueueStatus.isPending ? 'Calling...' : 'Call Next'}
+                                  </Button>
+                                )}
+                                {token.status === 'in_progress' && (
+                                  <Button 
+                                    size="sm" 
+                                    className="bg-blue-600 hover:bg-blue-700"
+                                    onClick={() => updateQueueStatus.mutate({ tokenId: token.id, status: 'completed' })}
+                                    disabled={updateQueueStatus.isPending}
+                                    data-testid={`button-complete-${token.id}`}
+                                  >
+                                    {updateQueueStatus.isPending ? 'Completing...' : 'Complete'}
                                   </Button>
                                 )}
                                 <Button 
@@ -691,7 +703,7 @@ export default function ClinicDashboard() {
                                   Dr. {appointment.doctor.firstName} {appointment.doctor.lastName}
                                 </p>
                                 <p className="text-xs text-gray-500">
-                                  {new Date(appointment.appointmentDate).toLocaleDateString()} at {appointment.appointmentTime}
+                                  {new Date(appointment.appointmentDate).toLocaleDateString()} at {new Date(appointment.appointmentDate).toLocaleTimeString()}
                                 </p>
                               </div>
                             </div>
@@ -706,7 +718,7 @@ export default function ClinicDashboard() {
                                   {appointment.status}
                                 </Badge>
                                 <p className="text-sm text-gray-600 mt-1">
-                                  {appointment.consultationType}
+                                  {appointment.type || 'Consultation'}
                                 </p>
                               </div>
                               <div className="flex gap-2">
