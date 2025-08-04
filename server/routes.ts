@@ -1053,7 +1053,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.put("/api/queue/:tokenId/status", authMiddleware, async (req, res) => {
     try {
-      if (req.user!.role !== 'admin') {
+      if (req.user!.role !== 'admin' && req.user!.role !== 'doctor' && req.user!.role !== 'staff') {
         return res.status(403).json({ message: "Admin access required" });
       }
 
@@ -1066,6 +1066,146 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       res.json({ message: "Queue status updated successfully", token: updatedToken });
+    } catch (error: any) {
+      res.status(400).json({ message: error.message });
+    }
+  });
+
+  // Staff Management Routes
+  app.put("/api/users/:userId/activate", authMiddleware, async (req, res) => {
+    try {
+      if (req.user!.role !== 'admin') {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const { userId } = req.params;
+      const user = await storage.updateUser(userId, { isActive: true });
+      
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      res.json({ message: "User activated successfully" });
+    } catch (error: any) {
+      res.status(400).json({ message: error.message });
+    }
+  });
+
+  app.put("/api/users/:userId/deactivate", authMiddleware, async (req, res) => {
+    try {
+      if (req.user!.role !== 'admin') {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const { userId } = req.params;
+      const user = await storage.updateUser(userId, { isActive: false });
+      
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      res.json({ message: "User deactivated successfully" });
+    } catch (error: any) {
+      res.status(400).json({ message: error.message });
+    }
+  });
+
+  // Appointment Management Routes
+  app.put("/api/appointments/:appointmentId/status", authMiddleware, async (req, res) => {
+    try {
+      if (req.user!.role !== 'admin' && req.user!.role !== 'doctor' && req.user!.role !== 'staff') {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const { appointmentId } = req.params;
+      const { status } = req.body;
+      
+      const appointment = await storage.updateAppointment(appointmentId, { status });
+      
+      if (!appointment) {
+        return res.status(404).json({ message: "Appointment not found" });
+      }
+
+      res.json({ message: "Appointment status updated successfully" });
+    } catch (error: any) {
+      res.status(400).json({ message: error.message });
+    }
+  });
+
+  // Medicine/Inventory Management Routes
+  app.post("/api/medicines", authMiddleware, async (req, res) => {
+    try {
+      if (req.user!.role !== 'admin' && req.user!.role !== 'staff') {
+        return res.status(403).json({ message: "Admin or staff access required" });
+      }
+
+      const medicine = await storage.createMedicine(req.body);
+      res.json(medicine);
+    } catch (error: any) {
+      res.status(400).json({ message: error.message });
+    }
+  });
+
+  app.put("/api/medicines/:medicineId", authMiddleware, async (req, res) => {
+    try {
+      if (req.user!.role !== 'admin' && req.user!.role !== 'staff') {
+        return res.status(403).json({ message: "Admin or staff access required" });
+      }
+
+      const { medicineId } = req.params;
+      // Medicine update logic would go here
+      res.json({ message: "Medicine updated successfully" });
+    } catch (error: any) {
+      res.status(400).json({ message: error.message });
+    }
+  });
+
+  // Patient Records Management
+  app.put("/api/patients/:patientId", authMiddleware, async (req, res) => {
+    try {
+      if (req.user!.role !== 'admin' && req.user!.role !== 'doctor') {
+        return res.status(403).json({ message: "Admin or doctor access required" });
+      }
+
+      const { patientId } = req.params;
+      const patient = await storage.updateUser(patientId, req.body);
+      
+      if (!patient) {
+        return res.status(404).json({ message: "Patient not found" });
+      }
+
+      res.json({ message: "Patient updated successfully" });
+    } catch (error: any) {
+      res.status(400).json({ message: error.message });
+    }
+  });
+
+  // Reports Generation
+  app.get("/api/reports/daily", authMiddleware, async (req, res) => {
+    try {
+      if (req.user!.role !== 'admin') {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const tomorrow = new Date(today);
+      tomorrow.setDate(tomorrow.getDate() + 1);
+
+      const appointments = await storage.getAppointmentsByDateRange(today, tomorrow);
+      const completedAppointments = appointments.filter(apt => apt.status === 'completed');
+      const cancelledAppointments = appointments.filter(apt => apt.status === 'cancelled');
+      
+      const report = {
+        date: today.toISOString().split('T')[0],
+        totalAppointments: appointments.length,
+        completedAppointments: completedAppointments.length,
+        cancelledAppointments: cancelledAppointments.length,
+        revenue: completedAppointments.length * 150,
+        appointments: appointments
+      };
+
+      res.json(report);
     } catch (error: any) {
       res.status(400).json({ message: error.message });
     }

@@ -87,7 +87,9 @@ interface StaffMember extends User {
 }
 
 export default function ClinicDashboard() {
+  const [activeTab, setActiveTab] = useState('dashboard')
   const [currentTime, setCurrentTime] = useState(new Date())
+  const [reportData, setReportData] = useState<any>(null)
   const { toast } = useToast()
   const queryClient = useQueryClient()
 
@@ -190,6 +192,46 @@ export default function ClinicDashboard() {
     }
   })
 
+  // Additional mutations for comprehensive admin functionality
+  const updateUserStatus = useMutation({
+    mutationFn: async ({ userId, action }: { userId: string; action: 'activate' | 'deactivate' }) => {
+      return await apiRequest('PUT', `/api/users/${userId}/${action}`, {})
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/users'] })
+      toast({ title: 'Success', description: 'User status updated successfully' })
+    },
+    onError: (error) => {
+      toast({ title: 'Error', description: error.message, variant: 'destructive' })
+    }
+  })
+
+  const updateAppointmentStatus = useMutation({
+    mutationFn: async ({ appointmentId, status }: { appointmentId: string; status: string }) => {
+      return await apiRequest('PUT', `/api/appointments/${appointmentId}/status`, { status })
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/appointments/admin'] })
+      toast({ title: 'Success', description: 'Appointment status updated successfully' })
+    },
+    onError: (error) => {
+      toast({ title: 'Error', description: error.message, variant: 'destructive' })
+    }
+  })
+
+  const generateReport = useMutation({
+    mutationFn: async () => {
+      return await apiRequest('GET', '/api/reports/daily', {})
+    },
+    onSuccess: (data) => {
+      setReportData(data)
+      toast({ title: 'Success', description: 'Daily report generated successfully' })
+    },
+    onError: (error) => {
+      toast({ title: 'Error', description: error.message, variant: 'destructive' })
+    }
+  })
+
   // Handle queue actions
   const handleCallNext = (tokenId: string) => {
     updateQueueStatus.mutate({ tokenId, status: 'in_progress' })
@@ -197,6 +239,23 @@ export default function ClinicDashboard() {
 
   const handleApproveUser = (userId: string) => {
     approveUser.mutate({ userId, isApproved: true })
+  }
+
+  // Additional handler functions for new functionality
+  const handleActivateUser = (userId: string) => {
+    updateUserStatus.mutate({ userId, action: 'activate' })
+  }
+
+  const handleDeactivateUser = (userId: string) => {
+    updateUserStatus.mutate({ userId, action: 'deactivate' })
+  }
+
+  const handleUpdateAppointment = (appointmentId: string, status: string) => {
+    updateAppointmentStatus.mutate({ appointmentId, status })
+  }
+
+  const handleGenerateReport = () => {
+    generateReport.mutate()
   }
 
   if (currentUser && currentUser.role !== 'admin') {
