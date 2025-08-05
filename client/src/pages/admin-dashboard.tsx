@@ -266,7 +266,7 @@ export default function ClinicDashboard() {
           email: patientForm.email || undefined,
           role: 'patient',
           password: 'temp123', // Default password
-          dateOfBirth: patientForm.dateOfBirth || undefined,
+          dateOfBirth: patientForm.dateOfBirth || undefined, // Send as string, schema will convert
           address: patientForm.address || undefined
         })
       })
