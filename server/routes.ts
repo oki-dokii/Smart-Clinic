@@ -168,6 +168,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           const users = await storage.getAllUsers();
           // Filter out patients to show only staff members
           const staffUsers = users.filter(user => user.role !== 'patient');
+          console.log('Fetching staff users. Total users:', users.length, 'Staff users:', staffUsers.length);
           // Add cache-busting headers
           res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
           res.set('Pragma', 'no-cache');

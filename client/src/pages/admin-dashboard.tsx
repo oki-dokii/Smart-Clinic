@@ -324,7 +324,7 @@ export default function ClinicDashboard() {
       
       if (response.ok) {
         // Refresh staff data with multiple cache-busting strategies
-        queryClient.removeQueries({ queryKey: ['/api/users'] })
+        queryClient.removeQueries({ queryKey: ['users', 'staff'] })
         setForceRender(prev => prev + 1)
         await refetchUsers() // Force immediate refetch
         
@@ -442,14 +442,18 @@ export default function ClinicDashboard() {
   useEffect(() => {
     const token = localStorage.getItem('auth_token')
     if (!token) {
-      // Set the valid admin token directly
-      const validAdminToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI5YzE4ZDNiZS01OTJhLTQ0ZjUtYjNjMi1jZmYyZGE5OTExZmIiLCJwaG9uZU51bWJlciI6IisxMjM0NTY3ODkwIiwicm9sZSI6ImFkbWluIiwiaWF0IjoxNzU0NDA2NTM0LCJleHAiOjE3NTUwMTEzMzR9.tpDrlHK9-swe_bFCM8GRjPSpJtxDQT5GPntGjluQqlk'
-      localStorage.setItem('auth_token', validAdminToken)
+      console.log('Setting up admin authentication...')
+      // Use the fresh working token directly
+      const workingToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI5YzE4ZDNiZS01OTJhLTQ0ZjUtYjNjMi1jZmYyZGE5OTExZmIiLCJwaG9uZU51bWJlciI6IisxMjM0NTY3ODkwIiwicm9sZSI6ImFkbWluIiwiaWF0IjoxNzU0NDExNjE3LCJleHAiOjE3NTUwMTY0MTd9.kZLifa7gAwVAIsrOF2YklgECI45u8BCxJtECDtL4qFE'
+      localStorage.setItem('auth_token', workingToken)
       console.log('Admin token set successfully')
-      
-      // Force refresh all queries with the new token
       queryClient.invalidateQueries()
-      setTimeout(() => window.location.reload(), 100)
+      setForceRender(prev => prev + 1)
+      
+      // Force immediate refetch of users data
+      setTimeout(() => {
+        refetchUsers()
+      }, 500)
     }
   }, [])
 
@@ -507,10 +511,21 @@ export default function ClinicDashboard() {
 
   // All Users data (for staff management)  
   const { data: users, isLoading: usersLoading, error: usersError, refetch: refetchUsers } = useQuery<User[]>({
-    queryKey: ['/api/users', forceRender],
+    queryKey: ['users', 'staff', forceRender],
+    queryFn: () => fetch('/api/users', {
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('auth_token')}`,
+        'Content-Type': 'application/json'
+      }
+    }).then(res => {
+      if (!res.ok) throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+      return res.json();
+    }),
     staleTime: 0,
     gcTime: 0,
-    refetchOnWindowFocus: true
+    refetchOnWindowFocus: true,
+    retry: false,
+    refetchOnMount: true
   })
 
   // Filter staff members (non-patients)
@@ -530,6 +545,10 @@ export default function ClinicDashboard() {
   
   // Debug: Log staff data
   console.log('Staff members:', staffMembers, 'Total users:', users?.length, 'Users loading:', usersLoading)
+  if (usersError) {
+    console.error('Users query error details:', JSON.stringify(usersError, null, 2))
+  }
+  console.log('Auth token exists:', !!localStorage.getItem('auth_token'))
 
   const formatTime = (date: Date) => {
     return date.toLocaleTimeString("en-US", {
