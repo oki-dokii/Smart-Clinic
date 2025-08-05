@@ -46,6 +46,7 @@ interface User {
   role: string;
   phoneNumber: string;
   email?: string;
+  address?: string;
   isActive: boolean;
   isApproved: boolean;
   createdAt: string;
@@ -73,10 +74,16 @@ interface Appointment {
   patientId: string;
   doctorId: string;
   appointmentDate: string;
-  appointmentTime: string;
-  consultationType: string;
+  appointmentTime?: string;
+  consultationType?: string;
   symptoms: string;
   status: string;
+  type?: string;
+  duration?: number;
+  diagnosis?: string;
+  treatmentPlan?: string;
+  createdAt: string;
+  updatedAt: string;
   patient: User;
   doctor: User;
 }
@@ -123,6 +130,23 @@ export default function ClinicDashboard() {
     stock: 0,
     description: ''
   })
+  
+  // Patient form state
+  const [patientForm, setPatientForm] = useState({
+    firstName: '',
+    lastName: '',
+    phoneNumber: '',
+    email: '',
+    dateOfBirth: '',
+    address: ''
+  })
+  
+  // Reschedule form state
+  const [rescheduleForm, setRescheduleForm] = useState({
+    appointmentId: '',
+    newDate: '',
+    newTime: ''
+  })
   const [restockAmount, setRestockAmount] = useState(0)
   const [forceRender, setForceRender] = useState(0)
   const [isAddStaffOpen, setIsAddStaffOpen] = useState(false)
@@ -155,15 +179,7 @@ export default function ClinicDashboard() {
     }
   ])
 
-  // Form states
-  const [patientForm, setPatientForm] = useState({
-    firstName: '',
-    lastName: '',
-    phoneNumber: '',
-    email: '',
-    dateOfBirth: '',
-    address: ''
-  })
+
 
   // Appointment form state
   const [appointmentForm, setAppointmentForm] = useState({
@@ -172,7 +188,10 @@ export default function ClinicDashboard() {
     appointmentDate: '',
     appointmentTime: '',
     consultationType: 'regular',
-    symptoms: ''
+    symptoms: '',
+    date: '',
+    time: '',
+    type: ''
   })
 
   const [prescriptionForm, setPrescriptionForm] = useState({
@@ -223,7 +242,7 @@ export default function ClinicDashboard() {
   }
 
   // Form submission handlers
-  const handlePatientSubmit = async () => {
+  const handlePatientSubmitOriginal = async () => {
     if (!patientForm.firstName || !patientForm.lastName || !patientForm.phoneNumber) {
       toast({
         title: 'Validation Error',
@@ -708,6 +727,55 @@ export default function ClinicDashboard() {
 
   const handleGenerateReport = () => {
     generateReport.mutate()
+  }
+  
+  // Patient form submission handler
+  const handlePatientSubmit = async () => {
+    try {
+      await apiRequest('POST', '/api/auth/register', {
+        ...patientForm,
+        role: 'patient'
+      })
+      
+      // Reset form
+      setPatientForm({
+        firstName: '',
+        lastName: '',
+        phoneNumber: '',
+        email: '',
+        dateOfBirth: '',
+        address: ''
+      })
+      
+      // Refresh patients list
+      queryClient.invalidateQueries({ queryKey: ['/api/patients'] })
+      toast({ title: 'Success', description: 'Patient added successfully' })
+    } catch (error: any) {
+      toast({ title: 'Error', description: error.message, variant: 'destructive' })
+    }
+  }
+  
+  // Reschedule appointment handler
+  const handleReschedule = async (appointmentId: string, newDate: string, newTime: string) => {
+    try {
+      const newDateTime = new Date(`${newDate}T${newTime}:00`)
+      await apiRequest('PUT', `/api/appointments/${appointmentId}`, {
+        appointmentDate: newDateTime.toISOString()
+      })
+      
+      // Reset form
+      setRescheduleForm({
+        appointmentId: '',
+        newDate: '',
+        newTime: ''
+      })
+      
+      // Refresh appointments list
+      queryClient.invalidateQueries({ queryKey: ['/api/appointments/admin'] })
+      toast({ title: 'Success', description: 'Appointment rescheduled successfully' })
+    } catch (error: any) {
+      toast({ title: 'Error', description: error.message, variant: 'destructive' })
+    }
   }
 
   // Medicine management mutations
@@ -2181,27 +2249,44 @@ export default function ClinicDashboard() {
                                         </p>
                                       </div>
                                       <div>
-                                        <Label htmlFor="newDate">New Date</Label>
+                                        <Label htmlFor={`newDate-${appointment.id}`}>New Date</Label>
                                         <Input
-                                          id="newDate"
+                                          id={`newDate-${appointment.id}`}
                                           type="date"
                                           min={new Date().toISOString().split('T')[0]}
+                                          value={rescheduleForm.appointmentId === appointment.id ? rescheduleForm.newDate : ''}
+                                          onChange={(e) => setRescheduleForm({
+                                            appointmentId: appointment.id,
+                                            newDate: e.target.value,
+                                            newTime: rescheduleForm.newTime
+                                          })}
                                         />
                                       </div>
                                       <div>
-                                        <Label htmlFor="newTime">New Time</Label>
+                                        <Label htmlFor={`newTime-${appointment.id}`}>New Time</Label>
                                         <Input
-                                          id="newTime"
+                                          id={`newTime-${appointment.id}`}
                                           type="time"
+                                          value={rescheduleForm.appointmentId === appointment.id ? rescheduleForm.newTime : ''}
+                                          onChange={(e) => setRescheduleForm({
+                                            appointmentId: appointment.id,
+                                            newDate: rescheduleForm.newDate,
+                                            newTime: e.target.value
+                                          })}
                                         />
                                       </div>
                                       <Button 
                                         className="w-full"
                                         onClick={() => {
-                                          toast({ 
-                                            title: 'Appointment Rescheduled', 
-                                            description: `Appointment for ${appointment.patient.firstName} ${appointment.patient.lastName} has been rescheduled` 
-                                          })
+                                          if (rescheduleForm.newDate && rescheduleForm.newTime) {
+                                            handleReschedule(appointment.id, rescheduleForm.newDate, rescheduleForm.newTime)
+                                          } else {
+                                            toast({ 
+                                              title: 'Error', 
+                                              description: 'Please select both date and time',
+                                              variant: 'destructive'
+                                            })
+                                          }
                                         }}
                                       >
                                         Confirm Reschedule

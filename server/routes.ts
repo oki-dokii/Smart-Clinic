@@ -1351,6 +1351,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.put("/api/appointments/:appointmentId", authMiddleware, async (req, res) => {
+    try {
+      if (req.user!.role !== 'admin' && req.user!.role !== 'doctor' && req.user!.role !== 'staff') {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const { appointmentId } = req.params;
+      const updates = { ...req.body, updatedAt: new Date() };
+      
+      const appointment = await storage.updateAppointment(appointmentId, updates);
+      
+      if (!appointment) {
+        return res.status(404).json({ message: "Appointment not found" });
+      }
+
+      res.json(appointment);
+    } catch (error: any) {
+      res.status(400).json({ message: error.message });
+    }
+  });
+
   // Medicine/Inventory Management Routes
   app.post("/api/medicines", authMiddleware, async (req, res) => {
     try {
@@ -1372,8 +1393,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const { medicineId } = req.params;
-      // Medicine update logic would go here
-      res.json({ message: "Medicine updated successfully" });
+      const medicine = await storage.updateMedicine(medicineId, req.body);
+      res.json(medicine);
     } catch (error: any) {
       res.status(400).json({ message: error.message });
     }
