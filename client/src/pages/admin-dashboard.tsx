@@ -171,6 +171,19 @@ export default function ClinicDashboard() {
     medications: ''
   })
 
+  // Patient record modal states
+  const [selectedPatient, setSelectedPatient] = useState<User | null>(null)
+  const [showHistoryModal, setShowHistoryModal] = useState(false)
+  const [showEditModal, setShowEditModal] = useState(false)
+  const [editPatientForm, setEditPatientForm] = useState({
+    firstName: '',
+    lastName: '',
+    phoneNumber: '',
+    email: '',
+    address: '',
+    dateOfBirth: ''
+  })
+
   // Function to remove emergency alert
   const removeAlert = (alertId: string) => {
     setEmergencyAlerts(prev => prev.filter(alert => alert.id !== alertId))
@@ -181,19 +194,62 @@ export default function ClinicDashboard() {
   }
 
   // Form submission handlers
-  const handlePatientSubmit = () => {
-    toast({
-      title: 'Patient Added',
-      description: `${patientForm.firstName} ${patientForm.lastName} has been registered successfully.`,
-    })
-    setPatientForm({
-      firstName: '',
-      lastName: '',
-      phoneNumber: '',
-      email: '',
-      dateOfBirth: '',
-      address: ''
-    })
+  const handlePatientSubmit = async () => {
+    if (!patientForm.firstName || !patientForm.lastName || !patientForm.phoneNumber) {
+      toast({
+        title: 'Validation Error',
+        description: 'Please fill in all required fields (name and phone number).',
+        variant: 'destructive'
+      })
+      return
+    }
+
+    try {
+      const response = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
+        },
+        body: JSON.stringify({
+          firstName: patientForm.firstName,
+          lastName: patientForm.lastName,
+          phoneNumber: patientForm.phoneNumber,
+          email: patientForm.email || undefined,
+          role: 'patient',
+          password: 'temp123', // Default password
+          dateOfBirth: patientForm.dateOfBirth || undefined,
+          address: patientForm.address || undefined
+        })
+      })
+      
+      if (response.ok) {
+        // Refresh patient data
+        queryClient.invalidateQueries({ queryKey: ['/api/patients'] })
+        
+        toast({
+          title: 'Patient Added Successfully',
+          description: `${patientForm.firstName} ${patientForm.lastName} has been registered and will appear in Patient Records.`,
+        })
+        
+        setPatientForm({
+          firstName: '',
+          lastName: '',
+          phoneNumber: '',
+          email: '',
+          dateOfBirth: '',
+          address: ''
+        })
+      } else {
+        throw new Error('Registration failed')
+      }
+    } catch (error) {
+      toast({
+        title: 'Registration Error',
+        description: 'Failed to add patient. Please check the information and try again.',
+        variant: 'destructive'
+      })
+    }
   }
 
   const handleAppointmentSubmit = () => {
@@ -238,6 +294,59 @@ export default function ClinicDashboard() {
       followUpInstructions: '',
       medications: ''
     })
+  }
+
+  // Patient record handlers
+  const handleViewHistory = (patient: User) => {
+    setSelectedPatient(patient)
+    setShowHistoryModal(true)
+  }
+
+  const handleEditProfile = (patient: User) => {
+    setSelectedPatient(patient)
+    setEditPatientForm({
+      firstName: patient.firstName,
+      lastName: patient.lastName,
+      phoneNumber: patient.phoneNumber,
+      email: patient.email || '',
+      address: '',
+      dateOfBirth: ''
+    })
+    setShowEditModal(true)
+  }
+
+  const handleUpdatePatient = async () => {
+    if (!selectedPatient) return
+    
+    try {
+      await fetch(`/api/users/${selectedPatient.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
+        },
+        body: JSON.stringify({
+          firstName: editPatientForm.firstName,
+          lastName: editPatientForm.lastName,
+          phoneNumber: editPatientForm.phoneNumber,
+          email: editPatientForm.email
+        })
+      })
+      
+      queryClient.invalidateQueries({ queryKey: ['/api/patients'] })
+      setShowEditModal(false)
+      
+      toast({
+        title: 'Patient Updated',
+        description: `${editPatientForm.firstName} ${editPatientForm.lastName}'s profile has been updated.`,
+      })
+    } catch (error) {
+      toast({
+        title: 'Update Error',
+        description: 'Failed to update patient profile.',
+        variant: 'destructive'
+      })
+    }
   }
 
   useEffect(() => {
@@ -1340,7 +1449,7 @@ export default function ClinicDashboard() {
                                 <Button 
                                   size="sm" 
                                   variant="outline"
-                                  onClick={() => toast({ title: 'Patient History', description: `Viewing medical history for ${patient.firstName} ${patient.lastName}` })}
+                                  onClick={() => handleViewHistory(patient)}
                                   data-testid={`button-view-history-${patient.id}`}
                                 >
                                   View History
@@ -1348,7 +1457,7 @@ export default function ClinicDashboard() {
                                 <Button 
                                   size="sm" 
                                   variant="outline"
-                                  onClick={() => toast({ title: 'Edit Patient', description: `Editing profile for ${patient.firstName} ${patient.lastName}` })}
+                                  onClick={() => handleEditProfile(patient)}
                                   data-testid={`button-edit-profile-${patient.id}`}
                                 >
                                   Edit Profile
@@ -1698,6 +1807,168 @@ export default function ClinicDashboard() {
           </Tabs>
         </div>
       </div>
+
+      {/* Patient History Modal */}
+      <Dialog open={showHistoryModal} onOpenChange={setShowHistoryModal}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Patient Medical History</DialogTitle>
+          </DialogHeader>
+          {selectedPatient && (
+            <div className="space-y-6">
+              <div className="border-b pb-4">
+                <h3 className="text-lg font-semibold">
+                  {selectedPatient.firstName} {selectedPatient.lastName}
+                </h3>
+                <p className="text-gray-600">{selectedPatient.phoneNumber}</p>
+                <p className="text-sm text-gray-500">
+                  Patient ID: {selectedPatient.id.slice(0, 8)}...
+                </p>
+              </div>
+
+              <div className="grid grid-cols-2 gap-6">
+                <div>
+                  <h4 className="font-medium mb-3">Recent Appointments</h4>
+                  <div className="space-y-2">
+                    <div className="p-3 bg-gray-50 rounded-lg">
+                      <div className="font-medium">Consultation</div>
+                      <div className="text-sm text-gray-600">Dr. Smith • Jan 15, 2024</div>
+                      <div className="text-sm">Routine checkup completed</div>
+                    </div>
+                    <div className="p-3 bg-gray-50 rounded-lg">
+                      <div className="font-medium">Follow-up</div>
+                      <div className="text-sm text-gray-600">Dr. Johnson • Dec 28, 2023</div>
+                      <div className="text-sm">Blood pressure monitoring</div>
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <h4 className="font-medium mb-3">Current Medications</h4>
+                  <div className="space-y-2">
+                    <div className="p-3 bg-blue-50 rounded-lg">
+                      <div className="font-medium">Lisinopril 10mg</div>
+                      <div className="text-sm text-gray-600">Once daily • Started Dec 2023</div>
+                    </div>
+                    <div className="p-3 bg-blue-50 rounded-lg">
+                      <div className="font-medium">Metformin 500mg</div>
+                      <div className="text-sm text-gray-600">Twice daily • Started Nov 2023</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <h4 className="font-medium mb-3">Medical Notes</h4>
+                <div className="bg-gray-50 p-4 rounded-lg">
+                  <p className="text-sm text-gray-700">
+                    Patient has been managing diabetes well with current medication regimen. 
+                    Blood pressure readings have been stable. Recommends continued monitoring 
+                    and follow-up in 3 months.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex gap-3">
+                <Button 
+                  variant="outline" 
+                  onClick={() => setShowHistoryModal(false)}
+                  className="flex-1"
+                >
+                  Close
+                </Button>
+                <Button className="flex-1">
+                  <FileText className="w-4 h-4 mr-2" />
+                  Download Full History
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Patient Modal */}
+      <Dialog open={showEditModal} onOpenChange={setShowEditModal}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Edit Patient Profile</DialogTitle>
+          </DialogHeader>
+          {selectedPatient && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="editFirstName">First Name</Label>
+                  <Input
+                    id="editFirstName"
+                    value={editPatientForm.firstName}
+                    onChange={(e) => setEditPatientForm({...editPatientForm, firstName: e.target.value})}
+                    placeholder="First Name"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="editLastName">Last Name</Label>
+                  <Input
+                    id="editLastName"
+                    value={editPatientForm.lastName}
+                    onChange={(e) => setEditPatientForm({...editPatientForm, lastName: e.target.value})}
+                    placeholder="Last Name"
+                  />
+                </div>
+              </div>
+              <div>
+                <Label htmlFor="editPhone">Phone Number</Label>
+                <Input
+                  id="editPhone"
+                  value={editPatientForm.phoneNumber}
+                  onChange={(e) => setEditPatientForm({...editPatientForm, phoneNumber: e.target.value})}
+                  placeholder="Phone Number"
+                />
+              </div>
+              <div>
+                <Label htmlFor="editEmail">Email</Label>
+                <Input
+                  id="editEmail"
+                  type="email"
+                  value={editPatientForm.email}
+                  onChange={(e) => setEditPatientForm({...editPatientForm, email: e.target.value})}
+                  placeholder="Email Address"
+                />
+              </div>
+              <div>
+                <Label htmlFor="editAddress">Address</Label>
+                <Textarea
+                  id="editAddress"
+                  value={editPatientForm.address}
+                  onChange={(e) => setEditPatientForm({...editPatientForm, address: e.target.value})}
+                  placeholder="Home Address"
+                />
+              </div>
+              <div>
+                <Label htmlFor="editDOB">Date of Birth</Label>
+                <Input
+                  id="editDOB"
+                  type="date"
+                  value={editPatientForm.dateOfBirth}
+                  onChange={(e) => setEditPatientForm({...editPatientForm, dateOfBirth: e.target.value})}
+                />
+              </div>
+              <div className="flex gap-3 pt-4">
+                <Button 
+                  variant="outline" 
+                  onClick={() => setShowEditModal(false)}
+                  className="flex-1"
+                >
+                  Cancel
+                </Button>
+                <Button onClick={handleUpdatePatient} className="flex-1">
+                  <User className="w-4 h-4 mr-2" />
+                  Update Profile
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
