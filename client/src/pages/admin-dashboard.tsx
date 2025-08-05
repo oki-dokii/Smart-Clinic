@@ -573,7 +573,20 @@ export default function ClinicDashboard() {
 
   const generateReport = useMutation({
     mutationFn: async () => {
-      return await apiRequest('GET', '/api/reports/daily', {})
+      const response = await fetch('/api/reports/daily', {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('auth_token')}`,
+          'Content-Type': 'application/json'
+        }
+      })
+      
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.message || 'Failed to generate report')
+      }
+      
+      return await response.json()
     },
     onSuccess: (data) => {
       setReportData(data)
