@@ -1481,16 +1481,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.put("/api/queue/:tokenId/status", authMiddleware, async (req, res) => {
     try {
-      if (req.user!.role !== 'admin' && req.user!.role !== 'staff') {
-        return res.status(403).json({ message: "Admin or staff access required" });
+      console.log('🔥 QUEUE STATUS UPDATE - User role:', req.user?.role, 'User ID:', req.user?.id)
+      
+      if (req.user!.role !== 'admin' && req.user!.role !== 'staff' && req.user!.role !== 'doctor') {
+        console.log('🔥 Permission denied - Required: admin/staff/doctor, Got:', req.user!.role)
+        return res.status(403).json({ message: "Admin, staff, or doctor access required" });
       }
 
       const { tokenId } = req.params;
       const { status } = z.object({ status: z.string() }).parse(req.body);
       
+      console.log('🔥 Updating token:', tokenId, 'to status:', status)
       const result = await storage.updateQueueTokenStatus(tokenId, status);
+      console.log('🔥 Update result:', result)
       res.json(result);
     } catch (error: any) {
+      console.log('🔥 Queue update error:', error.message)
       res.status(400).json({ message: error.message });
     }
   });
