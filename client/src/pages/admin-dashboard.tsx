@@ -419,7 +419,13 @@ export default function ClinicDashboard() {
     refetchInterval: 60000
   })
 
-  // Staff data
+  // All Users data (for staff management)
+  const { data: users, isLoading: usersLoading } = useQuery<User[]>({
+    queryKey: ['/api/users'],
+    refetchInterval: 60000
+  })
+
+  // Staff data (filtered staff members)
   const { data: staffMembers, isLoading: staffLoading } = useQuery<User[]>({
     queryKey: ['/api/users'],
     queryFn: () => fetch('/api/users?role=staff,doctor', {
@@ -1966,13 +1972,160 @@ export default function ClinicDashboard() {
                     <h2 className="text-2xl font-bold">Staff Management</h2>
                     <p className="text-gray-600">Manage doctors, nurses, and administrative staff</p>
                   </div>
-                  <Button className="bg-blue-600 hover:bg-blue-700">
-                    <UserPlus className="w-4 h-4 mr-2" />
-                    Add Staff Member
-                  </Button>
+                  <div className="flex gap-3">
+                    <Dialog>
+                      <DialogTrigger asChild>
+                        <Button className="bg-blue-600 hover:bg-blue-700" data-testid="button-add-staff">
+                          <UserPlus className="w-4 h-4 mr-2" />
+                          Add Staff Member
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent className="max-w-md">
+                        <DialogHeader>
+                          <DialogTitle>Add New Staff Member</DialogTitle>
+                        </DialogHeader>
+                        <div className="space-y-4">
+                          <div className="grid grid-cols-2 gap-4">
+                            <div>
+                              <Label htmlFor="staffFirstName">First Name</Label>
+                              <Input id="staffFirstName" placeholder="First Name" />
+                            </div>
+                            <div>
+                              <Label htmlFor="staffLastName">Last Name</Label>
+                              <Input id="staffLastName" placeholder="Last Name" />
+                            </div>
+                          </div>
+                          <div>
+                            <Label htmlFor="staffRole">Role</Label>
+                            <Select>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select role" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="doctor">Doctor</SelectItem>
+                                <SelectItem value="nurse">Nurse</SelectItem>
+                                <SelectItem value="staff">Administrative Staff</SelectItem>
+                                <SelectItem value="admin">Administrator</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <div>
+                            <Label htmlFor="staffPhone">Phone Number</Label>
+                            <Input id="staffPhone" placeholder="+1234567890" />
+                          </div>
+                          <div>
+                            <Label htmlFor="staffEmail">Email</Label>
+                            <Input id="staffEmail" type="email" placeholder="staff@smartclinic.com" />
+                          </div>
+                          <Button className="w-full">
+                            <UserPlus className="w-4 h-4 mr-2" />
+                            Add Staff Member
+                          </Button>
+                        </div>
+                      </DialogContent>
+                    </Dialog>
+                    
+                    <Dialog>
+                      <DialogTrigger asChild>
+                        <Button variant="outline">
+                          <Shield className="w-4 h-4 mr-2" />
+                          GPS Verification
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent className="max-w-lg">
+                        <DialogHeader>
+                          <DialogTitle>Staff GPS Verification Status</DialogTitle>
+                        </DialogHeader>
+                        <div className="space-y-4">
+                          <div className="grid gap-3">
+                            <div className="p-4 bg-green-50 rounded-lg border-l-4 border-green-500">
+                              <div className="flex justify-between items-center">
+                                <div>
+                                  <h4 className="font-medium">Dr. Sarah Johnson</h4>
+                                  <p className="text-sm text-gray-600">Last check-in: 8:45 AM</p>
+                                </div>
+                                <Badge className="bg-green-100 text-green-800">On-site</Badge>
+                              </div>
+                            </div>
+                            <div className="p-4 bg-yellow-50 rounded-lg border-l-4 border-yellow-500">
+                              <div className="flex justify-between items-center">
+                                <div>
+                                  <h4 className="font-medium">Nurse Mary Davis</h4>
+                                  <p className="text-sm text-gray-600">Last check-in: 7:30 AM</p>
+                                </div>
+                                <Badge className="bg-yellow-100 text-yellow-800">Home Visit</Badge>
+                              </div>
+                            </div>
+                          </div>
+                          <div className="space-y-3">
+                            <h4 className="font-medium">GPS Settings</h4>
+                            <div className="space-y-2">
+                              <div className="flex items-center justify-between">
+                                <span className="text-sm">Require GPS for clock-in</span>
+                                <input type="checkbox" defaultChecked className="rounded" />
+                              </div>
+                              <div className="flex items-center justify-between">
+                                <span className="text-sm">Alert for location violations</span>
+                                <input type="checkbox" defaultChecked className="rounded" />
+                              </div>
+                            </div>
+                            <Button className="w-full" variant="outline">Update Settings</Button>
+                          </div>
+                        </div>
+                      </DialogContent>
+                    </Dialog>
+                  </div>
                 </div>
 
-                {staffLoading ? (
+                {/* Staff Statistics */}
+                <div className="grid grid-cols-4 gap-4 mb-6">
+                  <Card>
+                    <CardContent className="p-4">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-sm text-gray-600">Total Staff</p>
+                          <p className="text-2xl font-bold text-blue-600">12</p>
+                        </div>
+                        <Users className="w-8 h-8 text-blue-600" />
+                      </div>
+                    </CardContent>
+                  </Card>
+                  <Card>
+                    <CardContent className="p-4">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-sm text-gray-600">Doctors</p>
+                          <p className="text-2xl font-bold text-green-600">5</p>
+                        </div>
+                        <Stethoscope className="w-8 h-8 text-green-600" />
+                      </div>
+                    </CardContent>
+                  </Card>
+                  <Card>
+                    <CardContent className="p-4">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-sm text-gray-600">Nurses</p>
+                          <p className="text-2xl font-bold text-purple-600">4</p>
+                        </div>
+                        <User className="w-8 h-8 text-purple-600" />
+                      </div>
+                    </CardContent>
+                  </Card>
+                  <Card>
+                    <CardContent className="p-4">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-sm text-gray-600">On Duty</p>
+                          <p className="text-2xl font-bold text-orange-600">8</p>
+                        </div>
+                        <Activity className="w-8 h-8 text-orange-600" />
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+
+                {usersLoading ? (
                   <div className="space-y-4">
                     {[1, 2, 3, 4].map(i => (
                       <div key={i} className="h-16 bg-gray-100 rounded-lg animate-pulse"></div>
@@ -1980,54 +2133,187 @@ export default function ClinicDashboard() {
                   </div>
                 ) : (
                   <div className="space-y-4">
-                    {staffMembers && staffMembers.length > 0 ? (
-                      staffMembers.map((staff) => (
-                        <Card key={staff.id} className="p-4">
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-4">
-                              <div className="w-12 h-12 bg-teal-100 rounded-lg flex items-center justify-center">
-                                <Stethoscope className="w-6 h-6 text-teal-600" />
+                    {users && users.length > 0 ? (
+                      users
+                        .filter(user => user.role !== 'patient')
+                        .map((staff) => (
+                          <Card key={staff.id} className="p-4">
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-4">
+                                <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${
+                                  staff.role === 'doctor' ? 'bg-green-100' :
+                                  staff.role === 'nurse' ? 'bg-purple-100' :
+                                  staff.role === 'admin' ? 'bg-blue-100' : 'bg-gray-100'
+                                }`}>
+                                  {staff.role === 'doctor' ? (
+                                    <Stethoscope className="w-6 h-6 text-green-600" />
+                                  ) : staff.role === 'nurse' ? (
+                                    <User className="w-6 h-6 text-purple-600" />
+                                  ) : staff.role === 'admin' ? (
+                                    <Shield className="w-6 h-6 text-blue-600" />
+                                  ) : (
+                                    <User className="w-6 h-6 text-gray-600" />
+                                  )}
+                                </div>
+                                <div>
+                                  <h3 className="font-semibold">
+                                    {staff.firstName} {staff.lastName}
+                                  </h3>
+                                  <p className="text-sm text-gray-600">
+                                    {staff.phoneNumber}
+                                  </p>
+                                  <div className="flex items-center gap-2 mt-1">
+                                    <Badge className={
+                                      staff.role === 'doctor' ? 'bg-green-100 text-green-800' :
+                                      staff.role === 'nurse' ? 'bg-purple-100 text-purple-800' :
+                                      staff.role === 'admin' ? 'bg-blue-100 text-blue-800' :
+                                      'bg-gray-100 text-gray-800'
+                                    }>
+                                      {staff.role.charAt(0).toUpperCase() + staff.role.slice(1)}
+                                    </Badge>
+                                    <span className="text-xs text-gray-500">
+                                      ID: {staff.id.slice(0, 8)}...
+                                    </span>
+                                  </div>
+                                </div>
                               </div>
-                              <div>
-                                <h3 className="font-semibold">
-                                  Dr. {staff.firstName} {staff.lastName}
-                                </h3>
-                                <p className="text-sm text-gray-600">
-                                  {staff.role === 'doctor' ? 'Doctor' : 'Staff'} • {staff.phoneNumber}
-                                </p>
-                                <p className="text-xs text-gray-500">
-                                  Joined: {new Date(staff.createdAt).toLocaleDateString()}
-                                </p>
+                              <div className="flex items-center gap-4">
+                                <div className="text-right">
+                                  <Badge className={
+                                    staff.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                                  }>
+                                    {staff.isActive ? 'Active' : 'Inactive'}
+                                  </Badge>
+                                  {!staff.isApproved && (
+                                    <Badge className="bg-yellow-100 text-yellow-800 ml-2">
+                                      Pending Approval
+                                    </Badge>
+                                  )}
+                                  <p className="text-xs text-gray-500 mt-1">
+                                    Joined: {new Date(staff.createdAt).toLocaleDateString()}
+                                  </p>
+                                </div>
+                                <div className="flex gap-2">
+                                  <Dialog>
+                                    <DialogTrigger asChild>
+                                      <Button 
+                                        size="sm" 
+                                        variant="outline"
+                                        data-testid={`button-view-details-${staff.id}`}
+                                      >
+                                        View Details
+                                      </Button>
+                                    </DialogTrigger>
+                                    <DialogContent className="max-w-lg">
+                                      <DialogHeader>
+                                        <DialogTitle>Staff Member Details</DialogTitle>
+                                      </DialogHeader>
+                                      <div className="space-y-4">
+                                        <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-lg">
+                                          <div className={`w-16 h-16 rounded-full flex items-center justify-center ${
+                                            staff.role === 'doctor' ? 'bg-green-100' :
+                                            staff.role === 'nurse' ? 'bg-purple-100' :
+                                            staff.role === 'admin' ? 'bg-blue-100' : 'bg-gray-100'
+                                          }`}>
+                                            {staff.role === 'doctor' ? (
+                                              <Stethoscope className="w-8 h-8 text-green-600" />
+                                            ) : staff.role === 'nurse' ? (
+                                              <User className="w-8 h-8 text-purple-600" />
+                                            ) : staff.role === 'admin' ? (
+                                              <Shield className="w-8 h-8 text-blue-600" />
+                                            ) : (
+                                              <User className="w-8 h-8 text-gray-600" />
+                                            )}
+                                          </div>
+                                          <div>
+                                            <h3 className="font-semibold text-lg">{staff.firstName} {staff.lastName}</h3>
+                                            <p className="text-sm text-gray-600">{staff.role.charAt(0).toUpperCase() + staff.role.slice(1)}</p>
+                                            <p className="text-xs text-gray-500">{staff.email || 'No email on file'}</p>
+                                          </div>
+                                        </div>
+                                        
+                                        <div className="grid grid-cols-2 gap-4">
+                                          <div>
+                                            <h4 className="font-medium mb-2">Contact Information</h4>
+                                            <div className="space-y-1 text-sm">
+                                              <p><span className="text-gray-600">Phone:</span> {staff.phoneNumber}</p>
+                                              <p><span className="text-gray-600">Email:</span> {staff.email || 'Not provided'}</p>
+                                              <p><span className="text-gray-600">Address:</span> {staff.address || 'Not provided'}</p>
+                                            </div>
+                                          </div>
+                                          
+                                          <div>
+                                            <h4 className="font-medium mb-2">Work Information</h4>
+                                            <div className="space-y-1 text-sm">
+                                              <p><span className="text-gray-600">Department:</span> {staff.role === 'doctor' ? 'Medical' : staff.role === 'nurse' ? 'Nursing' : 'Administration'}</p>
+                                              <p><span className="text-gray-600">Status:</span> {staff.isActive ? 'Active' : 'Inactive'}</p>
+                                              <p><span className="text-gray-600">Approved:</span> {staff.isApproved ? 'Yes' : 'Pending'}</p>
+                                            </div>
+                                          </div>
+                                        </div>
+                                        
+                                        <div>
+                                          <h4 className="font-medium mb-2">Recent Activity</h4>
+                                          <div className="space-y-2">
+                                            <div className="p-2 bg-blue-50 rounded text-sm">
+                                              <span className="text-blue-800">Last login:</span> Today at 9:30 AM
+                                            </div>
+                                            <div className="p-2 bg-green-50 rounded text-sm">
+                                              <span className="text-green-800">Patients seen today:</span> {staff.role === 'doctor' ? '12' : staff.role === 'nurse' ? '8' : 'N/A'}
+                                            </div>
+                                          </div>
+                                        </div>
+                                      </div>
+                                    </DialogContent>
+                                  </Dialog>
+                                  
+                                  {!staff.isApproved && (
+                                    <Button 
+                                      size="sm" 
+                                      className="bg-green-600 hover:bg-green-700"
+                                      onClick={() => handleApproveUser(staff.id)}
+                                      disabled={approveUser.isPending}
+                                      data-testid={`button-approve-${staff.id}`}
+                                    >
+                                      {approveUser.isPending ? 'Approving...' : 'Approve'}
+                                    </Button>
+                                  )}
+                                  
+                                  {staff.isActive ? (
+                                    <Button 
+                                      size="sm" 
+                                      variant="destructive"
+                                      onClick={() => handleDeactivateUser(staff.id)}
+                                      disabled={updateUserStatus.isPending}
+                                      data-testid={`button-deactivate-${staff.id}`}
+                                    >
+                                      {updateUserStatus.isPending ? 'Deactivating...' : 'Deactivate'}
+                                    </Button>
+                                  ) : (
+                                    <Button 
+                                      size="sm" 
+                                      className="bg-blue-600 hover:bg-blue-700"
+                                      onClick={() => handleActivateUser(staff.id)}
+                                      disabled={updateUserStatus.isPending}
+                                      data-testid={`button-activate-${staff.id}`}
+                                    >
+                                      {updateUserStatus.isPending ? 'Activating...' : 'Activate'}
+                                    </Button>
+                                  )}
+                                </div>
                               </div>
                             </div>
-                            <div className="flex items-center gap-4">
-                              <div className="text-right">
-                                <Badge className={
-                                  staff.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                                }>
-                                  {staff.isActive ? 'Active' : 'Inactive'}
-                                </Badge>
-                                <p className="text-sm text-gray-600 mt-1">
-                                  {staff.role === 'doctor' ? 'Available' : 'On Duty'}
-                                </p>
-                              </div>
-                              <div className="flex gap-2">
-                                <Button size="sm" variant="outline">
-                                  View Schedule
-                                </Button>
-                                <Button size="sm" variant="outline">
-                                  Edit Profile
-                                </Button>
-                              </div>
-                            </div>
-                          </div>
-                        </Card>
-                      ))
+                          </Card>
+                        ))
                     ) : (
                       <Card className="p-8 text-center">
                         <Stethoscope className="w-12 h-12 text-gray-400 mx-auto mb-4" />
                         <h3 className="text-lg font-semibold text-gray-900 mb-2">No Staff Members</h3>
                         <p className="text-gray-600">No staff members found in the system.</p>
+                        <Button className="mt-4">
+                          <UserPlus className="w-4 h-4 mr-2" />
+                          Add First Staff Member
+                        </Button>
                       </Card>
                     )}
                   </div>
