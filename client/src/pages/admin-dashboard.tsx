@@ -126,6 +126,7 @@ export default function ClinicDashboard() {
   const [restockAmount, setRestockAmount] = useState(0)
   const [forceRender, setForceRender] = useState(0)
   const [isAddStaffOpen, setIsAddStaffOpen] = useState(false)
+  const [showAppointmentModal, setShowAppointmentModal] = useState(false)
   const { toast } = useToast()
   const queryClient = useQueryClient()
   
@@ -164,12 +165,13 @@ export default function ClinicDashboard() {
     address: ''
   })
 
+  // Appointment form state
   const [appointmentForm, setAppointmentForm] = useState({
     patientId: '',
     doctorId: '',
-    date: '',
-    time: '',
-    type: '',
+    appointmentDate: '',
+    appointmentTime: '',
+    consultationType: 'regular',
     symptoms: ''
   })
 
@@ -279,19 +281,49 @@ export default function ClinicDashboard() {
     }
   }
 
-  const handleAppointmentSubmit = () => {
-    toast({
-      title: 'Appointment Scheduled',
-      description: 'New appointment has been scheduled successfully.',
-    })
-    setAppointmentForm({
-      patientId: '',
-      doctorId: '',
-      date: '',
-      time: '',
-      type: '',
-      symptoms: ''
-    })
+  const handleAppointmentSubmit = async () => {
+    if (!appointmentForm.patientId || !appointmentForm.doctorId || !appointmentForm.appointmentDate || !appointmentForm.appointmentTime) {
+      toast({
+        title: 'Validation Error',
+        description: 'Please fill in all required fields.',
+        variant: 'destructive'
+      })
+      return
+    }
+
+    try {
+      const appointmentData = {
+        ...appointmentForm,
+        status: 'scheduled'
+      }
+
+      await apiRequest('POST', '/api/appointments', appointmentData)
+      
+      // Reset form and close modal
+      setAppointmentForm({
+        patientId: '',
+        doctorId: '',
+        appointmentDate: '',
+        appointmentTime: '',
+        consultationType: 'regular',
+        symptoms: ''
+      })
+      setShowAppointmentModal(false)
+      
+      // Refresh appointments
+      queryClient.invalidateQueries({ queryKey: ['/api/appointments/admin'] })
+      
+      toast({
+        title: 'Appointment Scheduled',
+        description: 'New appointment has been successfully scheduled.',
+      })
+    } catch (error) {
+      toast({
+        title: 'Booking Error',
+        description: 'Failed to schedule appointment. Please try again.',
+        variant: 'destructive'
+      })
+    }
   }
 
   const handleStaffSubmit = async () => {
@@ -2066,7 +2098,7 @@ export default function ClinicDashboard() {
                   </div>
                   <Button 
                     className="bg-blue-600 hover:bg-blue-700"
-                    onClick={() => toast({ title: 'Feature Coming Soon', description: 'New appointment booking will be available soon' })}
+                    onClick={() => setShowAppointmentModal(true)}
                     data-testid="button-new-appointment"
                   >
                     <Calendar className="w-4 h-4 mr-2" />
@@ -3366,6 +3398,108 @@ export default function ClinicDashboard() {
                 variant="outline"
                 onClick={() => setIsRestockOpen(false)}
                 data-testid="button-cancel-restock"
+              >
+                Cancel
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* New Appointment Modal */}
+      <Dialog open={showAppointmentModal} onOpenChange={setShowAppointmentModal}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Schedule New Appointment</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="patient-select">Patient *</Label>
+              <Select value={appointmentForm.patientId} onValueChange={(value) => setAppointmentForm({ ...appointmentForm, patientId: value })}>
+                <SelectTrigger data-testid="select-appointment-patient">
+                  <SelectValue placeholder="Select patient" />
+                </SelectTrigger>
+                <SelectContent>
+                  {patients?.filter(p => p.role === 'patient').map((patient) => (
+                    <SelectItem key={patient.id} value={patient.id}>
+                      {patient.firstName} {patient.lastName}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label htmlFor="doctor-select">Doctor *</Label>
+              <Select value={appointmentForm.doctorId} onValueChange={(value) => setAppointmentForm({ ...appointmentForm, doctorId: value })}>
+                <SelectTrigger data-testid="select-appointment-doctor">
+                  <SelectValue placeholder="Select doctor" />
+                </SelectTrigger>
+                <SelectContent>
+                  {users?.filter(u => u.role === 'doctor').map((doctor) => (
+                    <SelectItem key={doctor.id} value={doctor.id}>
+                      Dr. {doctor.firstName} {doctor.lastName}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label htmlFor="appointment-date">Date *</Label>
+              <Input
+                id="appointment-date"
+                type="date"
+                value={appointmentForm.appointmentDate}
+                onChange={(e) => setAppointmentForm({ ...appointmentForm, appointmentDate: e.target.value })}
+                data-testid="input-appointment-date"
+              />
+            </div>
+            <div>
+              <Label htmlFor="appointment-time">Time *</Label>
+              <Input
+                id="appointment-time"
+                type="time"
+                value={appointmentForm.appointmentTime}
+                onChange={(e) => setAppointmentForm({ ...appointmentForm, appointmentTime: e.target.value })}
+                data-testid="input-appointment-time"
+              />
+            </div>
+            <div>
+              <Label htmlFor="consultation-type">Consultation Type</Label>
+              <Select value={appointmentForm.consultationType} onValueChange={(value) => setAppointmentForm({ ...appointmentForm, consultationType: value })}>
+                <SelectTrigger data-testid="select-consultation-type">
+                  <SelectValue placeholder="Select consultation type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="regular">Regular Consultation</SelectItem>
+                  <SelectItem value="follow-up">Follow-up</SelectItem>
+                  <SelectItem value="emergency">Emergency</SelectItem>
+                  <SelectItem value="video-call">Video Call</SelectItem>
+                  <SelectItem value="home-visit">Home Visit</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label htmlFor="symptoms">Symptoms/Notes</Label>
+              <Textarea
+                id="symptoms"
+                value={appointmentForm.symptoms}
+                onChange={(e) => setAppointmentForm({ ...appointmentForm, symptoms: e.target.value })}
+                placeholder="Enter symptoms or additional notes"
+                data-testid="textarea-appointment-symptoms"
+              />
+            </div>
+            <div className="flex gap-2 pt-4">
+              <Button
+                onClick={handleAppointmentSubmit}
+                className="flex-1"
+                data-testid="button-schedule-appointment"
+              >
+                Schedule Appointment
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => setShowAppointmentModal(false)}
+                data-testid="button-cancel-appointment"
               >
                 Cancel
               </Button>
