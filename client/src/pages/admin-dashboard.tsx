@@ -125,6 +125,7 @@ export default function ClinicDashboard() {
   })
   const [restockAmount, setRestockAmount] = useState(0)
   const [forceRender, setForceRender] = useState(0)
+  const [isAddStaffOpen, setIsAddStaffOpen] = useState(false)
   const { toast } = useToast()
   const queryClient = useQueryClient()
   
@@ -324,7 +325,9 @@ export default function ClinicDashboard() {
       if (response.ok) {
         // Refresh staff data
         queryClient.invalidateQueries({ queryKey: ['/api/users'] })
-        refetchUsers() // Force immediate refetch
+        queryClient.refetchQueries({ queryKey: ['/api/users'] })
+        await refetchUsers() // Force immediate refetch
+        setForceRender(prev => prev + 1)
         
         toast({
           title: 'Staff Member Added Successfully',
@@ -338,6 +341,8 @@ export default function ClinicDashboard() {
           email: '',
           role: ''
         })
+        
+        setIsAddStaffOpen(false) // Close dialog
       } else {
         const errorData = await response.json()
         throw new Error(errorData.message || 'Registration failed')
@@ -503,10 +508,9 @@ export default function ClinicDashboard() {
   // All Users data (for staff management)  
   const { data: users, isLoading: usersLoading, error: usersError, refetch: refetchUsers } = useQuery<User[]>({
     queryKey: ['/api/users'],
-    refetchInterval: 10000,
-    retry: 3,
-    refetchOnWindowFocus: true,
-    staleTime: 0 // Always fetch fresh data
+    staleTime: 0,
+    gcTime: 0,
+    refetchOnWindowFocus: true
   })
 
   // Filter staff members (non-patients)
@@ -523,6 +527,9 @@ export default function ClinicDashboard() {
   // Debug: Log medicines data
   console.log('Medicines data:', medicines, 'Loading:', medicinesLoading, 'Force render:', forceRender)
   console.log('First medicine stock:', medicines[0]?.stock)
+  
+  // Debug: Log staff data
+  console.log('Staff members:', staffMembers, 'Total users:', users?.length, 'Users loading:', usersLoading)
 
   const formatTime = (date: Date) => {
     return date.toLocaleTimeString("en-US", {
@@ -2358,7 +2365,7 @@ export default function ClinicDashboard() {
                     <p className="text-gray-600">Manage doctors, nurses, and administrative staff</p>
                   </div>
                   <div className="flex gap-3">
-                    <Dialog>
+                    <Dialog open={isAddStaffOpen} onOpenChange={setIsAddStaffOpen}>
                       <DialogTrigger asChild>
                         <Button className="bg-blue-600 hover:bg-blue-700" data-testid="button-add-staff">
                           <UserPlus className="w-4 h-4 mr-2" />
@@ -2538,10 +2545,10 @@ export default function ClinicDashboard() {
                     ))}
                   </div>
                 ) : (
-                  <div className="space-y-4">
+                  <div className="space-y-4" key={forceRender}>
                     {staffMembers && staffMembers.length > 0 ? (
                       staffMembers.map((staff) => (
-                          <Card key={staff.id} className="p-4">
+                          <Card key={`${staff.id}-${forceRender}`} className="p-4">
                             <div className="flex items-center justify-between">
                               <div className="flex items-center gap-4">
                                 <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${
