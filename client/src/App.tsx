@@ -8,6 +8,7 @@ import { useEffect } from "react";
 import LoginPage from "@/pages/login";
 import Dashboard from "@/pages/dashboard";
 import AdminDashboard from "@/pages/admin-dashboard";
+import StaffCheckinPage from "@/pages/staff-checkin";
 import ProfilePage from "@/pages/profile";
 import SettingsPage from "@/pages/settings";
 import MedicinesPage from "@/pages/medicines";
@@ -24,6 +25,7 @@ function Router() {
       <Route path="/login" component={LoginPage} />
       <Route path="/dashboard" component={Dashboard} />
       <Route path="/admin" component={AdminDashboard} />
+      <Route path="/staff-checkin" component={StaffCheckinPage} />
       <Route path="/profile" component={ProfilePage} />
       <Route path="/settings" component={SettingsPage} />
       <Route path="/medicines" component={MedicinesPage} />

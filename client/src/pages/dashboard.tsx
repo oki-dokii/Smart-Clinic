@@ -275,30 +275,8 @@ export default function SmartClinicDashboard() {
       return;
     }
 
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          checkInMutation.mutate({
-            latitude: position.coords.latitude,
-            longitude: position.coords.longitude,
-            workLocation: "Main Clinic"
-          });
-        },
-        (error) => {
-          toast({
-            title: "Location Required",
-            description: "Please enable location access to check in.",
-            variant: "destructive",
-          });
-        }
-      );
-    } else {
-      toast({
-        title: "Location Not Supported",
-        description: "Your browser doesn't support location services.",
-        variant: "destructive",
-      });
-    }
+    // Redirect to dedicated staff check-in page for better GPS verification
+    setLocation("/staff-checkin");
   };
 
   const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
@@ -461,6 +439,18 @@ export default function SmartClinicDashboard() {
                 {user.role}
               </Badge>
             </div>
+
+            {/* Staff Check-in Link */}
+            {(user.role === 'doctor' || user.role === 'staff' || user.role === 'nurse') && (
+              <button 
+                onClick={() => setLocation("/staff-checkin")}
+                className="flex items-center gap-2 px-3 py-2 bg-blue-100 hover:bg-blue-200 text-blue-700 rounded-lg transition-colors text-sm font-medium"
+                title="GPS Check-in"
+              >
+                <MapPin className="w-4 h-4" />
+                <span className="hidden sm:inline">Check-in</span>
+              </button>
+            )}
 
             <button 
               onClick={() => setLocation("/profile")}
