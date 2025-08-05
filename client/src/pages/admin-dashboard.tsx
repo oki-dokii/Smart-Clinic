@@ -124,6 +124,7 @@ export default function ClinicDashboard() {
     description: ''
   })
   const [restockAmount, setRestockAmount] = useState(0)
+  const [forceRender, setForceRender] = useState(0)
   const { toast } = useToast()
   const queryClient = useQueryClient()
   
@@ -512,10 +513,10 @@ export default function ClinicDashboard() {
   const staffMembers = users?.filter(user => user.role !== 'patient') || []
 
   // Medicines/Inventory data
-  const { data: medicines, isLoading: medicinesLoading } = useQuery<Medicine[]>({
+  const { data: medicines = [], isLoading: medicinesLoading } = useQuery<Medicine[]>({
     queryKey: ['/api/medicines'],
     staleTime: 0,
-    cacheTime: 0,
+    gcTime: 0,
     refetchOnWindowFocus: true
   })
 
@@ -665,6 +666,7 @@ export default function ClinicDashboard() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/medicines'] })
       queryClient.refetchQueries({ queryKey: ['/api/medicines'] })
+      setForceRender(prev => prev + 1)
       setIsEditMedicineOpen(false)
       setSelectedMedicine(null)
       toast({ title: 'Success', description: 'Medicine updated successfully' })
@@ -682,6 +684,7 @@ export default function ClinicDashboard() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/medicines'] })
       queryClient.refetchQueries({ queryKey: ['/api/medicines'] })
+      setForceRender(prev => prev + 1)
       setIsRestockOpen(false)
       setRestockAmount(0)
       setSelectedMedicine(null)
@@ -2272,10 +2275,10 @@ export default function ClinicDashboard() {
                     ))}
                   </div>
                 ) : (
-                  <div className="space-y-4">
+                  <div className="space-y-4" key={forceRender}>
                     {medicines && medicines.length > 0 ? (
-                      medicines.map((medicine) => (
-                        <Card key={medicine.id} className="p-4">
+                      medicines.map((medicine: Medicine) => (
+                        <Card key={`${medicine.id}-${forceRender}`} className="p-4">
                           <div className="flex items-center justify-between">
                             <div className="flex items-center gap-4">
                               <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
