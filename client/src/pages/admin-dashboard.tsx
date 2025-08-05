@@ -639,11 +639,10 @@ export default function ClinicDashboard() {
 
   // Medicine management mutations
   const addMedicineMutation = useMutation({
-    mutationFn: async (medicine: any) => 
-      apiRequest('/api/medicines', {
-        method: 'POST',
-        body: JSON.stringify(medicine)
-      }),
+    mutationFn: async (medicine: any) => {
+      const response = await apiRequest('POST', '/api/medicines', medicine)
+      return response.json()
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/medicines'] })
       setIsAddMedicineOpen(false)
@@ -656,11 +655,10 @@ export default function ClinicDashboard() {
   })
 
   const updateMedicineMutation = useMutation({
-    mutationFn: async ({ medicineId, updates }: { medicineId: string, updates: any }) => 
-      apiRequest(`/api/medicines/${medicineId}`, {
-        method: 'PUT',
-        body: JSON.stringify(updates)
-      }),
+    mutationFn: async ({ medicineId, updates }: { medicineId: string, updates: any }) => {
+      const response = await apiRequest('PUT', `/api/medicines/${medicineId}`, updates)
+      return response.json()
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/medicines'] })
       setIsEditMedicineOpen(false)
@@ -673,11 +671,10 @@ export default function ClinicDashboard() {
   })
 
   const restockMedicineMutation = useMutation({
-    mutationFn: async ({ medicineId, amount }: { medicineId: string, amount: number }) => 
-      apiRequest(`/api/medicines/${medicineId}/restock`, {
-        method: 'PUT',
-        body: JSON.stringify({ amount })
-      }),
+    mutationFn: async ({ medicineId, amount }: { medicineId: string, amount: number }) => {
+      const response = await apiRequest('PUT', `/api/medicines/${medicineId}/restock`, { amount })
+      return response.json()
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/medicines'] })
       setIsRestockOpen(false)

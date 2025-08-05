@@ -1080,6 +1080,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Medicine management routes
+  app.get("/api/medicines", authMiddleware, async (req, res) => {
+    try {
+      const medicines = await storage.getAllMedicines();
+      res.json(medicines);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
   app.post("/api/medicines", authMiddleware, async (req, res) => {
     try {
       if (req.user!.role !== 'admin') {
