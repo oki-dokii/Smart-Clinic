@@ -440,11 +440,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put("/api/queue/:id/status", authMiddleware, requireRole(['doctor', 'staff']), async (req, res) => {
+  app.put("/api/queue/:id/status", authMiddleware, requireRole(['admin', 'doctor', 'staff']), async (req, res) => {
     try {
+      console.log('🔥 FIRST QUEUE ROUTE HIT - User role:', req.user?.role, 'Token ID:', req.params.id)
+      
       const { id } = req.params;
       const { status } = z.object({ status: z.string() }).parse(req.body);
       
+      console.log('🔥 First route updating token:', id, 'to status:', status)
       const token = await storage.updateQueueTokenStatus(id, status, new Date());
       if (!token) {
         return res.status(404).json({ message: "Queue token not found" });
@@ -453,8 +456,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Broadcast queue update via Server-Sent Events
       queueService.broadcastQueueUpdate(token.doctorId);
 
+      console.log('🔥 First route update successful')
       res.json(token);
     } catch (error: any) {
+      console.log('🔥 First route error:', error.message)
       res.status(400).json({ message: error.message });
     }
   });
