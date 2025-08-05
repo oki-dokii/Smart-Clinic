@@ -273,11 +273,17 @@ export const insertUserSchema = createInsertSchema(users).omit({
   createdAt: true,
   updatedAt: true,
 }).extend({
-  // Allow dateOfBirth to accept string input and convert to Date
+  password: z.string().min(6, "Password must be at least 6 characters"),
+  // Allow dateOfBirth to accept string input and convert to Date, handle empty strings
   dateOfBirth: z.union([
     z.date(),
-    z.string().transform((str) => new Date(str)),
-    z.null()
+    z.string().transform((str) => {
+      if (!str || str.trim() === '') return null;
+      const date = new Date(str);
+      return isNaN(date.getTime()) ? null : date;
+    }),
+    z.null(),
+    z.undefined()
   ]).optional()
 });
 
