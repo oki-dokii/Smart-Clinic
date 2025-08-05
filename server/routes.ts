@@ -1191,19 +1191,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Admin routes
   app.get("/api/appointments/admin", authMiddleware, async (req, res) => {
+    console.log('🔥 ADMIN APPOINTMENTS ROUTE HIT - START');
     try {
       if (req.user!.role !== 'admin') {
+        console.log('🔥 Admin role check failed:', req.user!.role);
         return res.status(403).json({ message: "Admin access required" });
       }
 
-      console.log('Route: Fetching appointments for admin...');
+      console.log('🔥 About to call storage.getAppointments()');
       const appointments = await storage.getAppointments();
-      console.log('Route: Found appointments:', appointments?.length || 0);
-      console.log('Route: Sample appointment:', appointments?.[0] ? JSON.stringify(appointments[0], null, 2) : 'No appointments');
+      console.log('🔥 Found appointments:', appointments?.length || 0);
+      
+      if (appointments && appointments.length > 0) {
+        console.log('🔥 Sample appointment:', JSON.stringify(appointments[0], null, 2));
+      } else {
+        console.log('🔥 No appointments returned from storage');
+      }
+      
+      console.log('🔥 Sending response with', appointments?.length || 0, 'appointments');
       res.json(appointments || []);
     } catch (error: any) {
-      console.error('Route: Error fetching admin appointments:', error);
-      res.status(500).json({ message: "Failed to fetch appointments" });
+      console.error('🔥 ERROR in admin appointments route:', error);
+      console.error('🔥 Error stack:', error.stack);
+      res.status(500).json({ message: "Failed to fetch appointments", error: error.message });
     }
   });
 
