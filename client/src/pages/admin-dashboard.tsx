@@ -882,7 +882,9 @@ export default function ClinicDashboard() {
     try {
       await apiRequest('POST', '/api/auth/register', {
         ...patientForm,
-        role: 'patient'
+        role: 'patient',
+        password: 'temp123', // Required password for new accounts
+        isApproved: true // Auto-approve patients created by admin
       })
       
       // Reset form
