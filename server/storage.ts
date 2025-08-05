@@ -74,6 +74,9 @@ export interface IStorage {
   getMedicineByName(name: string): Promise<Medicine | undefined>;
   getAllMedicines(): Promise<Medicine[]>;
   searchMedicines(query: string): Promise<Medicine[]>;
+  addMedicine(medicine: Omit<Medicine, 'id' | 'createdAt' | 'updatedAt'>): Promise<Medicine>;
+  getMedicineById(medicineId: string): Promise<Medicine | null>;
+  updateMedicine(medicineId: string, updates: Partial<Medicine>): Promise<Medicine | null>;
   
   // Prescriptions
   createPrescription(prescription: InsertPrescription): Promise<Prescription>;
@@ -173,23 +176,7 @@ export class DatabaseStorage implements IStorage {
     return await db.select().from(users).where(eq(users.role, 'patient'));
   }
 
-  async getActiveStaffCount(): Promise<number> {
-    const result = await db.select({ count: sql<number>`count(*)` })
-      .from(users)
-      .where(and(
-        sql`role IN ('doctor', 'staff')`,
-        eq(users.isActive, true)
-      ));
-    return result[0]?.count || 0;
-  }
 
-  async updateUserApproval(id: string, isApproved: boolean): Promise<User | undefined> {
-    const [updatedUser] = await db.update(users)
-      .set({ isApproved, updatedAt: new Date() })
-      .where(eq(users.id, id))
-      .returning();
-    return updatedUser || undefined;
-  }
 
   // OTP Sessions
   async createOtpSession(session: InsertOtpSession): Promise<OtpSession> {
@@ -402,19 +389,7 @@ export class DatabaseStorage implements IStorage {
     });
   }
 
-  async getAppointmentsByDateRange(startDate: Date, endDate: Date): Promise<(Appointment & { patient: User; doctor: User })[]> {
-    return await db.query.appointments.findMany({
-      where: and(
-        gte(appointments.appointmentDate, startDate),
-        lte(appointments.appointmentDate, endDate)
-      ),
-      with: {
-        patient: true,
-        doctor: true,
-      },
-      orderBy: asc(appointments.appointmentDate),
-    });
-  }
+
 
   // Queue Management
   async createQueueToken(token: InsertQueueToken): Promise<QueueToken> {
@@ -550,6 +525,24 @@ export class DatabaseStorage implements IStorage {
     return await db.select().from(medicines)
       .where(sql`${medicines.name} ILIKE ${'%' + query + '%'}`)
       .orderBy(asc(medicines.name));
+  }
+
+  async addMedicine(medicine: Omit<Medicine, 'id' | 'createdAt' | 'updatedAt'>): Promise<Medicine> {
+    const [newMedicine] = await db.insert(medicines).values(medicine).returning();
+    return newMedicine;
+  }
+
+  async getMedicineById(medicineId: string): Promise<Medicine | null> {
+    const [medicine] = await db.select().from(medicines).where(eq(medicines.id, medicineId));
+    return medicine || null;
+  }
+
+  async updateMedicine(medicineId: string, updates: Partial<Medicine>): Promise<Medicine | null> {
+    const [updatedMedicine] = await db.update(medicines)
+      .set(updates)
+      .where(eq(medicines.id, medicineId))
+      .returning();
+    return updatedMedicine || null;
   }
 
   // Prescriptions
@@ -1130,14 +1123,6 @@ export class DatabaseStorage implements IStorage {
       .where(eq(appointments.id, id))
       .returning();
     return updatedAppointment || undefined;
-  }
-
-  async updateUserApproval(id: string, isApproved: boolean): Promise<User | undefined> {
-    const [updatedUser] = await db.update(users)
-      .set({ isApproved, updatedAt: new Date() })
-      .where(eq(users.id, id))
-      .returning();
-    return updatedUser || undefined;
   }
 }
 

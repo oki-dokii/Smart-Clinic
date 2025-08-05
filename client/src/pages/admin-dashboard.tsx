@@ -111,6 +111,19 @@ export default function ClinicDashboard() {
   const [activeTab, setActiveTab] = useState('dashboard')
   const [currentTime, setCurrentTime] = useState(new Date())
   const [reportData, setReportData] = useState<any>(null)
+  const [isAddMedicineOpen, setIsAddMedicineOpen] = useState(false)
+  const [isRestockOpen, setIsRestockOpen] = useState(false)
+  const [isEditMedicineOpen, setIsEditMedicineOpen] = useState(false)
+  const [selectedMedicine, setSelectedMedicine] = useState<any>(null)
+  const [newMedicine, setNewMedicine] = useState({
+    name: '',
+    strength: '',
+    dosageForm: '',
+    manufacturer: '',
+    stock: 0,
+    description: ''
+  })
+  const [restockAmount, setRestockAmount] = useState(0)
   const { toast } = useToast()
   const queryClient = useQueryClient()
   
@@ -622,6 +635,102 @@ export default function ClinicDashboard() {
 
   const handleGenerateReport = () => {
     generateReport.mutate()
+  }
+
+  // Medicine management mutations
+  const addMedicineMutation = useMutation({
+    mutationFn: async (medicine: any) => 
+      apiRequest('/api/medicines', {
+        method: 'POST',
+        body: JSON.stringify(medicine)
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/medicines'] })
+      setIsAddMedicineOpen(false)
+      setNewMedicine({ name: '', strength: '', dosageForm: '', manufacturer: '', stock: 0, description: '' })
+      toast({ title: 'Success', description: 'Medicine added successfully' })
+    },
+    onError: (error: any) => {
+      toast({ title: 'Error', description: error.message || 'Failed to add medicine' })
+    }
+  })
+
+  const updateMedicineMutation = useMutation({
+    mutationFn: async ({ medicineId, updates }: { medicineId: string, updates: any }) => 
+      apiRequest(`/api/medicines/${medicineId}`, {
+        method: 'PUT',
+        body: JSON.stringify(updates)
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/medicines'] })
+      setIsEditMedicineOpen(false)
+      setSelectedMedicine(null)
+      toast({ title: 'Success', description: 'Medicine updated successfully' })
+    },
+    onError: (error: any) => {
+      toast({ title: 'Error', description: error.message || 'Failed to update medicine' })
+    }
+  })
+
+  const restockMedicineMutation = useMutation({
+    mutationFn: async ({ medicineId, amount }: { medicineId: string, amount: number }) => 
+      apiRequest(`/api/medicines/${medicineId}/restock`, {
+        method: 'PUT',
+        body: JSON.stringify({ amount })
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/medicines'] })
+      setIsRestockOpen(false)
+      setRestockAmount(0)
+      setSelectedMedicine(null)
+      toast({ title: 'Success', description: 'Medicine restocked successfully' })
+    },
+    onError: (error: any) => {
+      toast({ title: 'Error', description: error.message || 'Failed to restock medicine' })
+    }
+  })
+
+  const handleAddMedicine = () => {
+    if (!newMedicine.name || !newMedicine.strength || !newMedicine.dosageForm || !newMedicine.manufacturer) {
+      toast({ title: 'Error', description: 'Please fill in all required fields' })
+      return
+    }
+    addMedicineMutation.mutate(newMedicine)
+  }
+
+  const handleEditMedicine = (medicine: any) => {
+    setSelectedMedicine(medicine)
+    setNewMedicine({
+      name: medicine.name,
+      strength: medicine.strength,
+      dosageForm: medicine.dosageForm,
+      manufacturer: medicine.manufacturer,
+      stock: medicine.stock || 0,
+      description: medicine.description || ''
+    })
+    setIsEditMedicineOpen(true)
+  }
+
+  const handleUpdateMedicine = () => {
+    if (!selectedMedicine || !newMedicine.name || !newMedicine.strength || !newMedicine.dosageForm || !newMedicine.manufacturer) {
+      toast({ title: 'Error', description: 'Please fill in all required fields' })
+      return
+    }
+    updateMedicineMutation.mutate({ medicineId: selectedMedicine.id, updates: newMedicine })
+  }
+
+  const handleRestockMedicine = (medicine: any) => {
+    setSelectedMedicine(medicine)
+    setRestockAmount(0)
+    setIsRestockOpen(true)
+  }
+
+  const handleRestock = () => {
+    if (!selectedMedicine || restockAmount <= 0) {
+      toast({ title: 'Error', description: 'Please enter a valid restock amount' })
+      return
+    }
+    restockMedicineMutation.mutate({ medicineId: selectedMedicine.id, amount: restockAmount })
   }
 
   const generatePDFReport = (reportData: any) => {
@@ -2146,7 +2255,7 @@ export default function ClinicDashboard() {
                   </div>
                   <Button 
                     className="bg-blue-600 hover:bg-blue-700"
-                    onClick={() => toast({ title: 'Feature Coming Soon', description: 'Add medicine functionality will be available soon' })}
+                    onClick={() => setIsAddMedicineOpen(true)}
                     data-testid="button-add-medicine"
                   >
                     <FileText className="w-4 h-4 mr-2" />
@@ -2195,10 +2304,20 @@ export default function ClinicDashboard() {
                                 </p>
                               </div>
                               <div className="flex gap-2">
-                                <Button size="sm" variant="outline">
+                                <Button 
+                                  size="sm" 
+                                  variant="outline"
+                                  onClick={() => handleRestockMedicine(medicine)}
+                                  data-testid={`button-restock-${medicine.id}`}
+                                >
                                   Restock
                                 </Button>
-                                <Button size="sm" variant="outline">
+                                <Button 
+                                  size="sm" 
+                                  variant="outline"
+                                  onClick={() => handleEditMedicine(medicine)}
+                                  data-testid={`button-edit-${medicine.id}`}
+                                >
                                   Edit
                                 </Button>
                               </div>
@@ -2976,6 +3095,243 @@ export default function ClinicDashboard() {
               </div>
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Add Medicine Modal */}
+      <Dialog open={isAddMedicineOpen} onOpenChange={setIsAddMedicineOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Add New Medicine</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="medicine-name">Medicine Name *</Label>
+              <Input
+                id="medicine-name"
+                value={newMedicine.name}
+                onChange={(e) => setNewMedicine({ ...newMedicine, name: e.target.value })}
+                placeholder="Enter medicine name"
+                data-testid="input-medicine-name"
+              />
+            </div>
+            <div>
+              <Label htmlFor="medicine-strength">Strength *</Label>
+              <Input
+                id="medicine-strength"
+                value={newMedicine.strength}
+                onChange={(e) => setNewMedicine({ ...newMedicine, strength: e.target.value })}
+                placeholder="e.g., 250mg, 500ml"
+                data-testid="input-medicine-strength"
+              />
+            </div>
+            <div>
+              <Label htmlFor="medicine-form">Dosage Form *</Label>
+              <Select value={newMedicine.dosageForm} onValueChange={(value) => setNewMedicine({ ...newMedicine, dosageForm: value })}>
+                <SelectTrigger data-testid="select-medicine-form">
+                  <SelectValue placeholder="Select dosage form" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="tablet">Tablet</SelectItem>
+                  <SelectItem value="capsule">Capsule</SelectItem>
+                  <SelectItem value="syrup">Syrup</SelectItem>
+                  <SelectItem value="injection">Injection</SelectItem>
+                  <SelectItem value="cream">Cream</SelectItem>
+                  <SelectItem value="drops">Drops</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label htmlFor="medicine-manufacturer">Manufacturer *</Label>
+              <Input
+                id="medicine-manufacturer"
+                value={newMedicine.manufacturer}
+                onChange={(e) => setNewMedicine({ ...newMedicine, manufacturer: e.target.value })}
+                placeholder="Enter manufacturer name"
+                data-testid="input-medicine-manufacturer"
+              />
+            </div>
+            <div>
+              <Label htmlFor="medicine-stock">Initial Stock</Label>
+              <Input
+                id="medicine-stock"
+                type="number"
+                value={newMedicine.stock}
+                onChange={(e) => setNewMedicine({ ...newMedicine, stock: parseInt(e.target.value) || 0 })}
+                placeholder="0"
+                data-testid="input-medicine-stock"
+              />
+            </div>
+            <div>
+              <Label htmlFor="medicine-description">Description</Label>
+              <Textarea
+                id="medicine-description"
+                value={newMedicine.description}
+                onChange={(e) => setNewMedicine({ ...newMedicine, description: e.target.value })}
+                placeholder="Optional description"
+                data-testid="textarea-medicine-description"
+              />
+            </div>
+            <div className="flex gap-2 pt-4">
+              <Button
+                onClick={handleAddMedicine}
+                disabled={addMedicineMutation.isPending}
+                className="flex-1"
+                data-testid="button-save-medicine"
+              >
+                {addMedicineMutation.isPending ? 'Adding...' : 'Add Medicine'}
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => setIsAddMedicineOpen(false)}
+                data-testid="button-cancel-add-medicine"
+              >
+                Cancel
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Medicine Modal */}
+      <Dialog open={isEditMedicineOpen} onOpenChange={setIsEditMedicineOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Edit Medicine</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="edit-medicine-name">Medicine Name *</Label>
+              <Input
+                id="edit-medicine-name"
+                value={newMedicine.name}
+                onChange={(e) => setNewMedicine({ ...newMedicine, name: e.target.value })}
+                placeholder="Enter medicine name"
+                data-testid="input-edit-medicine-name"
+              />
+            </div>
+            <div>
+              <Label htmlFor="edit-medicine-strength">Strength *</Label>
+              <Input
+                id="edit-medicine-strength"
+                value={newMedicine.strength}
+                onChange={(e) => setNewMedicine({ ...newMedicine, strength: e.target.value })}
+                placeholder="e.g., 250mg, 500ml"
+                data-testid="input-edit-medicine-strength"
+              />
+            </div>
+            <div>
+              <Label htmlFor="edit-medicine-form">Dosage Form *</Label>
+              <Select value={newMedicine.dosageForm} onValueChange={(value) => setNewMedicine({ ...newMedicine, dosageForm: value })}>
+                <SelectTrigger data-testid="select-edit-medicine-form">
+                  <SelectValue placeholder="Select dosage form" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="tablet">Tablet</SelectItem>
+                  <SelectItem value="capsule">Capsule</SelectItem>
+                  <SelectItem value="syrup">Syrup</SelectItem>
+                  <SelectItem value="injection">Injection</SelectItem>
+                  <SelectItem value="cream">Cream</SelectItem>
+                  <SelectItem value="drops">Drops</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label htmlFor="edit-medicine-manufacturer">Manufacturer *</Label>
+              <Input
+                id="edit-medicine-manufacturer"
+                value={newMedicine.manufacturer}
+                onChange={(e) => setNewMedicine({ ...newMedicine, manufacturer: e.target.value })}
+                placeholder="Enter manufacturer name"
+                data-testid="input-edit-medicine-manufacturer"
+              />
+            </div>
+            <div>
+              <Label htmlFor="edit-medicine-stock">Stock</Label>
+              <Input
+                id="edit-medicine-stock"
+                type="number"
+                value={newMedicine.stock}
+                onChange={(e) => setNewMedicine({ ...newMedicine, stock: parseInt(e.target.value) || 0 })}
+                placeholder="0"
+                data-testid="input-edit-medicine-stock"
+              />
+            </div>
+            <div>
+              <Label htmlFor="edit-medicine-description">Description</Label>
+              <Textarea
+                id="edit-medicine-description"
+                value={newMedicine.description}
+                onChange={(e) => setNewMedicine({ ...newMedicine, description: e.target.value })}
+                placeholder="Optional description"
+                data-testid="textarea-edit-medicine-description"
+              />
+            </div>
+            <div className="flex gap-2 pt-4">
+              <Button
+                onClick={handleUpdateMedicine}
+                disabled={updateMedicineMutation.isPending}
+                className="flex-1"
+                data-testid="button-update-medicine"
+              >
+                {updateMedicineMutation.isPending ? 'Updating...' : 'Update Medicine'}
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => setIsEditMedicineOpen(false)}
+                data-testid="button-cancel-edit-medicine"
+              >
+                Cancel
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Restock Medicine Modal */}
+      <Dialog open={isRestockOpen} onOpenChange={setIsRestockOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Restock Medicine</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            {selectedMedicine && (
+              <div className="p-4 bg-gray-50 rounded-lg">
+                <h3 className="font-semibold">{selectedMedicine.name}</h3>
+                <p className="text-sm text-gray-600">{selectedMedicine.strength} - {selectedMedicine.dosageForm}</p>
+                <p className="text-sm text-gray-500">Current Stock: {selectedMedicine.stock || 0} units</p>
+              </div>
+            )}
+            <div>
+              <Label htmlFor="restock-amount">Restock Amount *</Label>
+              <Input
+                id="restock-amount"
+                type="number"
+                value={restockAmount}
+                onChange={(e) => setRestockAmount(parseInt(e.target.value) || 0)}
+                placeholder="Enter amount to add"
+                min="1"
+                data-testid="input-restock-amount"
+              />
+            </div>
+            <div className="flex gap-2 pt-4">
+              <Button
+                onClick={handleRestock}
+                disabled={restockMedicineMutation.isPending}
+                className="flex-1"
+                data-testid="button-confirm-restock"
+              >
+                {restockMedicineMutation.isPending ? 'Restocking...' : 'Restock Medicine'}
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => setIsRestockOpen(false)}
+                data-testid="button-cancel-restock"
+              >
+                Cancel
+              </Button>
+            </div>
+          </div>
         </DialogContent>
       </Dialog>
     </div>

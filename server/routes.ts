@@ -1079,6 +1079,83 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Medicine management routes
+  app.post("/api/medicines", authMiddleware, async (req, res) => {
+    try {
+      if (req.user!.role !== 'admin') {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const { name, strength, dosageForm, manufacturer, stock, description } = req.body;
+      
+      const medicine = await storage.addMedicine({
+        name,
+        strength,
+        dosageForm,
+        manufacturer,
+        stock: parseInt(stock) || 0,
+        description
+      });
+      
+      res.json(medicine);
+    } catch (error: any) {
+      res.status(400).json({ message: error.message });
+    }
+  });
+
+  app.put("/api/medicines/:medicineId", authMiddleware, async (req, res) => {
+    try {
+      if (req.user!.role !== 'admin') {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const { medicineId } = req.params;
+      const { name, strength, dosageForm, manufacturer, stock, description } = req.body;
+      
+      const medicine = await storage.updateMedicine(medicineId, {
+        name,
+        strength,
+        dosageForm,
+        manufacturer,
+        stock: parseInt(stock) || 0,
+        description
+      });
+      
+      if (!medicine) {
+        return res.status(404).json({ message: "Medicine not found" });
+      }
+      
+      res.json(medicine);
+    } catch (error: any) {
+      res.status(400).json({ message: error.message });
+    }
+  });
+
+  app.put("/api/medicines/:medicineId/restock", authMiddleware, async (req, res) => {
+    try {
+      if (req.user!.role !== 'admin') {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const { medicineId } = req.params;
+      const { amount } = req.body;
+      
+      const medicine = await storage.getMedicineById(medicineId);
+      if (!medicine) {
+        return res.status(404).json({ message: "Medicine not found" });
+      }
+      
+      const updatedMedicine = await storage.updateMedicine(medicineId, {
+        ...medicine,
+        stock: (medicine.stock || 0) + parseInt(amount)
+      });
+      
+      res.json(updatedMedicine);
+    } catch (error: any) {
+      res.status(400).json({ message: error.message });
+    }
+  });
+
   // Admin routes
   app.get("/api/appointments/admin", authMiddleware, async (req, res) => {
     try {
