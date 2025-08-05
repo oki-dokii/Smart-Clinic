@@ -8,6 +8,15 @@ Preferred communication style: Simple, everyday language.
 
 # Recent Changes
 
+## 2025-08-05 - Patient Registration and Edit Profile Cache Invalidation Fix
+- RESOLVED: Patient registration date validation issue - schema now automatically converts string dates to Date objects
+- FIXED: Edit profile UI cache invalidation problem - implemented comprehensive cache management
+- Enhanced React Query with force render dependencies and cache-busting techniques
+- Added immediate cache invalidation, refetch calls, and component re-render triggers
+- Patient registration now works with date strings via enhanced Zod schema transformation
+- Edit profile updates now immediately reflect in UI with proper cache management
+- Implemented staleTime: 0 and cacheTime: 0 for always-fresh patient data display
+
 ## 2025-08-05 - Complete Inventory and Staff Management System Fix
 - CRITICAL FIX: Added missing /api/auth/register endpoint that was causing staff additions to fail silently
 - Fixed inventory management system by adding missing stock column to database schema and running migration

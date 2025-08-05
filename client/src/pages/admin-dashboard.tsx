@@ -488,12 +488,19 @@ export default function ClinicDashboard() {
         throw new Error(error.message || 'Update failed')
       }
       
-      // Invalidate multiple cache keys to ensure UI updates
-      queryClient.invalidateQueries({ queryKey: ['/api/patients'] })
-      queryClient.invalidateQueries({ queryKey: ['/api/users'] })
-      queryClient.invalidateQueries({ queryKey: [`/api/users/${selectedPatient.id}`] })
+      // Force immediate cache invalidation and refetch
+      await queryClient.invalidateQueries({ queryKey: ['/api/patients'] })
+      await queryClient.invalidateQueries({ queryKey: ['/api/users'] })
+      await queryClient.invalidateQueries({ queryKey: [`/api/users/${selectedPatient.id}`] })
+      
+      // Force refetch of patients data immediately
+      await queryClient.refetchQueries({ queryKey: ['/api/patients'] })
+      await refetchPatients() // Direct refetch call
       
       setShowEditModal(false)
+      
+      // Force component re-render
+      setForceRender(prev => prev + 1)
       
       toast({
         title: 'Patient Profile Updated',
@@ -701,10 +708,12 @@ export default function ClinicDashboard() {
     refetchInterval: 30000
   })
 
-  // Patients data
-  const { data: patients, isLoading: patientsLoading } = useQuery<User[]>({
-    queryKey: ['/api/patients'],
-    refetchInterval: 60000
+  // Patients data with force render dependency
+  const { data: patients, isLoading: patientsLoading, refetch: refetchPatients } = useQuery<User[]>({
+    queryKey: ['/api/patients', forceRender],
+    refetchInterval: 60000,
+    staleTime: 0, // Always consider data stale to force fresh fetch
+    cacheTime: 0 // Don't cache data to ensure fresh reads
   })
 
   // All Users data (for staff management)  
