@@ -323,11 +323,10 @@ export default function ClinicDashboard() {
       })
       
       if (response.ok) {
-        // Refresh staff data
-        queryClient.invalidateQueries({ queryKey: ['/api/users'] })
-        queryClient.refetchQueries({ queryKey: ['/api/users'] })
-        await refetchUsers() // Force immediate refetch
+        // Refresh staff data with multiple cache-busting strategies
+        queryClient.removeQueries({ queryKey: ['/api/users'] })
         setForceRender(prev => prev + 1)
+        await refetchUsers() // Force immediate refetch
         
         toast({
           title: 'Staff Member Added Successfully',
@@ -348,9 +347,10 @@ export default function ClinicDashboard() {
         throw new Error(errorData.message || 'Registration failed')
       }
     } catch (error) {
+      console.error('Staff registration error:', error)
       toast({
         title: 'Registration Error',
-        description: 'Failed to add staff member. Please check the information and try again.',
+        description: error instanceof Error ? error.message : 'Failed to add staff member. Please check the information and try again.',
         variant: 'destructive'
       })
     }
@@ -507,7 +507,7 @@ export default function ClinicDashboard() {
 
   // All Users data (for staff management)  
   const { data: users, isLoading: usersLoading, error: usersError, refetch: refetchUsers } = useQuery<User[]>({
-    queryKey: ['/api/users'],
+    queryKey: ['/api/users', forceRender],
     staleTime: 0,
     gcTime: 0,
     refetchOnWindowFocus: true

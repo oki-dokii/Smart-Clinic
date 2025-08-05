@@ -87,6 +87,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.post("/api/auth/register", authMiddleware, requireRole(['admin']), async (req, res) => {
+    try {
+      const userData = insertUserSchema.parse(req.body);
+      const user = await storage.createUser(userData);
+      res.json(user);
+    } catch (error: any) {
+      console.error('Staff registration error:', error);
+      res.status(400).json({ message: error.message });
+    }
+  });
+
   app.get("/api/auth/me", authMiddleware, async (req, res) => {
     try {
       res.json({ user: req.user });
@@ -157,6 +168,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
           const users = await storage.getAllUsers();
           // Filter out patients to show only staff members
           const staffUsers = users.filter(user => user.role !== 'patient');
+          // Add cache-busting headers
+          res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
+          res.set('Pragma', 'no-cache');
+          res.set('Expires', '0');
           res.json(staffUsers);
         } else {
           const users = await storage.getUsersByRole(role as string);

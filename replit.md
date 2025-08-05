@@ -8,6 +8,15 @@ Preferred communication style: Simple, everyday language.
 
 # Recent Changes
 
+## 2025-08-05 - Complete Inventory and Staff Management System Fix
+- CRITICAL FIX: Added missing /api/auth/register endpoint that was causing staff additions to fail silently
+- Fixed inventory management system by adding missing stock column to database schema and running migration
+- Enhanced staff management with controlled dialog state management and proper cache invalidation
+- Added cache-busting headers to prevent 304 responses for staff data updates
+- Implemented comprehensive debugging system with console logging for both systems
+- Fixed React Query cache management with proper key invalidation and force rendering
+- Both inventory stock updates and staff member additions now work in real-time
+
 ## 2025-08-05 - Professional PDF Report Generation with Enhanced Styling
 - Implemented comprehensive PDF report generation with jsPDF library
 - Created professional report layout with color-coded sections and clinic branding
