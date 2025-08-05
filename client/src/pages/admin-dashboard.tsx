@@ -522,6 +522,7 @@ export default function ClinicDashboard() {
 
   // Debug: Log medicines data
   console.log('Medicines data:', medicines, 'Loading:', medicinesLoading, 'Force render:', forceRender)
+  console.log('First medicine stock:', medicines[0]?.stock)
 
   const formatTime = (date: Date) => {
     return date.toLocaleTimeString("en-US", {

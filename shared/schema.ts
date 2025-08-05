@@ -108,6 +108,7 @@ export const medicines = pgTable("medicines", {
   dosageForm: text("dosage_form").notNull(), // tablet, capsule, syrup, etc.
   strength: text("strength"), // 500mg, 10ml, etc.
   manufacturer: text("manufacturer"),
+  stock: integer("stock").notNull().default(0),
   createdAt: timestamp("created_at").notNull().default(sql`NOW()`),
 });
 
