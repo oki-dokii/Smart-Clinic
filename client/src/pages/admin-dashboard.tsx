@@ -309,6 +309,7 @@ export default function ClinicDashboard() {
       if (response.ok) {
         // Refresh staff data
         queryClient.invalidateQueries({ queryKey: ['/api/users'] })
+        refetchUsers() // Force immediate refetch
         
         toast({
           title: 'Staff Member Added Successfully',
@@ -484,20 +485,17 @@ export default function ClinicDashboard() {
     refetchInterval: 60000
   })
 
-  // All Users data (for staff management)
-  const { data: users, isLoading: usersLoading } = useQuery<User[]>({
+  // All Users data (for staff management)  
+  const { data: users, isLoading: usersLoading, error: usersError, refetch: refetchUsers } = useQuery<User[]>({
     queryKey: ['/api/users'],
-    refetchInterval: 60000
+    refetchInterval: 10000,
+    retry: 3,
+    refetchOnWindowFocus: true,
+    staleTime: 0 // Always fetch fresh data
   })
 
-  // Staff data (filtered staff members)
-  const { data: staffMembers, isLoading: staffLoading } = useQuery<User[]>({
-    queryKey: ['/api/users'],
-    queryFn: () => fetch('/api/users?role=staff,doctor', {
-      headers: { 'Authorization': `Bearer ${localStorage.getItem('auth_token')}` }
-    }).then(res => res.json()),
-    refetchInterval: 60000
-  })
+  // Filter staff members (non-patients)
+  const staffMembers = users?.filter(user => user.role !== 'patient') || []
 
   // Medicines/Inventory data
   const { data: medicines, isLoading: medicinesLoading } = useQuery<Medicine[]>({
@@ -2219,10 +2217,8 @@ export default function ClinicDashboard() {
                   </div>
                 ) : (
                   <div className="space-y-4">
-                    {users && users.length > 0 ? (
-                      users
-                        .filter(user => user.role !== 'patient')
-                        .map((staff) => (
+                    {staffMembers && staffMembers.length > 0 ? (
+                      staffMembers.map((staff) => (
                           <Card key={staff.id} className="p-4">
                             <div className="flex items-center justify-between">
                               <div className="flex items-center gap-4">
