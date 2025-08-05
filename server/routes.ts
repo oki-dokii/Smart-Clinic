@@ -1426,18 +1426,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/appointments/admin", authMiddleware, async (req, res) => {
-    try {
-      if (req.user!.role !== 'admin' && req.user!.role !== 'staff') {
-        return res.status(403).json({ message: "Admin or staff access required" });
-      }
 
-      const appointments = await storage.getAllAppointments();
-      res.json(appointments);
-    } catch (error: any) {
-      res.status(400).json({ message: error.message });
-    }
-  });
 
   app.get("/api/patients", authMiddleware, async (req, res) => {
     try {
