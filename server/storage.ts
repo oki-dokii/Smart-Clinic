@@ -380,13 +380,31 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getAppointments(userId?: string): Promise<(Appointment & { patient: User; doctor: User })[]> {
-    return await db.query.appointments.findMany({
-      with: {
-        patient: true,
-        doctor: true,
-      },
-      orderBy: asc(appointments.appointmentDate),
-    });
+    console.log('Storage: Getting appointments...');
+    
+    // Use direct query with manual joins to avoid Drizzle relation issues
+    const appointmentRecords = await db.select().from(appointments).orderBy(asc(appointments.appointmentDate));
+    console.log('Storage: Direct query found appointments:', appointmentRecords?.length || 0);
+    
+    // Manually join with users
+    const appointmentsWithUsers = [];
+    for (const appointment of appointmentRecords) {
+      const [patient] = await db.select().from(users).where(eq(users.id, appointment.patientId));
+      const [doctor] = await db.select().from(users).where(eq(users.id, appointment.doctorId));
+      
+      if (patient && doctor) {
+        appointmentsWithUsers.push({
+          ...appointment,
+          patient,
+          doctor
+        });
+      } else {
+        console.log(`Storage: Missing user data for appointment ${appointment.id} - patient: ${!!patient}, doctor: ${!!doctor}`);
+      }
+    }
+    
+    console.log('Storage: Final result with users:', appointmentsWithUsers.length);
+    return appointmentsWithUsers;
   }
 
 

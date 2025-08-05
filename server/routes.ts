@@ -1196,12 +1196,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "Admin access required" });
       }
 
-      console.log('Fetching appointments for admin...');
+      console.log('Route: Fetching appointments for admin...');
       const appointments = await storage.getAppointments();
-      console.log('Found appointments:', appointments?.length || 0);
+      console.log('Route: Found appointments:', appointments?.length || 0);
+      console.log('Route: Sample appointment:', appointments?.[0] ? JSON.stringify(appointments[0], null, 2) : 'No appointments');
       res.json(appointments || []);
     } catch (error: any) {
-      console.error('Error fetching admin appointments:', error);
+      console.error('Route: Error fetching admin appointments:', error);
       res.status(500).json({ message: "Failed to fetch appointments" });
     }
   });
