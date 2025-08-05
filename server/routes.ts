@@ -151,8 +151,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         if (req.user!.role !== 'admin') {
           return res.status(403).json({ message: "Access denied. Insufficient permissions" });
         }
-        const users = await storage.getUsersByRole(role as string);
-        res.json(users);
+        
+        // If no role specified, get all non-patient users for staff management
+        if (!role) {
+          const users = await storage.getAllUsers();
+          // Filter out patients to show only staff members
+          const staffUsers = users.filter(user => user.role !== 'patient');
+          res.json(staffUsers);
+        } else {
+          const users = await storage.getUsersByRole(role as string);
+          res.json(users);
+        }
       }
     } catch (error: any) {
       res.status(400).json({ message: error.message });

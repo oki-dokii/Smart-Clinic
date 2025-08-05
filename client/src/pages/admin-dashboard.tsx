@@ -174,6 +174,14 @@ export default function ClinicDashboard() {
     medications: ''
   })
 
+  const [staffForm, setStaffForm] = useState({
+    firstName: '',
+    lastName: '',
+    phoneNumber: '',
+    email: '',
+    role: ''
+  })
+
   // Patient record modal states
   const [selectedPatient, setSelectedPatient] = useState<User | null>(null)
   const [showHistoryModal, setShowHistoryModal] = useState(false)
@@ -268,6 +276,63 @@ export default function ClinicDashboard() {
       type: '',
       symptoms: ''
     })
+  }
+
+  const handleStaffSubmit = async () => {
+    if (!staffForm.firstName || !staffForm.lastName || !staffForm.phoneNumber || !staffForm.role) {
+      toast({
+        title: 'Validation Error',
+        description: 'Please fill in all required fields (name, phone number, and role).',
+        variant: 'destructive'
+      })
+      return
+    }
+
+    try {
+      const response = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
+        },
+        body: JSON.stringify({
+          firstName: staffForm.firstName,
+          lastName: staffForm.lastName,
+          phoneNumber: staffForm.phoneNumber,
+          email: staffForm.email || undefined,
+          role: staffForm.role,
+          password: 'temp123', // Default password
+          isApproved: true // Auto-approve staff created by admin
+        })
+      })
+      
+      if (response.ok) {
+        // Refresh staff data
+        queryClient.invalidateQueries({ queryKey: ['/api/users'] })
+        
+        toast({
+          title: 'Staff Member Added Successfully',
+          description: `${staffForm.firstName} ${staffForm.lastName} has been added to the staff.`,
+        })
+        
+        setStaffForm({
+          firstName: '',
+          lastName: '',
+          phoneNumber: '',
+          email: '',
+          role: ''
+        })
+      } else {
+        const errorData = await response.json()
+        throw new Error(errorData.message || 'Registration failed')
+      }
+    } catch (error) {
+      toast({
+        title: 'Registration Error',
+        description: 'Failed to add staff member. Please check the information and try again.',
+        variant: 'destructive'
+      })
+    }
   }
 
   const handlePrescriptionSubmit = () => {
@@ -1988,16 +2053,26 @@ export default function ClinicDashboard() {
                           <div className="grid grid-cols-2 gap-4">
                             <div>
                               <Label htmlFor="staffFirstName">First Name</Label>
-                              <Input id="staffFirstName" placeholder="First Name" />
+                              <Input 
+                                id="staffFirstName" 
+                                placeholder="First Name"
+                                value={staffForm.firstName}
+                                onChange={(e) => setStaffForm(prev => ({ ...prev, firstName: e.target.value }))}
+                              />
                             </div>
                             <div>
                               <Label htmlFor="staffLastName">Last Name</Label>
-                              <Input id="staffLastName" placeholder="Last Name" />
+                              <Input 
+                                id="staffLastName" 
+                                placeholder="Last Name"
+                                value={staffForm.lastName}
+                                onChange={(e) => setStaffForm(prev => ({ ...prev, lastName: e.target.value }))}
+                              />
                             </div>
                           </div>
                           <div>
                             <Label htmlFor="staffRole">Role</Label>
-                            <Select>
+                            <Select value={staffForm.role} onValueChange={(value) => setStaffForm(prev => ({ ...prev, role: value }))}>
                               <SelectTrigger>
                                 <SelectValue placeholder="Select role" />
                               </SelectTrigger>
@@ -2011,13 +2086,24 @@ export default function ClinicDashboard() {
                           </div>
                           <div>
                             <Label htmlFor="staffPhone">Phone Number</Label>
-                            <Input id="staffPhone" placeholder="+1234567890" />
+                            <Input 
+                              id="staffPhone" 
+                              placeholder="+1234567890"
+                              value={staffForm.phoneNumber}
+                              onChange={(e) => setStaffForm(prev => ({ ...prev, phoneNumber: e.target.value }))}
+                            />
                           </div>
                           <div>
                             <Label htmlFor="staffEmail">Email</Label>
-                            <Input id="staffEmail" type="email" placeholder="staff@smartclinic.com" />
+                            <Input 
+                              id="staffEmail" 
+                              type="email" 
+                              placeholder="staff@smartclinic.com"
+                              value={staffForm.email}
+                              onChange={(e) => setStaffForm(prev => ({ ...prev, email: e.target.value }))}
+                            />
                           </div>
-                          <Button className="w-full">
+                          <Button className="w-full" onClick={handleStaffSubmit}>
                             <UserPlus className="w-4 h-4 mr-2" />
                             Add Staff Member
                           </Button>

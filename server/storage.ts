@@ -21,6 +21,7 @@ export interface IStorage {
   approveUser(id: string): Promise<User | undefined>;
   deactivateUser(id: string): Promise<User | undefined>;
   getUsersByRole(role: string): Promise<User[]>;
+  getAllUsers(): Promise<User[]>;
   getPatients(): Promise<User[]>;
   getActiveStaffCount(): Promise<number>;
   updateUserApproval(id: string, isApproved: boolean): Promise<User | undefined>;
@@ -162,6 +163,10 @@ export class DatabaseStorage implements IStorage {
 
   async getUsersByRole(role: string): Promise<User[]> {
     return await db.select().from(users).where(eq(users.role, role as any));
+  }
+
+  async getAllUsers(): Promise<User[]> {
+    return await db.select().from(users);
   }
 
   async getPatients(): Promise<User[]> {
