@@ -292,8 +292,16 @@ export default function ClinicDashboard() {
     }
 
     try {
+      // Combine date and time into proper DateTime format
+      const appointmentDateTime = new Date(`${appointmentForm.appointmentDate}T${appointmentForm.appointmentTime}:00`)
+      
       const appointmentData = {
-        ...appointmentForm,
+        patientId: appointmentForm.patientId,
+        doctorId: appointmentForm.doctorId,
+        appointmentDate: appointmentDateTime.toISOString(),
+        type: appointmentForm.consultationType === 'video-call' ? 'telehealth' : 
+              appointmentForm.consultationType === 'home-visit' ? 'home_visit' : 'clinic',
+        symptoms: appointmentForm.symptoms,
         status: 'scheduled'
       }
 

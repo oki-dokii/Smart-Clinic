@@ -1196,7 +1196,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "Admin access required" });
       }
 
+      console.log('Fetching appointments for admin...');
       const appointments = await storage.getAppointments();
+      console.log('Found appointments:', appointments?.length || 0);
       res.json(appointments || []);
     } catch (error: any) {
       console.error('Error fetching admin appointments:', error);
