@@ -20,6 +20,9 @@ import {
   X,
   Plus,
   UserCheck,
+  Shield,
+  Database,
+  Download,
 } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -358,7 +361,16 @@ export default function ClinicDashboard() {
 
   // Check if user is admin
   const { data: currentUser } = useQuery<User>({
-    queryKey: ['/api/users/me']
+    queryKey: ['/api/users/me'],
+    retry: (failureCount, error) => {
+      // If auth fails, redirect to login
+      if (error && typeof error === 'object' && 'status' in error && error.status === 401) {
+        localStorage.removeItem('auth_token')
+        window.location.href = '/login'
+        return false
+      }
+      return failureCount < 2
+    }
   })
 
   // Redirect if not admin
@@ -558,26 +570,159 @@ export default function ClinicDashboard() {
               </div>
             </div>
 
-            <div className="flex items-center gap-3">
-              <div className="relative">
-                <Bell className="w-5 h-5 text-gray-600" />
-                <div className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full flex items-center justify-center">
-                  <span className="text-xs text-white font-medium">1</span>
-                </div>
-              </div>
+            <div className="flex items-center gap-4">
+              {/* Notifications Dropdown */}
+              <Dialog>
+                <DialogTrigger asChild>
+                  <Button 
+                    variant="ghost" 
+                    size="sm"
+                    data-testid="button-notifications"
+                  >
+                    <Bell className="w-5 h-5" />
+                    <Badge className="bg-red-500 text-white text-xs ml-1">3</Badge>
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-md">
+                  <DialogHeader>
+                    <DialogTitle>Notifications</DialogTitle>
+                  </DialogHeader>
+                  <div className="space-y-4">
+                    <div className="p-3 bg-blue-50 rounded-lg border-l-4 border-blue-500">
+                      <div className="font-medium text-sm">New Patient Registration</div>
+                      <div className="text-xs text-gray-600">John Smith registered 5 minutes ago</div>
+                    </div>
+                    <div className="p-3 bg-yellow-50 rounded-lg border-l-4 border-yellow-500">
+                      <div className="font-medium text-sm">Appointment Reminder</div>
+                      <div className="text-xs text-gray-600">Dr. Johnson has 3 appointments today</div>
+                    </div>
+                    <div className="p-3 bg-red-50 rounded-lg border-l-4 border-red-500">
+                      <div className="font-medium text-sm">Low Stock Alert</div>
+                      <div className="text-xs text-gray-600">Paracetamol running low (5 units left)</div>
+                    </div>
+                    <Button className="w-full" variant="outline">
+                      Mark All as Read
+                    </Button>
+                  </div>
+                </DialogContent>
+              </Dialog>
 
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center">
-                  <User className="w-4 h-4 text-gray-600" />
-                </div>
-                <span className="text-sm font-medium text-gray-900">
-                  {currentUser?.firstName} {currentUser?.lastName}
-                </span>
-                <Badge className="bg-blue-600 text-white text-xs px-2 py-1">Admin</Badge>
-              </div>
+              {/* Profile Dropdown */}
+              <Dialog>
+                <DialogTrigger asChild>
+                  <Button 
+                    variant="ghost" 
+                    size="sm"
+                    data-testid="button-profile"
+                  >
+                    <User className="w-5 h-5" />
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-md">
+                  <DialogHeader>
+                    <DialogTitle>Admin Profile</DialogTitle>
+                  </DialogHeader>
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-lg">
+                      <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center">
+                        <User className="w-8 h-8 text-blue-600" />
+                      </div>
+                      <div>
+                        <h3 className="font-semibold">{currentUser?.firstName} {currentUser?.lastName}</h3>
+                        <p className="text-sm text-gray-600">System Administrator</p>
+                        <p className="text-xs text-gray-500">{currentUser?.email || 'admin@smartclinic.com'}</p>
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <Button variant="outline" className="w-full justify-start">
+                        <User className="w-4 h-4 mr-2" />
+                        Edit Profile
+                      </Button>
+                      <Button variant="outline" className="w-full justify-start">
+                        <Settings className="w-4 h-4 mr-2" />
+                        Account Settings
+                      </Button>
+                      <Button variant="outline" className="w-full justify-start">
+                        <Bell className="w-4 h-4 mr-2" />
+                        Notification Preferences
+                      </Button>
+                    </div>
+                  </div>
+                </DialogContent>
+              </Dialog>
 
-              <Settings className="w-5 h-5 text-gray-600 cursor-pointer" />
-              <LogOut className="w-5 h-5 text-gray-600 cursor-pointer" onClick={handleLogout} />
+              {/* Settings Dropdown */}
+              <Dialog>
+                <DialogTrigger asChild>
+                  <Button 
+                    variant="ghost" 
+                    size="sm"
+                    data-testid="button-settings"
+                  >
+                    <Settings className="w-5 h-5" />
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-md">
+                  <DialogHeader>
+                    <DialogTitle>System Settings</DialogTitle>
+                  </DialogHeader>
+                  <div className="space-y-4">
+                    <div className="space-y-3">
+                      <h4 className="font-medium">General Settings</h4>
+                      <div className="space-y-2">
+                        <Button variant="outline" className="w-full justify-start">
+                          <Users className="w-4 h-4 mr-2" />
+                          User Management
+                        </Button>
+                        <Button variant="outline" className="w-full justify-start">
+                          <Calendar className="w-4 h-4 mr-2" />
+                          Appointment Settings
+                        </Button>
+                        <Button variant="outline" className="w-full justify-start">
+                          <FileText className="w-4 h-4 mr-2" />
+                          System Reports
+                        </Button>
+                      </div>
+                    </div>
+                    <div className="space-y-3">
+                      <h4 className="font-medium">Security</h4>
+                      <div className="space-y-2">
+                        <Button variant="outline" className="w-full justify-start">
+                          <Shield className="w-4 h-4 mr-2" />
+                          Security Settings
+                        </Button>
+                        <Button variant="outline" className="w-full justify-start">
+                          <Activity className="w-4 h-4 mr-2" />
+                          Audit Logs
+                        </Button>
+                      </div>
+                    </div>
+                    <div className="space-y-3">
+                      <h4 className="font-medium">System</h4>
+                      <div className="space-y-2">
+                        <Button variant="outline" className="w-full justify-start">
+                          <Database className="w-4 h-4 mr-2" />
+                          Database Management
+                        </Button>
+                        <Button variant="outline" className="w-full justify-start">
+                          <Download className="w-4 h-4 mr-2" />
+                          Backup & Restore
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                </DialogContent>
+              </Dialog>
+
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={handleLogout}
+                data-testid="button-logout"
+              >
+                <LogOut className="w-4 h-4 mr-2" />
+                Logout
+              </Button>
             </div>
           </div>
         </div>
