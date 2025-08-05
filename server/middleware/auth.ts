@@ -14,6 +14,7 @@ export async function authMiddleware(req: Request, res: Response, next: NextFunc
   try {
     const authHeader = req.get('Authorization');
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      console.log('🔥 AUTH MIDDLEWARE - No auth header or invalid format')
       res.status(401).json({ message: 'Authentication required' });
       return;
     }
@@ -21,9 +22,17 @@ export async function authMiddleware(req: Request, res: Response, next: NextFunc
     const token = authHeader.replace('Bearer ', '');
     const user = await authService.verifyToken(token);
     
+    console.log('🔥 AUTH MIDDLEWARE - User verified:', {
+      id: user.id,
+      role: user.role,
+      phoneNumber: user.phoneNumber,
+      isActive: user.isActive
+    })
+    
     req.user = user;
     next();
   } catch (error: any) {
+    console.log('🔥 AUTH MIDDLEWARE - Error:', error.message)
     res.status(401).json({ message: error.message });
   }
 }
