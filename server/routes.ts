@@ -1190,7 +1190,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Admin routes
-  app.get("/api/appointments/admin", authMiddleware, async (req, res) => {
+  app.get("/api/appointments/admin", (req, res, next) => {
+    console.log('🔥🔥🔥 RAW ROUTE HIT - BEFORE AUTH MIDDLEWARE');
+    console.log('🔥🔥🔥 Request method:', req.method);
+    console.log('🔥🔥🔥 Request path:', req.path);
+    console.log('🔥🔥🔥 Request headers:', req.headers.authorization ? 'Authorization header present' : 'No auth header');
+    next();
+  }, authMiddleware, async (req, res) => {
     console.log('🔥 ADMIN APPOINTMENTS ROUTE HIT - START');
     try {
       if (req.user!.role !== 'admin') {
