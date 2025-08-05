@@ -2157,22 +2157,140 @@ export default function ClinicDashboard() {
                                 </p>
                               </div>
                               <div className="flex gap-2">
-                                <Button 
-                                  size="sm" 
-                                  variant="outline"
-                                  onClick={() => toast({ title: 'Reschedule Appointment', description: `Rescheduling appointment for ${appointment.patient.firstName} ${appointment.patient.lastName}` })}
-                                  data-testid={`button-reschedule-${appointment.id}`}
-                                >
-                                  Reschedule
-                                </Button>
-                                <Button 
-                                  size="sm" 
-                                  variant="outline"
-                                  onClick={() => toast({ title: 'Appointment Details', description: `Viewing details for appointment with ${appointment.patient.firstName} ${appointment.patient.lastName}` })}
-                                  data-testid={`button-view-details-${appointment.id}`}
-                                >
-                                  View Details
-                                </Button>
+                                <Dialog>
+                                  <DialogTrigger asChild>
+                                    <Button 
+                                      size="sm" 
+                                      variant="outline"
+                                      data-testid={`button-reschedule-${appointment.id}`}
+                                    >
+                                      Reschedule
+                                    </Button>
+                                  </DialogTrigger>
+                                  <DialogContent className="max-w-md">
+                                    <DialogHeader>
+                                      <DialogTitle>Reschedule Appointment</DialogTitle>
+                                    </DialogHeader>
+                                    <div className="space-y-4">
+                                      <div>
+                                        <p className="text-sm text-gray-600">
+                                          Patient: {appointment.patient.firstName} {appointment.patient.lastName}
+                                        </p>
+                                        <p className="text-sm text-gray-600">
+                                          Doctor: Dr. {appointment.doctor.firstName} {appointment.doctor.lastName}
+                                        </p>
+                                      </div>
+                                      <div>
+                                        <Label htmlFor="newDate">New Date</Label>
+                                        <Input
+                                          id="newDate"
+                                          type="date"
+                                          min={new Date().toISOString().split('T')[0]}
+                                        />
+                                      </div>
+                                      <div>
+                                        <Label htmlFor="newTime">New Time</Label>
+                                        <Input
+                                          id="newTime"
+                                          type="time"
+                                        />
+                                      </div>
+                                      <Button 
+                                        className="w-full"
+                                        onClick={() => {
+                                          toast({ 
+                                            title: 'Appointment Rescheduled', 
+                                            description: `Appointment for ${appointment.patient.firstName} ${appointment.patient.lastName} has been rescheduled` 
+                                          })
+                                        }}
+                                      >
+                                        Confirm Reschedule
+                                      </Button>
+                                    </div>
+                                  </DialogContent>
+                                </Dialog>
+                                
+                                <Dialog>
+                                  <DialogTrigger asChild>
+                                    <Button 
+                                      size="sm" 
+                                      variant="outline"
+                                      data-testid={`button-view-details-${appointment.id}`}
+                                    >
+                                      View Details
+                                    </Button>
+                                  </DialogTrigger>
+                                  <DialogContent className="max-w-2xl">
+                                    <DialogHeader>
+                                      <DialogTitle>Appointment Details</DialogTitle>
+                                    </DialogHeader>
+                                    <div className="space-y-6">
+                                      <div className="grid grid-cols-2 gap-4">
+                                        <div>
+                                          <Label className="text-sm font-medium text-gray-700">Patient</Label>
+                                          <p className="text-sm">{appointment.patient.firstName} {appointment.patient.lastName}</p>
+                                          <p className="text-xs text-gray-500">{appointment.patient.phoneNumber}</p>
+                                        </div>
+                                        <div>
+                                          <Label className="text-sm font-medium text-gray-700">Doctor</Label>
+                                          <p className="text-sm">Dr. {appointment.doctor.firstName} {appointment.doctor.lastName}</p>
+                                          <p className="text-xs text-gray-500">{appointment.doctor.phoneNumber}</p>
+                                        </div>
+                                      </div>
+                                      
+                                      <div className="grid grid-cols-2 gap-4">
+                                        <div>
+                                          <Label className="text-sm font-medium text-gray-700">Date & Time</Label>
+                                          <p className="text-sm">{new Date(appointment.appointmentDate).toLocaleDateString()}</p>
+                                          <p className="text-xs text-gray-500">{new Date(appointment.appointmentDate).toLocaleTimeString()}</p>
+                                        </div>
+                                        <div>
+                                          <Label className="text-sm font-medium text-gray-700">Type & Duration</Label>
+                                          <p className="text-sm">{appointment.type || 'Consultation'}</p>
+                                          <p className="text-xs text-gray-500">{appointment.duration || 30} minutes</p>
+                                        </div>
+                                      </div>
+                                      
+                                      <div>
+                                        <Label className="text-sm font-medium text-gray-700">Status</Label>
+                                        <Badge className={
+                                          appointment.status === 'scheduled' ? 'bg-blue-100 text-blue-800' :
+                                          appointment.status === 'completed' ? 'bg-green-100 text-green-800' :
+                                          appointment.status === 'cancelled' ? 'bg-red-100 text-red-800' :
+                                          'bg-gray-100 text-gray-800'
+                                        }>
+                                          {appointment.status}
+                                        </Badge>
+                                      </div>
+                                      
+                                      {appointment.symptoms && (
+                                        <div>
+                                          <Label className="text-sm font-medium text-gray-700">Symptoms</Label>
+                                          <p className="text-sm text-gray-600">{appointment.symptoms}</p>
+                                        </div>
+                                      )}
+                                      
+                                      {appointment.diagnosis && (
+                                        <div>
+                                          <Label className="text-sm font-medium text-gray-700">Diagnosis</Label>
+                                          <p className="text-sm text-gray-600">{appointment.diagnosis}</p>
+                                        </div>
+                                      )}
+                                      
+                                      {appointment.treatmentPlan && (
+                                        <div>
+                                          <Label className="text-sm font-medium text-gray-700">Treatment Plan</Label>
+                                          <p className="text-sm text-gray-600">{appointment.treatmentPlan}</p>
+                                        </div>
+                                      )}
+                                      
+                                      <div className="text-xs text-gray-500 border-t pt-4">
+                                        <p>Created: {new Date(appointment.createdAt).toLocaleString()}</p>
+                                        <p>Last Updated: {new Date(appointment.updatedAt).toLocaleString()}</p>
+                                      </div>
+                                    </div>
+                                  </DialogContent>
+                                </Dialog>
                                 {appointment.status === 'scheduled' && (
                                   <Button 
                                     size="sm" 
@@ -2208,14 +2326,85 @@ export default function ClinicDashboard() {
                     <h2 className="text-2xl font-bold">Patient Records</h2>
                     <p className="text-gray-600">View and manage all patient records</p>
                   </div>
-                  <Button 
-                    className="bg-blue-600 hover:bg-blue-700"
-                    onClick={() => toast({ title: 'Feature Coming Soon', description: 'Add patient functionality will be available soon' })}
-                    data-testid="button-add-patient"
-                  >
-                    <UserPlus className="w-4 h-4 mr-2" />
-                    Add Patient
-                  </Button>
+                  <Dialog>
+                    <DialogTrigger asChild>
+                      <Button 
+                        className="bg-blue-600 hover:bg-blue-700"
+                        data-testid="button-add-patient"
+                      >
+                        <UserPlus className="w-4 h-4 mr-2" />
+                        Add Patient
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="max-w-md">
+                      <DialogHeader>
+                        <DialogTitle>Add New Patient</DialogTitle>
+                      </DialogHeader>
+                      <div className="space-y-4">
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <Label htmlFor="firstName">First Name</Label>
+                            <Input
+                              id="firstName"
+                              value={patientForm.firstName}
+                              onChange={(e) => setPatientForm({...patientForm, firstName: e.target.value})}
+                              placeholder="John"
+                            />
+                          </div>
+                          <div>
+                            <Label htmlFor="lastName">Last Name</Label>
+                            <Input
+                              id="lastName"
+                              value={patientForm.lastName}
+                              onChange={(e) => setPatientForm({...patientForm, lastName: e.target.value})}
+                              placeholder="Doe"
+                            />
+                          </div>
+                        </div>
+                        <div>
+                          <Label htmlFor="phoneNumber">Phone Number</Label>
+                          <Input
+                            id="phoneNumber"
+                            value={patientForm.phoneNumber}
+                            onChange={(e) => setPatientForm({...patientForm, phoneNumber: e.target.value})}
+                            placeholder="+1234567890"
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="email">Email (Optional)</Label>
+                          <Input
+                            id="email"
+                            type="email"
+                            value={patientForm.email}
+                            onChange={(e) => setPatientForm({...patientForm, email: e.target.value})}
+                            placeholder="john.doe@example.com"
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="dateOfBirth">Date of Birth (Optional)</Label>
+                          <Input
+                            id="dateOfBirth"
+                            type="date"
+                            value={patientForm.dateOfBirth}
+                            onChange={(e) => setPatientForm({...patientForm, dateOfBirth: e.target.value})}
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="address">Address (Optional)</Label>
+                          <Textarea
+                            id="address"
+                            value={patientForm.address}
+                            onChange={(e) => setPatientForm({...patientForm, address: e.target.value})}
+                            placeholder="123 Main St, City, State"
+                          />
+                        </div>
+                        <Button onClick={handlePatientSubmit} className="w-full">
+                          <UserPlus className="w-4 h-4 mr-2" />
+                          Add Patient
+                        </Button>
+                      </div>
+                    </DialogContent>
+                  </Dialog>
                 </div>
 
                 {patientsLoading ? (

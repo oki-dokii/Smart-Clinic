@@ -1474,21 +1474,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put("/api/appointments/:appointmentId/status", authMiddleware, async (req, res) => {
-    try {
-      if (req.user!.role !== 'admin' && req.user!.role !== 'staff') {
-        return res.status(403).json({ message: "Admin or staff access required" });
-      }
 
-      const { appointmentId } = req.params;
-      const { status } = z.object({ status: z.string() }).parse(req.body);
-      
-      const result = await storage.updateAppointmentStatus(appointmentId, status);
-      res.json(result);
-    } catch (error: any) {
-      res.status(400).json({ message: error.message });
-    }
-  });
 
   app.put("/api/users/:userId/approve", authMiddleware, async (req, res) => {
     try {
