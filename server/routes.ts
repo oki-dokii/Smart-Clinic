@@ -254,6 +254,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Admin appointment routes (MUST come before general routes)
+  app.get("/api/appointments/admin", (req, res, next) => {
+    console.log('🔥🔥🔥 RAW ROUTE HIT - BEFORE AUTH MIDDLEWARE');
+    console.log('🔥🔥🔥 Request method:', req.method);
+    console.log('🔥🔥🔥 Request path:', req.path);
+    console.log('🔥🔥🔥 Request headers:', req.headers.authorization ? 'Authorization header present' : 'No auth header');
+    next();
+  }, authMiddleware, async (req, res) => {
+    console.log('🔥 ADMIN APPOINTMENTS ROUTE HIT - START');
+    try {
+      if (req.user!.role !== 'admin') {
+        console.log('🔥 Admin role check failed:', req.user!.role);
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      console.log('🔥 About to call storage.getAppointments()');
+      const appointments = await storage.getAppointments();
+      console.log('🔥 Found appointments:', appointments?.length || 0);
+      
+      if (appointments && appointments.length > 0) {
+        console.log('🔥 Sample appointment:', JSON.stringify(appointments[0], null, 2));
+      } else {
+        console.log('🔥 No appointments returned from storage');
+      }
+      
+      console.log('🔥 Sending response with', appointments?.length || 0, 'appointments');
+      res.json(appointments || []);
+    } catch (error: any) {
+      console.error('🔥 ERROR in admin appointments route:', error);
+      console.error('🔥 Error stack:', error.stack);
+      res.status(500).json({ message: "Failed to fetch appointments", error: error.message });
+    }
+  });
+
   // Appointment routes
   app.post("/api/appointments", authMiddleware, async (req, res) => {
     try {
@@ -1189,40 +1223,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Admin routes
-  app.get("/api/appointments/admin", (req, res, next) => {
-    console.log('🔥🔥🔥 RAW ROUTE HIT - BEFORE AUTH MIDDLEWARE');
-    console.log('🔥🔥🔥 Request method:', req.method);
-    console.log('🔥🔥🔥 Request path:', req.path);
-    console.log('🔥🔥🔥 Request headers:', req.headers.authorization ? 'Authorization header present' : 'No auth header');
-    next();
-  }, authMiddleware, async (req, res) => {
-    console.log('🔥 ADMIN APPOINTMENTS ROUTE HIT - START');
-    try {
-      if (req.user!.role !== 'admin') {
-        console.log('🔥 Admin role check failed:', req.user!.role);
-        return res.status(403).json({ message: "Admin access required" });
-      }
-
-      console.log('🔥 About to call storage.getAppointments()');
-      const appointments = await storage.getAppointments();
-      console.log('🔥 Found appointments:', appointments?.length || 0);
-      
-      if (appointments && appointments.length > 0) {
-        console.log('🔥 Sample appointment:', JSON.stringify(appointments[0], null, 2));
-      } else {
-        console.log('🔥 No appointments returned from storage');
-      }
-      
-      console.log('🔥 Sending response with', appointments?.length || 0, 'appointments');
-      res.json(appointments || []);
-    } catch (error: any) {
-      console.error('🔥 ERROR in admin appointments route:', error);
-      console.error('🔥 Error stack:', error.stack);
-      res.status(500).json({ message: "Failed to fetch appointments", error: error.message });
-    }
-  });
-
+  // Other admin routes
   app.get("/api/queue/admin", authMiddleware, async (req, res) => {
     try {
       if (req.user!.role !== 'admin') {
