@@ -5,7 +5,7 @@ import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
 // Enums
-export const userRoleEnum = pgEnum("user_role", ["admin", "staff", "doctor", "patient"]);
+export const userRoleEnum = pgEnum("user_role", ["admin", "staff", "doctor", "nurse", "patient"]);
 export const appointmentStatusEnum = pgEnum("appointment_status", ["scheduled", "confirmed", "in_progress", "completed", "cancelled", "no_show"]);
 export const appointmentTypeEnum = pgEnum("appointment_type", ["clinic", "home_visit", "telehealth"]);
 export const queueStatusEnum = pgEnum("queue_status", ["waiting", "called", "in_progress", "completed", "missed"]);
