@@ -272,6 +272,13 @@ export const insertUserSchema = createInsertSchema(users).omit({
   id: true,
   createdAt: true,
   updatedAt: true,
+}).extend({
+  // Allow dateOfBirth to accept string input and convert to Date
+  dateOfBirth: z.union([
+    z.date(),
+    z.string().transform((str) => new Date(str)),
+    z.null()
+  ]).optional()
 });
 
 export const insertOtpSessionSchema = createInsertSchema(otpSessions).omit({

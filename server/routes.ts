@@ -89,8 +89,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/auth/register", authMiddleware, requireRole(['admin']), async (req, res) => {
     try {
-      const userData = insertUserSchema.parse(req.body);
-      const user = await storage.createUser(userData);
+      const validatedData = insertUserSchema.parse(req.body);
+      const user = await storage.createUser(validatedData);
       res.json(user);
     } catch (error: any) {
       console.error('Staff registration error:', error);
@@ -109,8 +109,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // User management routes
   app.post("/api/users", async (req, res) => {
     try {
-      const userData = insertUserSchema.parse(req.body);
-      const user = await storage.createUser(userData);
+      const validatedData = insertUserSchema.parse(req.body);
+      const user = await storage.createUser(validatedData);
       res.json(user);
     } catch (error: any) {
       res.status(400).json({ message: error.message });
