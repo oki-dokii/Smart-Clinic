@@ -89,6 +89,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/auth/register", authMiddleware, requireRole(['admin']), async (req, res) => {
     try {
+      console.log('🔥 STAFF REGISTRATION - Request body:', JSON.stringify(req.body, null, 2));
+      console.log('🔥 STAFF REGISTRATION - Body keys:', Object.keys(req.body));
+      console.log('🔥 STAFF REGISTRATION - Password field:', req.body.password);
+      
       const validatedData = insertUserSchema.parse(req.body);
       const user = await storage.createUser(validatedData);
       res.json(user);
