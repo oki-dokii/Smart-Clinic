@@ -473,7 +473,13 @@ export default function ClinicDashboard() {
                           </div>
                           <div className="flex items-center gap-2">
                             <span className="text-xs text-gray-500">2 min ago</span>
-                            <Button size="sm" variant="outline" className="text-xs bg-transparent">
+                            <Button 
+                              size="sm" 
+                              variant="outline" 
+                              className="text-xs bg-transparent"
+                              onClick={() => toast({ title: 'Alert Resolved', description: 'Patient in Room 3 alert has been resolved' })}
+                              data-testid="button-resolve-room3"
+                            >
                               Resolve
                             </Button>
                           </div>
@@ -486,7 +492,13 @@ export default function ClinicDashboard() {
                           </div>
                           <div className="flex items-center gap-2">
                             <span className="text-xs text-gray-500">15 min ago</span>
-                            <Button size="sm" variant="outline" className="text-xs bg-transparent">
+                            <Button 
+                              size="sm" 
+                              variant="outline" 
+                              className="text-xs bg-transparent"
+                              onClick={() => toast({ title: 'Stock Alert Resolved', description: 'Paracetamol stock alert has been resolved' })}
+                              data-testid="button-resolve-paracetamol"
+                            >
                               Resolve
                             </Button>
                           </div>
@@ -499,7 +511,13 @@ export default function ClinicDashboard() {
                           </div>
                           <div className="flex items-center gap-2">
                             <span className="text-xs text-gray-500">30 min ago</span>
-                            <Button size="sm" variant="outline" className="text-xs bg-transparent">
+                            <Button 
+                              size="sm" 
+                              variant="outline" 
+                              className="text-xs bg-transparent"
+                              onClick={() => toast({ title: 'Delay Alert Resolved', description: 'Dr. Johnson appointment delay alert has been resolved' })}
+                              data-testid="button-resolve-johnson"
+                            >
                               Resolve
                             </Button>
                           </div>
@@ -519,19 +537,38 @@ export default function ClinicDashboard() {
                     </CardHeader>
                     <CardContent>
                       <div className="grid grid-cols-2 gap-4">
-                        <Button className="h-20 flex-col gap-2 bg-blue-600 hover:bg-blue-700">
+                        <Button 
+                          className="h-20 flex-col gap-2 bg-blue-600 hover:bg-blue-700"
+                          onClick={() => toast({ title: 'Add Patient', description: 'Opening patient registration form' })}
+                          data-testid="button-quick-add-patient"
+                        >
                           <UserPlus className="w-6 h-6" />
                           <span>Add Patient</span>
                         </Button>
-                        <Button variant="outline" className="h-20 flex-col gap-2 bg-transparent">
+                        <Button 
+                          variant="outline" 
+                          className="h-20 flex-col gap-2 bg-transparent"
+                          onClick={() => toast({ title: 'Schedule Appointment', description: 'Opening appointment scheduler' })}
+                          data-testid="button-quick-schedule"
+                        >
                           <Calendar className="w-6 h-6" />
                           <span>Schedule</span>
                         </Button>
-                        <Button variant="outline" className="h-20 flex-col gap-2 bg-transparent">
+                        <Button 
+                          variant="outline" 
+                          className="h-20 flex-col gap-2 bg-transparent"
+                          onClick={() => toast({ title: 'Prescriptions', description: 'Opening prescription management' })}
+                          data-testid="button-quick-prescriptions"
+                        >
                           <FileText className="w-6 h-6" />
                           <span>Prescriptions</span>
                         </Button>
-                        <Button variant="outline" className="h-20 flex-col gap-2 bg-transparent">
+                        <Button 
+                          variant="outline" 
+                          className="h-20 flex-col gap-2 bg-transparent"
+                          onClick={() => toast({ title: 'Patient Discharge', description: 'Opening discharge management' })}
+                          data-testid="button-quick-discharge"
+                        >
                           <LogOut className="w-6 h-6" />
                           <span>Discharge</span>
                         </Button>
