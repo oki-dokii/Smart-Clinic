@@ -649,18 +649,130 @@ export default function ClinicDashboard() {
                       </div>
                     </div>
                     <div className="space-y-2">
-                      <Button variant="outline" className="w-full justify-start">
-                        <User className="w-4 h-4 mr-2" />
-                        Edit Profile
-                      </Button>
-                      <Button variant="outline" className="w-full justify-start">
-                        <Settings className="w-4 h-4 mr-2" />
-                        Account Settings
-                      </Button>
-                      <Button variant="outline" className="w-full justify-start">
-                        <Bell className="w-4 h-4 mr-2" />
-                        Notification Preferences
-                      </Button>
+                      <Dialog>
+                        <DialogTrigger asChild>
+                          <Button variant="outline" className="w-full justify-start">
+                            <User className="w-4 h-4 mr-2" />
+                            Edit Profile
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent className="max-w-md">
+                          <DialogHeader>
+                            <DialogTitle>Edit Admin Profile</DialogTitle>
+                          </DialogHeader>
+                          <div className="space-y-4">
+                            <div className="space-y-2">
+                              <Label htmlFor="edit-firstName">First Name</Label>
+                              <Input 
+                                id="edit-firstName" 
+                                defaultValue={currentUser?.firstName || 'Admin'}
+                                placeholder="First Name"
+                              />
+                            </div>
+                            <div className="space-y-2">
+                              <Label htmlFor="edit-lastName">Last Name</Label>
+                              <Input 
+                                id="edit-lastName" 
+                                defaultValue={currentUser?.lastName || 'User'}
+                                placeholder="Last Name"
+                              />
+                            </div>
+                            <div className="space-y-2">
+                              <Label htmlFor="edit-email">Email</Label>
+                              <Input 
+                                id="edit-email" 
+                                type="email"
+                                defaultValue={currentUser?.email || 'admin@smartclinic.com'}
+                                placeholder="Email Address"
+                              />
+                            </div>
+                            <div className="space-y-2">
+                              <Label htmlFor="edit-phone">Phone Number</Label>
+                              <Input 
+                                id="edit-phone" 
+                                defaultValue={currentUser?.phoneNumber || '+1234567890'}
+                                placeholder="Phone Number"
+                                disabled
+                              />
+                            </div>
+                            <div className="flex gap-2">
+                              <Button className="flex-1">Save Changes</Button>
+                              <Button variant="outline" className="flex-1">Cancel</Button>
+                            </div>
+                          </div>
+                        </DialogContent>
+                      </Dialog>
+                      
+                      <Dialog>
+                        <DialogTrigger asChild>
+                          <Button variant="outline" className="w-full justify-start">
+                            <Settings className="w-4 h-4 mr-2" />
+                            Account Settings
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent className="max-w-md">
+                          <DialogHeader>
+                            <DialogTitle>Account Settings</DialogTitle>
+                          </DialogHeader>
+                          <div className="space-y-4">
+                            <div className="space-y-3">
+                              <h4 className="font-medium">Security</h4>
+                              <div className="space-y-2">
+                                <Button variant="outline" className="w-full justify-start">
+                                  <Shield className="w-4 h-4 mr-2" />
+                                  Change Password
+                                </Button>
+                                <Button variant="outline" className="w-full justify-start">
+                                  <Activity className="w-4 h-4 mr-2" />
+                                  Two-Factor Authentication
+                                </Button>
+                              </div>
+                            </div>
+                            <div className="space-y-3">
+                              <h4 className="font-medium">Sessions</h4>
+                              <div className="space-y-2">
+                                <Button variant="outline" className="w-full justify-start">
+                                  <LogOut className="w-4 h-4 mr-2" />
+                                  Sign Out All Devices
+                                </Button>
+                              </div>
+                            </div>
+                          </div>
+                        </DialogContent>
+                      </Dialog>
+                      
+                      <Dialog>
+                        <DialogTrigger asChild>
+                          <Button variant="outline" className="w-full justify-start">
+                            <Bell className="w-4 h-4 mr-2" />
+                            Notification Preferences
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent className="max-w-md">
+                          <DialogHeader>
+                            <DialogTitle>Notification Settings</DialogTitle>
+                          </DialogHeader>
+                          <div className="space-y-4">
+                            <div className="flex items-center justify-between">
+                              <span>Email Notifications</span>
+                              <input type="checkbox" defaultChecked className="rounded" />
+                            </div>
+                            <div className="flex items-center justify-between">
+                              <span>SMS Alerts</span>
+                              <input type="checkbox" defaultChecked className="rounded" />
+                            </div>
+                            <div className="flex items-center justify-between">
+                              <span>Emergency Alerts</span>
+                              <input type="checkbox" defaultChecked className="rounded" />
+                            </div>
+                            <div className="flex items-center justify-between">
+                              <span>System Updates</span>
+                              <input type="checkbox" className="rounded" />
+                            </div>
+                            <Button className="w-full">Save Preferences</Button>
+                          </div>
+                        </DialogContent>
+                      </Dialog>
                     </div>
                   </div>
                 </DialogContent>
@@ -685,18 +797,113 @@ export default function ClinicDashboard() {
                     <div className="space-y-3">
                       <h4 className="font-medium">General Settings</h4>
                       <div className="space-y-2">
-                        <Button variant="outline" className="w-full justify-start">
-                          <Users className="w-4 h-4 mr-2" />
-                          User Management
-                        </Button>
-                        <Button variant="outline" className="w-full justify-start">
-                          <Calendar className="w-4 h-4 mr-2" />
-                          Appointment Settings
-                        </Button>
-                        <Button variant="outline" className="w-full justify-start">
-                          <FileText className="w-4 h-4 mr-2" />
-                          System Reports
-                        </Button>
+                        <Dialog>
+                          <DialogTrigger asChild>
+                            <Button variant="outline" className="w-full justify-start">
+                              <Users className="w-4 h-4 mr-2" />
+                              User Management
+                            </Button>
+                          </DialogTrigger>
+                          <DialogContent className="max-w-2xl">
+                            <DialogHeader>
+                              <DialogTitle>User Management</DialogTitle>
+                            </DialogHeader>
+                            <div className="space-y-4">
+                              <div className="grid grid-cols-3 gap-4">
+                                <div className="text-center p-4 bg-blue-50 rounded-lg">
+                                  <div className="text-2xl font-bold text-blue-600">{patients?.length || 0}</div>
+                                  <div className="text-sm text-gray-600">Active Patients</div>
+                                </div>
+                                <div className="text-center p-4 bg-green-50 rounded-lg">
+                                  <div className="text-2xl font-bold text-green-600">3</div>
+                                  <div className="text-sm text-gray-600">Doctors</div>
+                                </div>
+                                <div className="text-center p-4 bg-purple-50 rounded-lg">
+                                  <div className="text-2xl font-bold text-purple-600">8</div>
+                                  <div className="text-sm text-gray-600">Staff Members</div>
+                                </div>
+                              </div>
+                              <div className="space-y-2">
+                                <Button className="w-full">Add New User</Button>
+                                <Button variant="outline" className="w-full">Manage Permissions</Button>
+                                <Button variant="outline" className="w-full">View User Activity</Button>
+                              </div>
+                            </div>
+                          </DialogContent>
+                        </Dialog>
+                        
+                        <Dialog>
+                          <DialogTrigger asChild>
+                            <Button variant="outline" className="w-full justify-start">
+                              <Calendar className="w-4 h-4 mr-2" />
+                              Appointment Settings
+                            </Button>
+                          </DialogTrigger>
+                          <DialogContent className="max-w-md">
+                            <DialogHeader>
+                              <DialogTitle>Appointment Configuration</DialogTitle>
+                            </DialogHeader>
+                            <div className="space-y-4">
+                              <div className="space-y-2">
+                                <Label>Default Appointment Duration</Label>
+                                <Select defaultValue="30">
+                                  <SelectTrigger>
+                                    <SelectValue />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="15">15 minutes</SelectItem>
+                                    <SelectItem value="30">30 minutes</SelectItem>
+                                    <SelectItem value="45">45 minutes</SelectItem>
+                                    <SelectItem value="60">1 hour</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                              <div className="space-y-2">
+                                <Label>Booking Window (days ahead)</Label>
+                                <Input type="number" defaultValue="30" />
+                              </div>
+                              <div className="flex items-center justify-between">
+                                <span>Allow Same-Day Booking</span>
+                                <input type="checkbox" defaultChecked className="rounded" />
+                              </div>
+                              <Button className="w-full">Save Settings</Button>
+                            </div>
+                          </DialogContent>
+                        </Dialog>
+                        
+                        <Dialog>
+                          <DialogTrigger asChild>
+                            <Button variant="outline" className="w-full justify-start">
+                              <FileText className="w-4 h-4 mr-2" />
+                              System Reports
+                            </Button>
+                          </DialogTrigger>
+                          <DialogContent className="max-w-lg">
+                            <DialogHeader>
+                              <DialogTitle>Generate Reports</DialogTitle>
+                            </DialogHeader>
+                            <div className="space-y-4">
+                              <div className="space-y-2">
+                                <Button variant="outline" className="w-full justify-start">
+                                  <Users className="w-4 h-4 mr-2" />
+                                  Patient Activity Report
+                                </Button>
+                                <Button variant="outline" className="w-full justify-start">
+                                  <Calendar className="w-4 h-4 mr-2" />
+                                  Appointment Analytics
+                                </Button>
+                                <Button variant="outline" className="w-full justify-start">
+                                  <DollarSign className="w-4 h-4 mr-2" />
+                                  Revenue Summary
+                                </Button>
+                                <Button variant="outline" className="w-full justify-start">
+                                  <Activity className="w-4 h-4 mr-2" />
+                                  System Performance
+                                </Button>
+                              </div>
+                            </div>
+                          </DialogContent>
+                        </Dialog>
                       </div>
                     </div>
                     <div className="space-y-3">
