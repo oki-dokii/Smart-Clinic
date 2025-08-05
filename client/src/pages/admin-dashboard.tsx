@@ -2410,9 +2410,13 @@ export default function ClinicDashboard() {
                     <h2 className="text-2xl font-bold">Reports & Analytics</h2>
                     <p className="text-gray-600">View comprehensive reports and analytics</p>
                   </div>
-                  <Button className="bg-blue-600 hover:bg-blue-700">
+                  <Button 
+                    className="bg-blue-600 hover:bg-blue-700"
+                    onClick={handleGenerateReport}
+                    disabled={generateReport.isPending}
+                  >
                     <BarChart3 className="w-4 h-4 mr-2" />
-                    Generate Report
+                    {generateReport.isPending ? 'Generating...' : 'Generate Report'}
                   </Button>
                 </div>
 
@@ -2429,23 +2433,92 @@ export default function ClinicDashboard() {
                       <div className="space-y-4">
                         <div className="flex justify-between items-center">
                           <span className="text-sm text-gray-600">Total Patients</span>
-                          <span className="font-semibold">{stats?.patientsToday || 0}</span>
+                          <span className="font-semibold">{reportData?.summary?.totalPatients || stats?.patientsToday || 0}</span>
                         </div>
                         <div className="flex justify-between items-center">
                           <span className="text-sm text-gray-600">Completed Appointments</span>
-                          <span className="font-semibold">{stats?.completedAppointments || 0}</span>
+                          <span className="font-semibold">{reportData?.summary?.completedAppointments || stats?.completedAppointments || 0}</span>
                         </div>
                         <div className="flex justify-between items-center">
                           <span className="text-sm text-gray-600">Revenue</span>
-                          <span className="font-semibold">${stats?.revenue || 0}</span>
+                          <span className="font-semibold">${reportData?.summary?.revenue || stats?.revenue || 0}</span>
                         </div>
                         <div className="flex justify-between items-center">
                           <span className="text-sm text-gray-600">Active Staff</span>
-                          <span className="font-semibold">{stats?.activeStaff || 0}</span>
+                          <span className="font-semibold">{reportData?.summary?.activeStaff || stats?.activeStaff || 0}</span>
                         </div>
+                        {reportData && (
+                          <>
+                            <div className="flex justify-between items-center">
+                              <span className="text-sm text-gray-600">Queue Processed</span>
+                              <span className="font-semibold">{reportData.summary.queueProcessed}</span>
+                            </div>
+                            <div className="flex justify-between items-center">
+                              <span className="text-sm text-gray-600">Completion Rate</span>
+                              <span className="font-semibold">{reportData.appointments.completionRate}%</span>
+                            </div>
+                          </>
+                        )}
                       </div>
                     </CardContent>
                   </Card>
+
+                  {/* Enhanced Report Display */}
+                  {reportData && (
+                    <Card>
+                      <CardHeader>
+                        <CardTitle className="flex items-center gap-2">
+                          <FileText className="w-5 h-5 text-purple-500" />
+                          Generated Report Details
+                        </CardTitle>
+                        <p className="text-sm text-gray-500">
+                          Generated on {new Date(reportData.generatedAt).toLocaleString()} by {reportData.generatedBy}
+                        </p>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="space-y-2">
+                            <h4 className="font-medium text-gray-700">Appointments</h4>
+                            <div className="text-sm space-y-1">
+                              <div className="flex justify-between">
+                                <span>Total:</span>
+                                <span className="font-medium">{reportData.appointments.total}</span>
+                              </div>
+                              <div className="flex justify-between">
+                                <span>Completed:</span>
+                                <span className="font-medium text-green-600">{reportData.appointments.completed}</span>
+                              </div>
+                              <div className="flex justify-between">
+                                <span>Cancelled:</span>
+                                <span className="font-medium text-red-600">{reportData.appointments.cancelled}</span>
+                              </div>
+                              <div className="flex justify-between">
+                                <span>Completion Rate:</span>
+                                <span className="font-medium">{reportData.appointments.completionRate}%</span>
+                              </div>
+                            </div>
+                          </div>
+                          <div className="space-y-2">
+                            <h4 className="font-medium text-gray-700">Financial</h4>
+                            <div className="text-sm space-y-1">
+                              <div className="flex justify-between">
+                                <span>Gross Revenue:</span>
+                                <span className="font-medium text-green-600">${reportData.financial.grossRevenue}</span>
+                              </div>
+                              <div className="flex justify-between">
+                                <span>Consultation Fees:</span>
+                                <span className="font-medium">${reportData.financial.consultationFees}</span>
+                              </div>
+                              <div className="flex justify-between">
+                                <span>Avg per Patient:</span>
+                                <span className="font-medium">${reportData.financial.averageRevenuePerPatient}</span>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  )}
 
                   {/* Patient Flow */}
                   <Card>

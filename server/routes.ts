@@ -999,6 +999,86 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Reports endpoint
+  app.get("/api/reports/daily", authMiddleware, requireRole(['admin']), async (req, res) => {
+    try {
+      // Get today's date for filtering
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const tomorrow = new Date(today);
+      tomorrow.setDate(tomorrow.getDate() + 1);
+
+      // Fetch comprehensive data for the report
+      const todayAppointments = await storage.getAppointmentsByDateRange(today, tomorrow);
+      const completedAppointments = todayAppointments.filter((apt: any) => apt.status === 'completed');
+      const cancelledAppointments = todayAppointments.filter((apt: any) => apt.status === 'cancelled');
+      const pendingAppointments = todayAppointments.filter((apt: any) => apt.status === 'scheduled');
+      
+      const allPatients = await storage.getPatients();
+      const todayPatients = allPatients.filter(patient => {
+        const patientDate = new Date(patient.createdAt);
+        return patientDate >= today && patientDate < tomorrow;
+      });
+
+      const queueTokens = await storage.getQueueTokens();
+      const todayQueue = queueTokens.filter(token => {
+        const tokenDate = new Date(token.createdAt);
+        return tokenDate >= today && tokenDate < tomorrow;
+      });
+
+      const revenue = completedAppointments.length * 150; // $150 per consultation
+      const activeStaff = await storage.getActiveStaffCount();
+
+      const report = {
+        date: today.toISOString().split('T')[0],
+        summary: {
+          totalPatients: todayPatients.length,
+          totalAppointments: todayAppointments.length,
+          completedAppointments: completedAppointments.length,
+          cancelledAppointments: cancelledAppointments.length,
+          pendingAppointments: pendingAppointments.length,
+          revenue: revenue,
+          activeStaff: activeStaff,
+          queueProcessed: todayQueue.length
+        },
+        appointments: {
+          total: todayAppointments.length,
+          completed: completedAppointments.length,
+          cancelled: cancelledAppointments.length,
+          pending: pendingAppointments.length,
+          completionRate: todayAppointments.length > 0 ? Math.round((completedAppointments.length / todayAppointments.length) * 100) : 0
+        },
+        patients: {
+          newRegistrations: todayPatients.length,
+          totalActive: allPatients.filter(p => p.isActive).length,
+          totalRegistered: allPatients.length
+        },
+        queue: {
+          processed: todayQueue.filter(t => t.status === 'completed').length,
+          waiting: todayQueue.filter(t => t.status === 'waiting').length,
+          missed: todayQueue.filter(t => t.status === 'missed').length,
+          averageWaitTime: todayQueue.length > 0 ? Math.round(todayQueue.reduce((acc, t) => acc + (t.estimatedWaitTime || 15), 0) / todayQueue.length) : 0
+        },
+        financial: {
+          grossRevenue: revenue,
+          consultationFees: completedAppointments.length * 150,
+          averageRevenuePerPatient: todayPatients.length > 0 ? Math.round(revenue / todayPatients.length) : 0
+        },
+        staff: {
+          active: activeStaff,
+          onDuty: activeStaff, // Assuming all active staff are on duty
+          productivity: completedAppointments.length > 0 ? Math.round(completedAppointments.length / Math.max(activeStaff, 1)) : 0
+        },
+        generatedAt: new Date().toISOString(),
+        generatedBy: req.user!.firstName + ' ' + req.user!.lastName
+      };
+
+      res.json(report);
+    } catch (error: any) {
+      res.status(400).json({ message: error.message });
+    }
+  });
+
   // Admin routes
   app.get("/api/appointments/admin", authMiddleware, async (req, res) => {
     try {
