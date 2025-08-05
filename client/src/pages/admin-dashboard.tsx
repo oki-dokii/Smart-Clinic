@@ -514,7 +514,9 @@ export default function ClinicDashboard() {
   // Medicines/Inventory data
   const { data: medicines, isLoading: medicinesLoading } = useQuery<Medicine[]>({
     queryKey: ['/api/medicines'],
-    refetchInterval: 300000 // 5 minutes
+    staleTime: 0,
+    cacheTime: 0,
+    refetchOnWindowFocus: true
   })
 
   const formatTime = (date: Date) => {
@@ -645,6 +647,7 @@ export default function ClinicDashboard() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/medicines'] })
+      queryClient.refetchQueries({ queryKey: ['/api/medicines'] })
       setIsAddMedicineOpen(false)
       setNewMedicine({ name: '', strength: '', dosageForm: '', manufacturer: '', stock: 0, description: '' })
       toast({ title: 'Success', description: 'Medicine added successfully' })
@@ -661,6 +664,7 @@ export default function ClinicDashboard() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/medicines'] })
+      queryClient.refetchQueries({ queryKey: ['/api/medicines'] })
       setIsEditMedicineOpen(false)
       setSelectedMedicine(null)
       toast({ title: 'Success', description: 'Medicine updated successfully' })
@@ -677,6 +681,7 @@ export default function ClinicDashboard() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/medicines'] })
+      queryClient.refetchQueries({ queryKey: ['/api/medicines'] })
       setIsRestockOpen(false)
       setRestockAmount(0)
       setSelectedMedicine(null)
