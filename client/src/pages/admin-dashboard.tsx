@@ -701,6 +701,7 @@ export default function ClinicDashboard() {
                                 <Button 
                                   size="sm" 
                                   variant="outline"
+                                  onClick={() => toast({ title: 'Queue Details', description: `Token #${token.tokenNumber} - ${token.patient.firstName} ${token.patient.lastName}` })}
                                   data-testid={`button-view-details-${token.id}`}
                                 >
                                   View Details
@@ -731,6 +732,7 @@ export default function ClinicDashboard() {
                   </div>
                   <Button 
                     className="bg-blue-600 hover:bg-blue-700"
+                    onClick={() => toast({ title: 'Feature Coming Soon', description: 'New appointment booking will be available soon' })}
                     data-testid="button-new-appointment"
                   >
                     <Calendar className="w-4 h-4 mr-2" />
@@ -784,6 +786,7 @@ export default function ClinicDashboard() {
                                 <Button 
                                   size="sm" 
                                   variant="outline"
+                                  onClick={() => toast({ title: 'Reschedule Appointment', description: `Rescheduling appointment for ${appointment.patient.firstName} ${appointment.patient.lastName}` })}
                                   data-testid={`button-reschedule-${appointment.id}`}
                                 >
                                   Reschedule
@@ -791,10 +794,22 @@ export default function ClinicDashboard() {
                                 <Button 
                                   size="sm" 
                                   variant="outline"
+                                  onClick={() => toast({ title: 'Appointment Details', description: `Viewing details for appointment with ${appointment.patient.firstName} ${appointment.patient.lastName}` })}
                                   data-testid={`button-view-details-${appointment.id}`}
                                 >
                                   View Details
                                 </Button>
+                                {appointment.status === 'scheduled' && (
+                                  <Button 
+                                    size="sm" 
+                                    className="bg-green-600 hover:bg-green-700"
+                                    onClick={() => handleUpdateAppointment(appointment.id, 'completed')}
+                                    disabled={updateAppointmentStatus.isPending}
+                                    data-testid={`button-complete-appointment-${appointment.id}`}
+                                  >
+                                    {updateAppointmentStatus.isPending ? 'Completing...' : 'Mark Complete'}
+                                  </Button>
+                                )}
                               </div>
                             </div>
                           </div>
@@ -819,7 +834,11 @@ export default function ClinicDashboard() {
                     <h2 className="text-2xl font-bold">Patient Records</h2>
                     <p className="text-gray-600">View and manage all patient records</p>
                   </div>
-                  <Button className="bg-blue-600 hover:bg-blue-700">
+                  <Button 
+                    className="bg-blue-600 hover:bg-blue-700"
+                    onClick={() => toast({ title: 'Feature Coming Soon', description: 'Add patient functionality will be available soon' })}
+                    data-testid="button-add-patient"
+                  >
                     <UserPlus className="w-4 h-4 mr-2" />
                     Add Patient
                   </Button>
@@ -870,6 +889,7 @@ export default function ClinicDashboard() {
                                 <Button 
                                   size="sm" 
                                   variant="outline"
+                                  onClick={() => toast({ title: 'Patient History', description: `Viewing medical history for ${patient.firstName} ${patient.lastName}` })}
                                   data-testid={`button-view-history-${patient.id}`}
                                 >
                                   View History
@@ -877,6 +897,7 @@ export default function ClinicDashboard() {
                                 <Button 
                                   size="sm" 
                                   variant="outline"
+                                  onClick={() => toast({ title: 'Edit Patient', description: `Editing profile for ${patient.firstName} ${patient.lastName}` })}
                                   data-testid={`button-edit-profile-${patient.id}`}
                                 >
                                   Edit Profile
@@ -889,7 +910,28 @@ export default function ClinicDashboard() {
                                     disabled={approveUser.isPending}
                                     data-testid={`button-approve-${patient.id}`}
                                   >
-                                    Approve
+                                    {approveUser.isPending ? 'Approving...' : 'Approve'}
+                                  </Button>
+                                )}
+                                {patient.isActive ? (
+                                  <Button 
+                                    size="sm" 
+                                    variant="destructive"
+                                    onClick={() => handleDeactivateUser(patient.id)}
+                                    disabled={updateUserStatus.isPending}
+                                    data-testid={`button-deactivate-${patient.id}`}
+                                  >
+                                    {updateUserStatus.isPending ? 'Deactivating...' : 'Deactivate'}
+                                  </Button>
+                                ) : (
+                                  <Button 
+                                    size="sm" 
+                                    className="bg-blue-600 hover:bg-blue-700"
+                                    onClick={() => handleActivateUser(patient.id)}
+                                    disabled={updateUserStatus.isPending}
+                                    data-testid={`button-activate-${patient.id}`}
+                                  >
+                                    {updateUserStatus.isPending ? 'Activating...' : 'Activate'}
                                   </Button>
                                 )}
                               </div>
@@ -916,7 +958,11 @@ export default function ClinicDashboard() {
                     <h2 className="text-2xl font-bold">Inventory Management</h2>
                     <p className="text-gray-600">Monitor medicine stock levels and manage inventory</p>
                   </div>
-                  <Button className="bg-blue-600 hover:bg-blue-700">
+                  <Button 
+                    className="bg-blue-600 hover:bg-blue-700"
+                    onClick={() => toast({ title: 'Feature Coming Soon', description: 'Add medicine functionality will be available soon' })}
+                    data-testid="button-add-medicine"
+                  >
                     <FileText className="w-4 h-4 mr-2" />
                     Add Medicine
                   </Button>
