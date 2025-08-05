@@ -513,12 +513,15 @@ export default function ClinicDashboard() {
   const staffMembers = users?.filter(user => user.role !== 'patient') || []
 
   // Medicines/Inventory data
-  const { data: medicines = [], isLoading: medicinesLoading } = useQuery<Medicine[]>({
+  const { data: medicines = [], isLoading: medicinesLoading, refetch: refetchMedicines } = useQuery<Medicine[]>({
     queryKey: ['/api/medicines'],
     staleTime: 0,
     gcTime: 0,
     refetchOnWindowFocus: true
   })
+
+  // Debug: Log medicines data
+  console.log('Medicines data:', medicines, 'Loading:', medicinesLoading, 'Force render:', forceRender)
 
   const formatTime = (date: Date) => {
     return date.toLocaleTimeString("en-US", {
@@ -663,9 +666,11 @@ export default function ClinicDashboard() {
       const response = await apiRequest('PUT', `/api/medicines/${medicineId}`, updates)
       return response.json()
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      console.log('Edit success, updated medicine:', data)
       queryClient.invalidateQueries({ queryKey: ['/api/medicines'] })
       queryClient.refetchQueries({ queryKey: ['/api/medicines'] })
+      refetchMedicines()
       setForceRender(prev => prev + 1)
       setIsEditMedicineOpen(false)
       setSelectedMedicine(null)
@@ -681,9 +686,11 @@ export default function ClinicDashboard() {
       const response = await apiRequest('PUT', `/api/medicines/${medicineId}/restock`, { amount })
       return response.json()
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      console.log('Restock success, updated medicine:', data)
       queryClient.invalidateQueries({ queryKey: ['/api/medicines'] })
       queryClient.refetchQueries({ queryKey: ['/api/medicines'] })
+      refetchMedicines()
       setForceRender(prev => prev + 1)
       setIsRestockOpen(false)
       setRestockAmount(0)

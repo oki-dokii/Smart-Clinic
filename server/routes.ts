@@ -1121,6 +1121,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { medicineId } = req.params;
       const { name, strength, dosageForm, manufacturer, stock, description } = req.body;
       
+      console.log(`Updating medicine ${medicineId} with:`, { name, strength, dosageForm, manufacturer, stock, description });
+      
       const medicine = await storage.updateMedicine(medicineId, {
         name,
         strength,
@@ -1129,6 +1131,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         stock: parseInt(stock) || 0,
         description
       });
+      
+      console.log('Updated medicine result:', medicine);
       
       if (!medicine) {
         return res.status(404).json({ message: "Medicine not found" });
@@ -1154,11 +1158,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Medicine not found" });
       }
       
+      const newStock = (medicine.stock || 0) + parseInt(amount);
+      console.log(`Restocking medicine ${medicineId}: current stock ${medicine.stock}, adding ${amount}, new stock ${newStock}`);
+      
       const updatedMedicine = await storage.updateMedicine(medicineId, {
         ...medicine,
-        stock: (medicine.stock || 0) + parseInt(amount)
+        stock: newStock
       });
       
+      console.log('Updated medicine result:', updatedMedicine);
       res.json(updatedMedicine);
     } catch (error: any) {
       res.status(400).json({ message: error.message });
