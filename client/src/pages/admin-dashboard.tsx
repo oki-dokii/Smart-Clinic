@@ -17,12 +17,20 @@ import {
   Stethoscope,
   User,
   TrendingUp,
+  X,
+  Plus,
+  UserCheck,
 } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Textarea } from "@/components/ui/textarea"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { apiRequest } from "@/lib/queryClient"
 import { useToast } from "@/hooks/use-toast"
@@ -86,12 +94,151 @@ interface StaffMember extends User {
   isPresent: boolean;
 }
 
+// Emergency Alert Interface
+interface EmergencyAlert {
+  id: string;
+  message: string;
+  type: 'critical' | 'warning' | 'info';
+  timeAgo: string;
+  color: string;
+}
+
 export default function ClinicDashboard() {
   const [activeTab, setActiveTab] = useState('dashboard')
   const [currentTime, setCurrentTime] = useState(new Date())
   const [reportData, setReportData] = useState<any>(null)
   const { toast } = useToast()
   const queryClient = useQueryClient()
+  
+  // Emergency alerts state
+  const [emergencyAlerts, setEmergencyAlerts] = useState<EmergencyAlert[]>([
+    {
+      id: '1',
+      message: 'Patient in Room 3 needs immediate attention',
+      type: 'critical',
+      timeAgo: '2 min ago',
+      color: 'red'
+    },
+    {
+      id: '2', 
+      message: 'Low stock: Paracetamol (5 units left)',
+      type: 'warning',
+      timeAgo: '15 min ago',
+      color: 'orange'
+    },
+    {
+      id: '3',
+      message: "Dr. Johnson's next appointment is delayed",
+      type: 'info',
+      timeAgo: '30 min ago',
+      color: 'blue'
+    }
+  ])
+
+  // Form states
+  const [patientForm, setPatientForm] = useState({
+    firstName: '',
+    lastName: '',
+    phoneNumber: '',
+    email: '',
+    dateOfBirth: '',
+    address: ''
+  })
+
+  const [appointmentForm, setAppointmentForm] = useState({
+    patientId: '',
+    doctorId: '',
+    date: '',
+    time: '',
+    type: '',
+    symptoms: ''
+  })
+
+  const [prescriptionForm, setPrescriptionForm] = useState({
+    patientId: '',
+    medicineName: '',
+    dosage: '',
+    frequency: '',
+    duration: '',
+    instructions: ''
+  })
+
+  const [dischargeForm, setDischargeForm] = useState({
+    patientId: '',
+    dischargeDate: '',
+    condition: '',
+    followUpInstructions: '',
+    medications: ''
+  })
+
+  // Function to remove emergency alert
+  const removeAlert = (alertId: string) => {
+    setEmergencyAlerts(prev => prev.filter(alert => alert.id !== alertId))
+    toast({
+      title: 'Alert Resolved',
+      description: 'Emergency alert has been successfully resolved and removed.',
+    })
+  }
+
+  // Form submission handlers
+  const handlePatientSubmit = () => {
+    toast({
+      title: 'Patient Added',
+      description: `${patientForm.firstName} ${patientForm.lastName} has been registered successfully.`,
+    })
+    setPatientForm({
+      firstName: '',
+      lastName: '',
+      phoneNumber: '',
+      email: '',
+      dateOfBirth: '',
+      address: ''
+    })
+  }
+
+  const handleAppointmentSubmit = () => {
+    toast({
+      title: 'Appointment Scheduled',
+      description: 'New appointment has been scheduled successfully.',
+    })
+    setAppointmentForm({
+      patientId: '',
+      doctorId: '',
+      date: '',
+      time: '',
+      type: '',
+      symptoms: ''
+    })
+  }
+
+  const handlePrescriptionSubmit = () => {
+    toast({
+      title: 'Prescription Created',
+      description: `Prescription for ${prescriptionForm.medicineName} has been created.`,
+    })
+    setPrescriptionForm({
+      patientId: '',
+      medicineName: '',
+      dosage: '',
+      frequency: '',
+      duration: '',
+      instructions: ''
+    })
+  }
+
+  const handleDischargeSubmit = () => {
+    toast({
+      title: 'Patient Discharged',
+      description: 'Patient discharge has been processed successfully.',
+    })
+    setDischargeForm({
+      patientId: '',
+      dischargeDate: '',
+      condition: '',
+      followUpInstructions: '',
+      medications: ''
+    })
+  }
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -466,62 +613,37 @@ export default function ClinicDashboard() {
                     </CardHeader>
                     <CardContent>
                       <div className="space-y-4">
-                        <div className="flex items-center justify-between p-3 bg-white rounded-lg border border-red-200">
-                          <div className="flex items-center gap-3">
-                            <div className="w-2 h-2 bg-red-500 rounded-full"></div>
-                            <span className="text-sm font-medium">Patient in Room 3 needs immediate attention</span>
+                        {emergencyAlerts.length > 0 ? (
+                          emergencyAlerts.map((alert) => (
+                            <div key={alert.id} className={`flex items-center justify-between p-3 bg-white rounded-lg border border-${alert.color}-200`}>
+                              <div className="flex items-center gap-3">
+                                <div className={`w-2 h-2 bg-${alert.color}-500 rounded-full`}></div>
+                                <span className="text-sm font-medium">{alert.message}</span>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <span className="text-xs text-gray-500">{alert.timeAgo}</span>
+                                <Button 
+                                  size="sm" 
+                                  variant="outline" 
+                                  className="text-xs bg-transparent"
+                                  onClick={() => removeAlert(alert.id)}
+                                  data-testid={`button-resolve-${alert.id}`}
+                                >
+                                  <X className="w-3 h-3 mr-1" />
+                                  Resolve
+                                </Button>
+                              </div>
+                            </div>
+                          ))
+                        ) : (
+                          <div className="text-center py-8">
+                            <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                              <AlertTriangle className="w-6 h-6 text-green-600" />
+                            </div>
+                            <h3 className="text-lg font-semibold text-gray-900 mb-2">All Clear!</h3>
+                            <p className="text-gray-600">No emergency alerts at this time.</p>
                           </div>
-                          <div className="flex items-center gap-2">
-                            <span className="text-xs text-gray-500">2 min ago</span>
-                            <Button 
-                              size="sm" 
-                              variant="outline" 
-                              className="text-xs bg-transparent"
-                              onClick={() => toast({ title: 'Alert Resolved', description: 'Patient in Room 3 alert has been resolved' })}
-                              data-testid="button-resolve-room3"
-                            >
-                              Resolve
-                            </Button>
-                          </div>
-                        </div>
-
-                        <div className="flex items-center justify-between p-3 bg-white rounded-lg border border-orange-200">
-                          <div className="flex items-center gap-3">
-                            <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
-                            <span className="text-sm font-medium">Low stock: Paracetamol (5 units left)</span>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <span className="text-xs text-gray-500">15 min ago</span>
-                            <Button 
-                              size="sm" 
-                              variant="outline" 
-                              className="text-xs bg-transparent"
-                              onClick={() => toast({ title: 'Stock Alert Resolved', description: 'Paracetamol stock alert has been resolved' })}
-                              data-testid="button-resolve-paracetamol"
-                            >
-                              Resolve
-                            </Button>
-                          </div>
-                        </div>
-
-                        <div className="flex items-center justify-between p-3 bg-white rounded-lg border border-blue-200">
-                          <div className="flex items-center gap-3">
-                            <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                            <span className="text-sm font-medium">Dr. Johnson's next appointment is delayed</span>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <span className="text-xs text-gray-500">30 min ago</span>
-                            <Button 
-                              size="sm" 
-                              variant="outline" 
-                              className="text-xs bg-transparent"
-                              onClick={() => toast({ title: 'Delay Alert Resolved', description: 'Dr. Johnson appointment delay alert has been resolved' })}
-                              data-testid="button-resolve-johnson"
-                            >
-                              Resolve
-                            </Button>
-                          </div>
-                        </div>
+                        )}
                       </div>
                     </CardContent>
                   </Card>
@@ -537,41 +659,333 @@ export default function ClinicDashboard() {
                     </CardHeader>
                     <CardContent>
                       <div className="grid grid-cols-2 gap-4">
-                        <Button 
-                          className="h-20 flex-col gap-2 bg-blue-600 hover:bg-blue-700"
-                          onClick={() => toast({ title: 'Add Patient', description: 'Opening patient registration form' })}
-                          data-testid="button-quick-add-patient"
-                        >
-                          <UserPlus className="w-6 h-6" />
-                          <span>Add Patient</span>
-                        </Button>
-                        <Button 
-                          variant="outline" 
-                          className="h-20 flex-col gap-2 bg-transparent"
-                          onClick={() => toast({ title: 'Schedule Appointment', description: 'Opening appointment scheduler' })}
-                          data-testid="button-quick-schedule"
-                        >
-                          <Calendar className="w-6 h-6" />
-                          <span>Schedule</span>
-                        </Button>
-                        <Button 
-                          variant="outline" 
-                          className="h-20 flex-col gap-2 bg-transparent"
-                          onClick={() => toast({ title: 'Prescriptions', description: 'Opening prescription management' })}
-                          data-testid="button-quick-prescriptions"
-                        >
-                          <FileText className="w-6 h-6" />
-                          <span>Prescriptions</span>
-                        </Button>
-                        <Button 
-                          variant="outline" 
-                          className="h-20 flex-col gap-2 bg-transparent"
-                          onClick={() => toast({ title: 'Patient Discharge', description: 'Opening discharge management' })}
-                          data-testid="button-quick-discharge"
-                        >
-                          <LogOut className="w-6 h-6" />
-                          <span>Discharge</span>
-                        </Button>
+                        {/* Add Patient Dialog */}
+                        <Dialog>
+                          <DialogTrigger asChild>
+                            <Button 
+                              className="h-20 flex-col gap-2 bg-blue-600 hover:bg-blue-700"
+                              data-testid="button-quick-add-patient"
+                            >
+                              <UserPlus className="w-6 h-6" />
+                              <span>Add Patient</span>
+                            </Button>
+                          </DialogTrigger>
+                          <DialogContent className="max-w-md">
+                            <DialogHeader>
+                              <DialogTitle>Add New Patient</DialogTitle>
+                            </DialogHeader>
+                            <div className="space-y-4">
+                              <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                  <Label htmlFor="firstName">First Name</Label>
+                                  <Input
+                                    id="firstName"
+                                    value={patientForm.firstName}
+                                    onChange={(e) => setPatientForm({...patientForm, firstName: e.target.value})}
+                                    placeholder="John"
+                                  />
+                                </div>
+                                <div>
+                                  <Label htmlFor="lastName">Last Name</Label>
+                                  <Input
+                                    id="lastName"
+                                    value={patientForm.lastName}
+                                    onChange={(e) => setPatientForm({...patientForm, lastName: e.target.value})}
+                                    placeholder="Doe"
+                                  />
+                                </div>
+                              </div>
+                              <div>
+                                <Label htmlFor="phoneNumber">Phone Number</Label>
+                                <Input
+                                  id="phoneNumber"
+                                  value={patientForm.phoneNumber}
+                                  onChange={(e) => setPatientForm({...patientForm, phoneNumber: e.target.value})}
+                                  placeholder="+1234567890"
+                                />
+                              </div>
+                              <div>
+                                <Label htmlFor="email">Email</Label>
+                                <Input
+                                  id="email"
+                                  type="email"
+                                  value={patientForm.email}
+                                  onChange={(e) => setPatientForm({...patientForm, email: e.target.value})}
+                                  placeholder="john@example.com"
+                                />
+                              </div>
+                              <div>
+                                <Label htmlFor="dateOfBirth">Date of Birth</Label>
+                                <Input
+                                  id="dateOfBirth"
+                                  type="date"
+                                  value={patientForm.dateOfBirth}
+                                  onChange={(e) => setPatientForm({...patientForm, dateOfBirth: e.target.value})}
+                                />
+                              </div>
+                              <div>
+                                <Label htmlFor="address">Address</Label>
+                                <Textarea
+                                  id="address"
+                                  value={patientForm.address}
+                                  onChange={(e) => setPatientForm({...patientForm, address: e.target.value})}
+                                  placeholder="123 Main St, City, State"
+                                />
+                              </div>
+                              <Button onClick={handlePatientSubmit} className="w-full">
+                                <Plus className="w-4 h-4 mr-2" />
+                                Add Patient
+                              </Button>
+                            </div>
+                          </DialogContent>
+                        </Dialog>
+
+                        {/* Schedule Appointment Dialog */}
+                        <Dialog>
+                          <DialogTrigger asChild>
+                            <Button 
+                              variant="outline" 
+                              className="h-20 flex-col gap-2 bg-transparent"
+                              data-testid="button-quick-schedule"
+                            >
+                              <Calendar className="w-6 h-6" />
+                              <span>Schedule</span>
+                            </Button>
+                          </DialogTrigger>
+                          <DialogContent className="max-w-md">
+                            <DialogHeader>
+                              <DialogTitle>Schedule Appointment</DialogTitle>
+                            </DialogHeader>
+                            <div className="space-y-4">
+                              <div>
+                                <Label htmlFor="patientSelect">Patient</Label>
+                                <Input
+                                  id="patientSelect"
+                                  value={appointmentForm.patientId}
+                                  onChange={(e) => setAppointmentForm({...appointmentForm, patientId: e.target.value})}
+                                  placeholder="Search patient by name or ID"
+                                />
+                              </div>
+                              <div>
+                                <Label htmlFor="doctorSelect">Doctor</Label>
+                                <Input
+                                  id="doctorSelect"
+                                  value={appointmentForm.doctorId}
+                                  onChange={(e) => setAppointmentForm({...appointmentForm, doctorId: e.target.value})}
+                                  placeholder="Select doctor"
+                                />
+                              </div>
+                              <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                  <Label htmlFor="appointmentDate">Date</Label>
+                                  <Input
+                                    id="appointmentDate"
+                                    type="date"
+                                    value={appointmentForm.date}
+                                    onChange={(e) => setAppointmentForm({...appointmentForm, date: e.target.value})}
+                                  />
+                                </div>
+                                <div>
+                                  <Label htmlFor="appointmentTime">Time</Label>
+                                  <Input
+                                    id="appointmentTime"
+                                    type="time"
+                                    value={appointmentForm.time}
+                                    onChange={(e) => setAppointmentForm({...appointmentForm, time: e.target.value})}
+                                  />
+                                </div>
+                              </div>
+                              <div>
+                                <Label htmlFor="appointmentType">Type</Label>
+                                <Select onValueChange={(value) => setAppointmentForm({...appointmentForm, type: value})}>
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="Select appointment type" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="consultation">Consultation</SelectItem>
+                                    <SelectItem value="follow-up">Follow-up</SelectItem>
+                                    <SelectItem value="emergency">Emergency</SelectItem>
+                                    <SelectItem value="checkup">Checkup</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                              <div>
+                                <Label htmlFor="symptoms">Symptoms/Notes</Label>
+                                <Textarea
+                                  id="symptoms"
+                                  value={appointmentForm.symptoms}
+                                  onChange={(e) => setAppointmentForm({...appointmentForm, symptoms: e.target.value})}
+                                  placeholder="Describe symptoms or appointment purpose"
+                                />
+                              </div>
+                              <Button onClick={handleAppointmentSubmit} className="w-full">
+                                <Calendar className="w-4 h-4 mr-2" />
+                                Schedule Appointment
+                              </Button>
+                            </div>
+                          </DialogContent>
+                        </Dialog>
+
+                        {/* Prescriptions Dialog */}
+                        <Dialog>
+                          <DialogTrigger asChild>
+                            <Button 
+                              variant="outline" 
+                              className="h-20 flex-col gap-2 bg-transparent"
+                              data-testid="button-quick-prescriptions"
+                            >
+                              <FileText className="w-6 h-6" />
+                              <span>Prescriptions</span>
+                            </Button>
+                          </DialogTrigger>
+                          <DialogContent className="max-w-md">
+                            <DialogHeader>
+                              <DialogTitle>Create Prescription</DialogTitle>
+                            </DialogHeader>
+                            <div className="space-y-4">
+                              <div>
+                                <Label htmlFor="prescriptionPatient">Patient</Label>
+                                <Input
+                                  id="prescriptionPatient"
+                                  value={prescriptionForm.patientId}
+                                  onChange={(e) => setPrescriptionForm({...prescriptionForm, patientId: e.target.value})}
+                                  placeholder="Search patient by name or ID"
+                                />
+                              </div>
+                              <div>
+                                <Label htmlFor="medicineName">Medicine Name</Label>
+                                <Input
+                                  id="medicineName"
+                                  value={prescriptionForm.medicineName}
+                                  onChange={(e) => setPrescriptionForm({...prescriptionForm, medicineName: e.target.value})}
+                                  placeholder="Paracetamol, Amoxicillin, etc."
+                                />
+                              </div>
+                              <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                  <Label htmlFor="dosage">Dosage</Label>
+                                  <Input
+                                    id="dosage"
+                                    value={prescriptionForm.dosage}
+                                    onChange={(e) => setPrescriptionForm({...prescriptionForm, dosage: e.target.value})}
+                                    placeholder="500mg"
+                                  />
+                                </div>
+                                <div>
+                                  <Label htmlFor="frequency">Frequency</Label>
+                                  <Select onValueChange={(value) => setPrescriptionForm({...prescriptionForm, frequency: value})}>
+                                    <SelectTrigger>
+                                      <SelectValue placeholder="Select frequency" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      <SelectItem value="once-daily">Once Daily</SelectItem>
+                                      <SelectItem value="twice-daily">Twice Daily</SelectItem>
+                                      <SelectItem value="three-times">Three Times Daily</SelectItem>
+                                      <SelectItem value="as-needed">As Needed</SelectItem>
+                                    </SelectContent>
+                                  </Select>
+                                </div>
+                              </div>
+                              <div>
+                                <Label htmlFor="duration">Duration</Label>
+                                <Input
+                                  id="duration"
+                                  value={prescriptionForm.duration}
+                                  onChange={(e) => setPrescriptionForm({...prescriptionForm, duration: e.target.value})}
+                                  placeholder="7 days, 2 weeks, etc."
+                                />
+                              </div>
+                              <div>
+                                <Label htmlFor="instructions">Instructions</Label>
+                                <Textarea
+                                  id="instructions"
+                                  value={prescriptionForm.instructions}
+                                  onChange={(e) => setPrescriptionForm({...prescriptionForm, instructions: e.target.value})}
+                                  placeholder="Take with food, after meals, etc."
+                                />
+                              </div>
+                              <Button onClick={handlePrescriptionSubmit} className="w-full">
+                                <FileText className="w-4 h-4 mr-2" />
+                                Create Prescription
+                              </Button>
+                            </div>
+                          </DialogContent>
+                        </Dialog>
+
+                        {/* Discharge Dialog */}
+                        <Dialog>
+                          <DialogTrigger asChild>
+                            <Button 
+                              variant="outline" 
+                              className="h-20 flex-col gap-2 bg-transparent"
+                              data-testid="button-quick-discharge"
+                            >
+                              <UserCheck className="w-6 h-6" />
+                              <span>Discharge</span>
+                            </Button>
+                          </DialogTrigger>
+                          <DialogContent className="max-w-md">
+                            <DialogHeader>
+                              <DialogTitle>Patient Discharge</DialogTitle>
+                            </DialogHeader>
+                            <div className="space-y-4">
+                              <div>
+                                <Label htmlFor="dischargePatient">Patient</Label>
+                                <Input
+                                  id="dischargePatient"
+                                  value={dischargeForm.patientId}
+                                  onChange={(e) => setDischargeForm({...dischargeForm, patientId: e.target.value})}
+                                  placeholder="Search patient by name or ID"
+                                />
+                              </div>
+                              <div>
+                                <Label htmlFor="dischargeDate">Discharge Date</Label>
+                                <Input
+                                  id="dischargeDate"
+                                  type="date"
+                                  value={dischargeForm.dischargeDate}
+                                  onChange={(e) => setDischargeForm({...dischargeForm, dischargeDate: e.target.value})}
+                                />
+                              </div>
+                              <div>
+                                <Label htmlFor="condition">Condition at Discharge</Label>
+                                <Select onValueChange={(value) => setDischargeForm({...dischargeForm, condition: value})}>
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="Select condition" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="stable">Stable</SelectItem>
+                                    <SelectItem value="improved">Improved</SelectItem>
+                                    <SelectItem value="recovered">Fully Recovered</SelectItem>
+                                    <SelectItem value="transfer">Transfer to Specialist</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                              <div>
+                                <Label htmlFor="followUpInstructions">Follow-up Instructions</Label>
+                                <Textarea
+                                  id="followUpInstructions"
+                                  value={dischargeForm.followUpInstructions}
+                                  onChange={(e) => setDischargeForm({...dischargeForm, followUpInstructions: e.target.value})}
+                                  placeholder="Return in 1 week, rest for 3 days, etc."
+                                />
+                              </div>
+                              <div>
+                                <Label htmlFor="dischargeMedications">Discharge Medications</Label>
+                                <Textarea
+                                  id="dischargeMedications"
+                                  value={dischargeForm.medications}
+                                  onChange={(e) => setDischargeForm({...dischargeForm, medications: e.target.value})}
+                                  placeholder="List medications to continue at home"
+                                />
+                              </div>
+                              <Button onClick={handleDischargeSubmit} className="w-full">
+                                <UserCheck className="w-4 h-4 mr-2" />
+                                Process Discharge
+                              </Button>
+                            </div>
+                          </DialogContent>
+                        </Dialog>
                       </div>
                     </CardContent>
                   </Card>
