@@ -40,6 +40,17 @@ export const otpSessions = pgTable("otp_sessions", {
   createdAt: timestamp("created_at").notNull().default(sql`NOW()`),
 });
 
+// Email OTP sessions table
+export const emailOtpSessions = pgTable("email_otp_sessions", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  email: varchar("email", { length: 255 }).notNull(),
+  otpHash: text("otp_hash").notNull(),
+  expiresAt: timestamp("expires_at").notNull(),
+  attempts: integer("attempts").notNull().default(0),
+  isUsed: boolean("is_used").notNull().default(false),
+  createdAt: timestamp("created_at").notNull().default(sql`NOW()`),
+});
+
 // Auth sessions table
 export const authSessions = pgTable("auth_sessions", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -292,6 +303,11 @@ export const insertOtpSessionSchema = createInsertSchema(otpSessions).omit({
   createdAt: true,
 });
 
+export const insertEmailOtpSessionSchema = createInsertSchema(emailOtpSessions).omit({
+  id: true,
+  createdAt: true,
+});
+
 export const insertAuthSessionSchema = createInsertSchema(authSessions).omit({
   id: true,
   createdAt: true,
@@ -349,6 +365,8 @@ export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type OtpSession = typeof otpSessions.$inferSelect;
 export type InsertOtpSession = z.infer<typeof insertOtpSessionSchema>;
+export type EmailOtpSession = typeof emailOtpSessions.$inferSelect;
+export type InsertEmailOtpSession = z.infer<typeof insertEmailOtpSessionSchema>;
 export type AuthSession = typeof authSessions.$inferSelect;
 export type InsertAuthSession = z.infer<typeof insertAuthSessionSchema>;
 export type StaffVerification = typeof staffVerifications.$inferSelect;

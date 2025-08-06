@@ -75,6 +75,50 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Email Authentication routes
+  app.post("/api/auth/send-email-otp", async (req, res) => {
+    try {
+      const { email } = z.object({ email: z.string().email() }).parse(req.body);
+      
+      console.log(`🔥 EMAIL OTP REQUEST - Sending OTP to: ${email}`);
+      const result = await authService.sendEmailOtp(email);
+      
+      if (result.success) {
+        res.json({ message: "OTP sent successfully to your email" });
+      } else {
+        // In development mode, return OTP for testing when email fails
+        if (process.env.NODE_ENV === 'development' && result.otp) {
+          res.json({ 
+            message: "Email delivery simulated for development", 
+            developmentOtp: result.otp,
+            error: result.error
+          });
+        } else {
+          res.json({ message: "OTP sent successfully to your email" }); // Don't expose errors to client in production
+        }
+      }
+    } catch (error: any) {
+      console.error('🔥 EMAIL OTP ERROR:', error);
+      res.status(400).json({ message: error.message });
+    }
+  });
+
+  app.post("/api/auth/verify-email-otp", async (req, res) => {
+    try {
+      const { email, otp } = z.object({ 
+        email: z.string().email(), 
+        otp: z.string() 
+      }).parse(req.body);
+      
+      console.log(`🔥 EMAIL OTP VERIFICATION - Email: ${email}, OTP: ${otp}`);
+      const result = await authService.verifyEmailOtp(email, otp, req.ip, req.get('User-Agent'));
+      res.json(result);
+    } catch (error: any) {
+      console.error('🔥 EMAIL OTP VERIFICATION ERROR:', error);
+      res.status(400).json({ message: error.message });
+    }
+  });
+
   app.post("/api/auth/logout", authMiddleware, async (req, res) => {
     try {
       const token = req.get('Authorization')?.replace('Bearer ', '');

@@ -1,8 +1,9 @@
 import { 
-  users, otpSessions, authSessions, staffVerifications, appointments, 
+  users, otpSessions, emailOtpSessions, authSessions, staffVerifications, appointments, 
   queueTokens, medicines, prescriptions, medicineReminders, delayNotifications,
   homeVisits, medicalHistory,
   type User, type InsertUser, type OtpSession, type InsertOtpSession,
+  type EmailOtpSession, type InsertEmailOtpSession,
   type AuthSession, type InsertAuthSession, type StaffVerification, type InsertStaffVerification,
   type Appointment, type InsertAppointment, type QueueToken, type InsertQueueToken,
   type Medicine, type InsertMedicine, type Prescription, type InsertPrescription,
@@ -16,6 +17,7 @@ export interface IStorage {
   // Users
   getUser(id: string): Promise<User | undefined>;
   getUserByPhone(phoneNumber: string): Promise<User | undefined>;
+  getUserByEmail(email: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
   updateUser(id: string, user: Partial<InsertUser>): Promise<User | undefined>;
   approveUser(id: string): Promise<User | undefined>;
@@ -31,6 +33,12 @@ export interface IStorage {
   getOtpSession(phoneNumber: string): Promise<OtpSession | undefined>;
   invalidateOtpSession(phoneNumber: string): Promise<void>;
   incrementOtpAttempts(phoneNumber: string): Promise<void>;
+  
+  // Email OTP Sessions
+  createEmailOtpSession(session: InsertEmailOtpSession): Promise<EmailOtpSession>;
+  getEmailOtpSession(email: string): Promise<EmailOtpSession | undefined>;
+  invalidateEmailOtpSession(email: string): Promise<void>;
+  incrementEmailOtpAttempts(email: string): Promise<void>;
   
   // Auth Sessions
   createAuthSession(session: InsertAuthSession): Promise<AuthSession>;
@@ -139,6 +147,11 @@ export class DatabaseStorage implements IStorage {
     return user || undefined;
   }
 
+  async getUserByEmail(email: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.email, email));
+    return user || undefined;
+  }
+
   async createUser(user: InsertUser): Promise<User> {
     const [newUser] = await db.insert(users).values(user).returning();
     return newUser;
@@ -209,6 +222,35 @@ export class DatabaseStorage implements IStorage {
     await db.update(otpSessions)
       .set({ attempts: sql`${otpSessions.attempts} + 1` })
       .where(eq(otpSessions.phoneNumber, phoneNumber));
+  }
+
+  // Email OTP Sessions
+  async createEmailOtpSession(session: InsertEmailOtpSession): Promise<EmailOtpSession> {
+    const [newSession] = await db.insert(emailOtpSessions).values(session).returning();
+    return newSession;
+  }
+
+  async getEmailOtpSession(email: string): Promise<EmailOtpSession | undefined> {
+    const [session] = await db.select().from(emailOtpSessions)
+      .where(and(
+        eq(emailOtpSessions.email, email),
+        eq(emailOtpSessions.isUsed, false),
+        gte(emailOtpSessions.expiresAt, new Date())
+      ))
+      .orderBy(desc(emailOtpSessions.createdAt));
+    return session || undefined;
+  }
+
+  async invalidateEmailOtpSession(email: string): Promise<void> {
+    await db.update(emailOtpSessions)
+      .set({ isUsed: true })
+      .where(eq(emailOtpSessions.email, email));
+  }
+
+  async incrementEmailOtpAttempts(email: string): Promise<void> {
+    await db.update(emailOtpSessions)
+      .set({ attempts: sql`${emailOtpSessions.attempts} + 1` })
+      .where(eq(emailOtpSessions.email, email));
   }
 
   // Auth Sessions

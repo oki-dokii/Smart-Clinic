@@ -6,27 +6,27 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
-import { Phone, ArrowRight } from 'lucide-react';
+import { Mail, ArrowRight } from 'lucide-react';
 
 export default function PatientLogin() {
-  const [phoneNumber, setPhoneNumber] = useState('');
+  const [email, setEmail] = useState('');
   const [otp, setOtp] = useState('');
-  const [step, setStep] = useState(1); // 1: phone, 2: otp
+  const [step, setStep] = useState(1); // 1: email, 2: otp
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
   const sendOtp = useMutation({
-    mutationFn: async (phone: string) => {
-      return apiRequest('/api/auth/send-otp', {
+    mutationFn: async (emailAddress: string) => {
+      return apiRequest('/api/auth/send-email-otp', {
         method: 'POST',
-        body: JSON.stringify({ phoneNumber: phone })
+        body: JSON.stringify({ email: emailAddress })
       });
     },
     onSuccess: () => {
       setStep(2);
       toast({
         title: "OTP Sent!",
-        description: "Please check your phone for the verification code.",
+        description: "Please check your email for the verification code.",
       });
     },
     onError: (error: any) => {
@@ -39,10 +39,10 @@ export default function PatientLogin() {
   });
 
   const verifyLogin = useMutation({
-    mutationFn: async ({ phone, otpCode }: { phone: string; otpCode: string }) => {
-      return apiRequest('/api/auth/verify-otp', {
+    mutationFn: async ({ emailAddress, otpCode }: { emailAddress: string; otpCode: string }) => {
+      return apiRequest('/api/auth/verify-email-otp', {
         method: 'POST',
-        body: JSON.stringify({ phoneNumber: phone, otp: otpCode })
+        body: JSON.stringify({ email: emailAddress, otp: otpCode })
       });
     },
     onSuccess: (data: any) => {
@@ -70,15 +70,15 @@ export default function PatientLogin() {
 
   const handleSendOtp = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!phoneNumber) {
+    if (!email) {
       toast({
-        title: "Phone Required",
-        description: "Please enter your phone number.",
+        title: "Email Required",
+        description: "Please enter your email address.",
         variant: "destructive"
       });
       return;
     }
-    sendOtp.mutate(phoneNumber);
+    sendOtp.mutate(email);
   };
 
   const handleVerifyOtp = (e: React.FormEvent) => {
@@ -91,7 +91,7 @@ export default function PatientLogin() {
       });
       return;
     }
-    verifyLogin.mutate({ phone: phoneNumber, otpCode: otp });
+    verifyLogin.mutate({ emailAddress: email, otpCode: otp });
   };
 
   return (
@@ -99,13 +99,13 @@ export default function PatientLogin() {
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <div className="w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
-            <Phone className="w-8 h-8 text-white" />
+            <Mail className="w-8 h-8 text-white" />
           </div>
           <CardTitle className="text-2xl">Patient Login</CardTitle>
           <p className="text-gray-600">
             {step === 1 
-              ? "Enter your phone number to book an appointment" 
-              : "Enter the verification code sent to your phone"
+              ? "Enter your email address to book an appointment" 
+              : "Enter the verification code sent to your email"
             }
           </p>
         </CardHeader>
@@ -113,13 +113,13 @@ export default function PatientLogin() {
           {step === 1 ? (
             <form onSubmit={handleSendOtp} className="space-y-4">
               <div>
-                <Label htmlFor="phone">Phone Number</Label>
+                <Label htmlFor="email">Email Address</Label>
                 <Input
-                  id="phone"
-                  type="tel"
-                  placeholder="+1234567890"
-                  value={phoneNumber}
-                  onChange={(e) => setPhoneNumber(e.target.value)}
+                  id="email"
+                  type="email"
+                  placeholder="patient@example.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                   disabled={sendOtp.isPending}
                 />
               </div>
