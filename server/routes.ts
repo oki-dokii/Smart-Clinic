@@ -84,18 +84,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const result = await authService.sendEmailOtp(email);
       
       if (result.success) {
-        res.json({ message: "OTP sent successfully to your email" });
-      } else {
-        // In development mode, return OTP for testing when email fails
-        if (process.env.NODE_ENV === 'development' && result.otp) {
-          res.json({ 
-            message: "Email delivery simulated for development", 
-            developmentOtp: result.otp,
-            error: result.error
-          });
-        } else {
-          res.json({ message: "OTP sent successfully to your email" }); // Don't expose errors to client in production
+        const response: any = { message: "OTP sent successfully to your email" };
+        
+        // In development mode, include additional info
+        if (process.env.NODE_ENV === 'development') {
+          if (result.previewUrl) {
+            response.previewUrl = result.previewUrl;
+            response.message = "OTP sent! Check the preview URL or console for the email.";
+          } else if (result.otp) {
+            response.developmentOtp = result.otp;
+            response.message = "Email service fallback - check console for OTP";
+          }
         }
+        
+        res.json(response);
+      } else {
+        res.json({ message: "OTP sent successfully to your email" }); // Don't expose errors to client in production
       }
     } catch (error: any) {
       console.error('🔥 EMAIL OTP ERROR:', error);
