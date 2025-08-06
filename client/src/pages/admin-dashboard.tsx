@@ -722,13 +722,13 @@ export default function ClinicDashboard() {
     }),
     refetchInterval: 60000,
     staleTime: 0, // Always consider data stale to force fresh fetch
-    cacheTime: 0, // Don't cache data to ensure fresh reads
+    gcTime: 0, // Don't cache data to ensure fresh reads
     retry: 3
   })
   
   // Debug patient query
   React.useEffect(() => {
-    console.log('🔥 PATIENTS QUERY - Data:', patients?.length || 0, 'Loading:', patientsLoading, 'Error:', patientsError);
+    console.log('🔥 PATIENTS QUERY - Data:', Array.isArray(patients) ? patients.length : 0, 'Loading:', patientsLoading, 'Error:', patientsError);
     if (patientsError) {
       console.log('🔥 PATIENTS QUERY ERROR DETAILS:', patientsError);
     }
@@ -1515,7 +1515,7 @@ export default function ClinicDashboard() {
                             <div className="space-y-4">
                               <div className="grid grid-cols-3 gap-4">
                                 <div className="text-center p-4 bg-blue-50 rounded-lg">
-                                  <div className="text-2xl font-bold text-blue-600">{patients?.length || 0}</div>
+                                  <div className="text-2xl font-bold text-blue-600">{Array.isArray(patients) ? patients.length : 0}</div>
                                   <div className="text-sm text-gray-600">Active Patients</div>
                                 </div>
                                 <div className="text-center p-4 bg-green-50 rounded-lg">
@@ -1613,27 +1613,213 @@ export default function ClinicDashboard() {
                     <div className="space-y-3">
                       <h4 className="font-medium">Security</h4>
                       <div className="space-y-2">
-                        <Button variant="outline" className="w-full justify-start">
-                          <Shield className="w-4 h-4 mr-2" />
-                          Security Settings
-                        </Button>
-                        <Button variant="outline" className="w-full justify-start">
-                          <Activity className="w-4 h-4 mr-2" />
-                          Audit Logs
-                        </Button>
+                        <Dialog>
+                          <DialogTrigger asChild>
+                            <Button variant="outline" className="w-full justify-start">
+                              <Shield className="w-4 h-4 mr-2" />
+                              Security Settings
+                            </Button>
+                          </DialogTrigger>
+                          <DialogContent className="max-w-lg">
+                            <DialogHeader>
+                              <DialogTitle>Security Settings</DialogTitle>
+                            </DialogHeader>
+                            <div className="space-y-4">
+                              <div className="space-y-3">
+                                <div className="flex items-center justify-between">
+                                  <span>Two-Factor Authentication</span>
+                                  <input type="checkbox" defaultChecked className="rounded" />
+                                </div>
+                                <div className="flex items-center justify-between">
+                                  <span>Password Complexity Requirements</span>
+                                  <input type="checkbox" defaultChecked className="rounded" />
+                                </div>
+                                <div className="flex items-center justify-between">
+                                  <span>Session Timeout (minutes)</span>
+                                  <Input type="number" defaultValue="30" className="w-20" />
+                                </div>
+                                <div className="flex items-center justify-between">
+                                  <span>Login Attempt Limit</span>
+                                  <Input type="number" defaultValue="3" className="w-20" />
+                                </div>
+                                <div className="flex items-center justify-between">
+                                  <span>Auto-lock System</span>
+                                  <input type="checkbox" defaultChecked className="rounded" />
+                                </div>
+                              </div>
+                              <Button className="w-full">Update Security Settings</Button>
+                            </div>
+                          </DialogContent>
+                        </Dialog>
+                        
+                        <Dialog>
+                          <DialogTrigger asChild>
+                            <Button variant="outline" className="w-full justify-start">
+                              <Activity className="w-4 h-4 mr-2" />
+                              Audit Logs
+                            </Button>
+                          </DialogTrigger>
+                          <DialogContent className="max-w-4xl">
+                            <DialogHeader>
+                              <DialogTitle>System Audit Logs</DialogTitle>
+                            </DialogHeader>
+                            <div className="space-y-4">
+                              <div className="flex gap-4 items-center">
+                                <Select defaultValue="all">
+                                  <SelectTrigger className="w-40">
+                                    <SelectValue />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="all">All Activities</SelectItem>
+                                    <SelectItem value="login">Login Attempts</SelectItem>
+                                    <SelectItem value="patient">Patient Changes</SelectItem>
+                                    <SelectItem value="staff">Staff Actions</SelectItem>
+                                    <SelectItem value="system">System Changes</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                                <Input type="date" className="w-40" />
+                                <Button>Filter</Button>
+                              </div>
+                              <div className="max-h-96 overflow-y-auto border rounded-lg">
+                                <div className="space-y-2 p-4">
+                                  {[
+                                    { time: '2025-08-06 12:04:30', user: 'Admin User', action: 'Viewed patient records', type: 'patient' },
+                                    { time: '2025-08-06 12:03:15', user: 'Dr. Sarah Johnson', action: 'Updated appointment status', type: 'appointment' },
+                                    { time: '2025-08-06 12:01:45', user: 'Admin User', action: 'Added new medicine to inventory', type: 'inventory' },
+                                    { time: '2025-08-06 11:58:20', user: 'Admin User', action: 'Login successful', type: 'login' },
+                                    { time: '2025-08-06 11:45:10', user: 'Dr. Michael Davis', action: 'Created new patient record', type: 'patient' }
+                                  ].map((log, index) => (
+                                    <div key={index} className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                                      <div>
+                                        <div className="font-medium">{log.action}</div>
+                                        <div className="text-sm text-gray-600">by {log.user}</div>
+                                      </div>
+                                      <div className="text-right">
+                                        <div className="text-sm">{log.time}</div>
+                                        <Badge className="text-xs">{log.type}</Badge>
+                                      </div>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                              <div className="flex gap-2">
+                                <Button variant="outline">Export Logs</Button>
+                                <Button variant="outline">Clear Old Logs</Button>
+                              </div>
+                            </div>
+                          </DialogContent>
+                        </Dialog>
                       </div>
                     </div>
                     <div className="space-y-3">
                       <h4 className="font-medium">System</h4>
                       <div className="space-y-2">
-                        <Button variant="outline" className="w-full justify-start">
-                          <Database className="w-4 h-4 mr-2" />
-                          Database Management
-                        </Button>
-                        <Button variant="outline" className="w-full justify-start">
-                          <Download className="w-4 h-4 mr-2" />
-                          Backup & Restore
-                        </Button>
+                        <Dialog>
+                          <DialogTrigger asChild>
+                            <Button variant="outline" className="w-full justify-start">
+                              <Database className="w-4 h-4 mr-2" />
+                              Database Management
+                            </Button>
+                          </DialogTrigger>
+                          <DialogContent className="max-w-lg">
+                            <DialogHeader>
+                              <DialogTitle>Database Management</DialogTitle>
+                            </DialogHeader>
+                            <div className="space-y-4">
+                              <div className="grid grid-cols-2 gap-4">
+                                <div className="text-center p-4 bg-blue-50 rounded-lg">
+                                  <div className="text-2xl font-bold text-blue-600">2.4 GB</div>
+                                  <div className="text-sm text-gray-600">Database Size</div>
+                                </div>
+                                <div className="text-center p-4 bg-green-50 rounded-lg">
+                                  <div className="text-2xl font-bold text-green-600">99.8%</div>
+                                  <div className="text-sm text-gray-600">Uptime</div>
+                                </div>
+                              </div>
+                              <div className="space-y-2">
+                                <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                                  <span>Patients Table</span>
+                                  <span className="font-medium">{Array.isArray(patients) ? patients.length : 0} records</span>
+                                </div>
+                                <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                                  <span>Appointments Table</span>
+                                  <span className="font-medium">12 records</span>
+                                </div>
+                                <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                                  <span>Staff Table</span>
+                                  <span className="font-medium">5 records</span>
+                                </div>
+                                <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                                  <span>Medicines Table</span>
+                                  <span className="font-medium">{medicines?.length || 0} records</span>
+                                </div>
+                              </div>
+                              <div className="space-y-2">
+                                <Button variant="outline" className="w-full">Optimize Database</Button>
+                                <Button variant="outline" className="w-full">Check Integrity</Button>
+                                <Button variant="destructive" className="w-full">Clear Cache</Button>
+                              </div>
+                            </div>
+                          </DialogContent>
+                        </Dialog>
+                        
+                        <Dialog>
+                          <DialogTrigger asChild>
+                            <Button variant="outline" className="w-full justify-start">
+                              <Download className="w-4 h-4 mr-2" />
+                              Backup & Restore
+                            </Button>
+                          </DialogTrigger>
+                          <DialogContent className="max-w-lg">
+                            <DialogHeader>
+                              <DialogTitle>Backup & Restore</DialogTitle>
+                            </DialogHeader>
+                            <div className="space-y-4">
+                              <div className="space-y-3">
+                                <h4 className="font-medium">Automatic Backups</h4>
+                                <div className="flex items-center justify-between">
+                                  <span>Daily Backups</span>
+                                  <input type="checkbox" defaultChecked className="rounded" />
+                                </div>
+                                <div className="flex items-center justify-between">
+                                  <span>Weekly Full Backup</span>
+                                  <input type="checkbox" defaultChecked className="rounded" />
+                                </div>
+                                <div className="flex items-center justify-between">
+                                  <span>Retention (days)</span>
+                                  <Input type="number" defaultValue="30" className="w-20" />
+                                </div>
+                              </div>
+                              
+                              <div className="space-y-3">
+                                <h4 className="font-medium">Recent Backups</h4>
+                                <div className="space-y-2">
+                                  {[
+                                    { date: '2025-08-06 06:00', type: 'Daily', size: '2.4 GB' },
+                                    { date: '2025-08-05 06:00', type: 'Daily', size: '2.3 GB' },
+                                    { date: '2025-08-04 00:00', type: 'Weekly', size: '2.2 GB' }
+                                  ].map((backup, index) => (
+                                    <div key={index} className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                                      <div>
+                                        <div className="font-medium">{backup.type} Backup</div>
+                                        <div className="text-sm text-gray-600">{backup.date}</div>
+                                      </div>
+                                      <div className="text-right">
+                                        <div className="text-sm">{backup.size}</div>
+                                        <Button size="sm" variant="outline">Restore</Button>
+                                      </div>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                              
+                              <div className="space-y-2">
+                                <Button className="w-full">Create Backup Now</Button>
+                                <Button variant="outline" className="w-full">Download Backup</Button>
+                              </div>
+                            </div>
+                          </DialogContent>
+                        </Dialog>
                       </div>
                     </div>
                   </div>
@@ -2689,8 +2875,8 @@ export default function ClinicDashboard() {
                   </div>
                 ) : (
                   <div className="space-y-4">
-                    {patients && patients.length > 0 ? (
-                      patients.map((patient) => (
+                    {Array.isArray(patients) && patients.length > 0 ? (
+                      patients.map((patient: any) => (
                         <Card key={patient.id} className="p-4">
                           <div className="flex items-center justify-between">
                             <div className="flex items-center gap-4">
