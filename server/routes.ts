@@ -500,6 +500,96 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Admin route to approve appointment
+  app.post('/api/appointments/admin/:appointmentId/approve', authMiddleware, async (req, res) => {
+    try {
+      const { appointmentId } = req.params;
+      console.log('🔥 APPROVING APPOINTMENT:', appointmentId);
+      
+      // Update appointment status to scheduled
+      const appointment = await storage.updateAppointment(appointmentId, { 
+        status: 'scheduled' 
+      });
+      
+      if (!appointment) {
+        return res.status(404).json({ error: 'Appointment not found' });
+      }
+
+      console.log('🔥 Appointment approved:', appointment.id);
+
+      // Send SMS notification to patient
+      try {
+        const patient = appointment.patient || await storage.getUserById(appointment.patientId);
+        const doctor = appointment.doctor || await storage.getUserById(appointment.doctorId);
+        
+        if (patient && doctor) {
+          const appointmentDate = new Date(appointment.appointmentDate);
+          const message = `Good news! Your appointment with Dr. ${doctor.firstName} ${doctor.lastName} on ${appointmentDate.toLocaleDateString()} at ${appointmentDate.toLocaleTimeString()} has been approved. Please arrive 15 minutes early.`;
+          
+          await smsService.sendSMS(patient.phoneNumber, message);
+          console.log('🔥 Approval SMS sent to:', patient.phoneNumber);
+        }
+      } catch (smsError) {
+        console.error('Failed to send approval SMS:', smsError);
+        // Don't fail the request if SMS fails
+      }
+
+      res.json({ 
+        success: true, 
+        message: 'Appointment approved successfully',
+        appointment 
+      });
+    } catch (error: any) {
+      console.error('Error approving appointment:', error);
+      res.status(500).json({ error: 'Failed to approve appointment' });
+    }
+  });
+
+  // Admin route to reject appointment
+  app.post('/api/appointments/admin/:appointmentId/reject', authMiddleware, async (req, res) => {
+    try {
+      const { appointmentId } = req.params;
+      console.log('🔥 REJECTING APPOINTMENT:', appointmentId);
+      
+      // Update appointment status to cancelled
+      const appointment = await storage.updateAppointment(appointmentId, { 
+        status: 'cancelled' 
+      });
+      
+      if (!appointment) {
+        return res.status(404).json({ error: 'Appointment not found' });
+      }
+
+      console.log('🔥 Appointment rejected:', appointment.id);
+
+      // Send SMS notification to patient
+      try {
+        const patient = appointment.patient || await storage.getUserById(appointment.patientId);
+        const doctor = appointment.doctor || await storage.getUserById(appointment.doctorId);
+        
+        if (patient && doctor) {
+          const appointmentDate = new Date(appointment.appointmentDate);
+          const message = `We're sorry, but your appointment request with Dr. ${doctor.firstName} ${doctor.lastName} on ${appointmentDate.toLocaleDateString()} could not be approved. Please contact the clinic to schedule an alternative time.`;
+          
+          await smsService.sendSMS(patient.phoneNumber, message);
+          console.log('🔥 Rejection SMS sent to:', patient.phoneNumber);
+        }
+      } catch (smsError) {
+        console.error('Failed to send rejection SMS:', smsError);
+        // Don't fail the request if SMS fails
+      }
+
+      res.json({ 
+        success: true, 
+        message: 'Appointment rejected successfully',
+        appointment 
+      });
+    } catch (error: any) {
+      console.error('Error rejecting appointment:', error);
+      res.status(500).json({ error: 'Failed to reject appointment' });
+    }
+  });
+
   // Appointment routes
   app.post("/api/appointments", authMiddleware, async (req, res) => {
     try {

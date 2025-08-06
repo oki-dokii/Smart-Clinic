@@ -153,6 +153,36 @@ export default function ClinicDashboard() {
   const [showAppointmentModal, setShowAppointmentModal] = useState(false)
   const { toast } = useToast()
   const queryClient = useQueryClient()
+
+  // Appointment approval mutation
+  const appointmentApproval = useMutation({
+    mutationFn: async ({ appointmentId, action }: { appointmentId: string; action: 'approve' | 'reject' }) => {
+      return apiRequest(`/api/appointments/admin/${appointmentId}/${action}`, {
+        method: 'POST'
+      })
+    },
+    onSuccess: (_, variables) => {
+      toast({
+        title: variables.action === 'approve' ? 'Appointment Approved' : 'Appointment Rejected',
+        description: variables.action === 'approve' 
+          ? 'Patient will receive SMS confirmation' 
+          : 'Patient will be notified of the rejection'
+      })
+      queryClient.invalidateQueries({ queryKey: ['/api/appointments/admin'] })
+    },
+    onError: () => {
+      toast({
+        title: 'Error',
+        description: 'Failed to update appointment status',
+        variant: 'destructive'
+      })
+    }
+  })
+
+  // Handler for appointment approval/rejection
+  const handleAppointmentAction = (appointmentId: string, action: 'approve' | 'reject') => {
+    appointmentApproval.mutate({ appointmentId, action })
+  }
   
   // Emergency alerts state
   const [emergencyAlerts, setEmergencyAlerts] = useState<EmergencyAlert[]>([
@@ -907,26 +937,7 @@ export default function ClinicDashboard() {
     generateReport.mutate()
   }
 
-  // Appointment approval actions
-  const appointmentApproval = useMutation({
-    mutationFn: async ({ appointmentId, action, notes }: { appointmentId: string; action: 'approve' | 'reject'; notes?: string }) => {
-      return await apiRequest('PUT', `/api/appointments/${appointmentId}/status`, { 
-        status: action === 'approve' ? 'approved' : 'rejected',
-        rejectionReason: notes
-      });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/appointments/admin'] });
-      toast({ title: 'Success', description: 'Appointment status updated successfully' });
-    },
-    onError: (error) => {
-      toast({ title: 'Error', description: error.message, variant: 'destructive' });
-    }
-  });
 
-  const handleAppointmentAction = (appointmentId: string, action: 'approve' | 'reject') => {
-    appointmentApproval.mutate({ appointmentId, action });
-  };
   
   // Patient form submission handler
   const handlePatientSubmit = async () => {
@@ -2590,23 +2601,37 @@ export default function ClinicDashboard() {
                 ) : (
                   <div className="space-y-4">
                     {appointments && appointments.length > 0 ? (
-                      appointments.map((appointment) => (
+                      appointments
+                        .sort((a, b) => {
+                          // Pending approval first, then by creation date
+                          if (a.status === 'pending_approval' && b.status !== 'pending_approval') return -1;
+                          if (b.status === 'pending_approval' && a.status !== 'pending_approval') return 1;
+                          return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+                        })
+                        .map((appointment) => (
                         <Card key={appointment.id} className="p-4">
                           <div className="flex items-center justify-between">
                             <div className="flex items-center gap-4">
-                              <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
-                                <Calendar className="w-6 h-6 text-green-600" />
+                              <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${
+                                appointment.status === 'pending_approval' ? 'bg-yellow-100' : 'bg-green-100'
+                              }`}>
+                                <Calendar className={`w-6 h-6 ${
+                                  appointment.status === 'pending_approval' ? 'text-yellow-600' : 'text-green-600'
+                                }`} />
                               </div>
                               <div>
                                 <h3 className="font-semibold">
-                                  {appointment.patient.firstName} {appointment.patient.lastName}
+                                  {appointment.patient?.firstName} {appointment.patient?.lastName}
                                 </h3>
                                 <p className="text-sm text-gray-600">
-                                  Dr. {appointment.doctor.firstName} {appointment.doctor.lastName}
+                                  Dr. {appointment.doctor?.firstName} {appointment.doctor?.lastName}
                                 </p>
                                 <p className="text-xs text-gray-500">
                                   {new Date(appointment.appointmentDate).toLocaleDateString()} at {new Date(appointment.appointmentDate).toLocaleTimeString()}
                                 </p>
+                                {appointment.symptoms && (
+                                  <p className="text-xs text-blue-600 mt-1">Symptoms: {appointment.symptoms}</p>
+                                )}
                               </div>
                             </div>
                             <div className="flex items-center gap-4">
@@ -2615,25 +2640,48 @@ export default function ClinicDashboard() {
                                   appointment.status === 'scheduled' ? 'bg-blue-100 text-blue-800' :
                                   appointment.status === 'completed' ? 'bg-green-100 text-green-800' :
                                   appointment.status === 'cancelled' ? 'bg-red-100 text-red-800' :
+                                  appointment.status === 'pending_approval' ? 'bg-yellow-100 text-yellow-800' :
                                   'bg-gray-100 text-gray-800'
                                 }>
-                                  {appointment.status}
+                                  {appointment.status === 'pending_approval' ? 'PENDING APPROVAL' : appointment.status}
                                 </Badge>
                                 <p className="text-sm text-gray-600 mt-1">
                                   {appointment.type || 'Consultation'}
                                 </p>
                               </div>
                               <div className="flex gap-2">
-                                <Dialog>
-                                  <DialogTrigger asChild>
-                                    <Button 
-                                      size="sm" 
-                                      variant="outline"
-                                      data-testid={`button-reschedule-${appointment.id}`}
+                                {appointment.status === 'pending_approval' ? (
+                                  <>
+                                    <Button
+                                      size="sm"
+                                      onClick={() => handleAppointmentAction(appointment.id, 'approve')}
+                                      className="bg-green-600 hover:bg-green-700 text-white"
+                                      disabled={appointmentApproval.isPending}
                                     >
-                                      Reschedule
+                                      Approve
                                     </Button>
-                                  </DialogTrigger>
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      onClick={() => handleAppointmentAction(appointment.id, 'reject')}
+                                      className="border-red-300 text-red-600 hover:bg-red-50"
+                                      disabled={appointmentApproval.isPending}
+                                    >
+                                      Reject
+                                    </Button>
+                                  </>
+                                ) : (
+                                  <div className="flex gap-2">
+                                <Dialog>
+                                    <DialogTrigger asChild>
+                                      <Button 
+                                        size="sm" 
+                                        variant="outline"
+                                        data-testid={`button-reschedule-${appointment.id}`}
+                                      >
+                                        Reschedule
+                                      </Button>
+                                    </DialogTrigger>
                                   <DialogContent className="max-w-md">
                                     <DialogHeader>
                                       <DialogTitle>Reschedule Appointment</DialogTitle>
@@ -2693,7 +2741,7 @@ export default function ClinicDashboard() {
                                     </div>
                                   </DialogContent>
                                 </Dialog>
-                                
+
                                 <Dialog>
                                   <DialogTrigger asChild>
                                     <Button 
@@ -2785,6 +2833,8 @@ export default function ClinicDashboard() {
                                   >
                                     {updateAppointmentStatus.isPending ? 'Completing...' : 'Mark Complete'}
                                   </Button>
+                                )}
+                                  </div>
                                 )}
                               </div>
                             </div>
