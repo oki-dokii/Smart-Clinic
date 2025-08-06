@@ -181,6 +181,7 @@ export default function ClinicDashboard() {
 
   // Handler for appointment approval/rejection
   const handleAppointmentAction = (appointmentId: string, action: 'approve' | 'reject') => {
+    console.log('🔥 Button clicked:', action, 'for appointment:', appointmentId)
     appointmentApproval.mutate({ appointmentId, action })
   }
   
