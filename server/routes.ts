@@ -260,7 +260,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const appointmentData = {
         patientId,
         doctorId: appointmentDetails.doctorId,
-        appointmentDate: appointmentDetails.preferredDate,
+        appointmentDate: new Date(appointmentDetails.preferredDate),
         duration: 30, // Default duration
         type: appointmentDetails.type,
         status: 'pending_approval',

@@ -6,7 +6,7 @@ import { z } from "zod";
 
 // Enums
 export const userRoleEnum = pgEnum("user_role", ["admin", "staff", "doctor", "nurse", "patient"]);
-export const appointmentStatusEnum = pgEnum("appointment_status", ["scheduled", "confirmed", "in_progress", "completed", "cancelled", "no_show"]);
+export const appointmentStatusEnum = pgEnum("appointment_status", ["scheduled", "confirmed", "in_progress", "completed", "cancelled", "no_show", "pending_approval"]);
 export const appointmentTypeEnum = pgEnum("appointment_type", ["clinic", "home_visit", "telehealth"]);
 export const queueStatusEnum = pgEnum("queue_status", ["waiting", "called", "in_progress", "completed", "missed"]);
 export const medicineFrequencyEnum = pgEnum("medicine_frequency", ["once_daily", "twice_daily", "three_times_daily", "four_times_daily", "as_needed", "weekly", "monthly"]);
