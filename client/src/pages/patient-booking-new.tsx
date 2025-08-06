@@ -76,16 +76,13 @@ export default function PatientBooking() {
   // Submit appointment request mutation
   const submitAppointment = useMutation({
     mutationFn: async (data: typeof bookingData) => {
-      return apiRequest('/api/appointments/patient-request', {
-        method: 'POST',
-        body: JSON.stringify({
-          doctorId: data.doctorId,
-          type: data.appointmentType,
-          symptoms: data.symptoms,
-          preferredDate: `${data.preferredDate}T${data.preferredTime}:00.000Z`,
-          urgency: data.urgency,
-          notes: data.notes
-        })
+      return apiRequest('POST', '/api/appointments/patient-request', {
+        doctorId: data.doctorId,
+        type: data.appointmentType,
+        symptoms: data.symptoms,
+        preferredDate: `${data.preferredDate}T${data.preferredTime}:00.000Z`,
+        urgency: data.urgency,
+        notes: data.notes
       });
     },
     onSuccess: () => {
