@@ -1,16 +1,25 @@
-// Email service for sending OTP via email using Nodemailer
+// Email service for sending OTP via email using multiple providers
 import nodemailer from 'nodemailer';
+import { Resend } from 'resend';
 
 class EmailService {
   private transporter: nodemailer.Transporter | null = null;
+  private resend: Resend | null = null;
 
   constructor() {
-    this.initializeTransporter();
+    this.initializeServices();
   }
 
-  private async initializeTransporter() {
+  private async initializeServices() {
     try {
-      // Use Ethereal Email for testing - creates temporary email accounts
+      // Try to initialize Resend if API key is available
+      if (process.env.RESEND_API_KEY) {
+        this.resend = new Resend(process.env.RESEND_API_KEY);
+        console.log('🔥 EMAIL SERVICE - Initialized with Resend (real email delivery)');
+        return;
+      }
+
+      // Fallback to Ethereal Email for testing
       const testAccount = await nodemailer.createTestAccount();
       
       this.transporter = nodemailer.createTransport({
@@ -23,59 +32,85 @@ class EmailService {
         },
       });
 
-      console.log('🔥 EMAIL SERVICE - Initialized with test account:', testAccount.user);
+      console.log('🔥 EMAIL SERVICE - Initialized with Ethereal test account (preview only)');
     } catch (error) {
       console.error('🔥 EMAIL SERVICE - Failed to initialize:', error);
     }
   }
 
   async sendOtp(email: string, otp: string): Promise<{ success: boolean; otp?: string; error?: string; previewUrl?: string }> {
+    const emailContent = {
+      subject: 'Your SmartClinic Login Code',
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+          <div style="text-align: center; margin-bottom: 30px;">
+            <h1 style="color: #2563eb; margin: 0;">SmartClinic</h1>
+            <p style="color: #666; margin: 5px 0;">Healthcare Management System</p>
+          </div>
+          
+          <div style="background: #f8fafc; border-radius: 8px; padding: 30px; text-align: center; margin-bottom: 20px;">
+            <h2 style="color: #1e293b; margin-bottom: 20px;">Your Login Code</h2>
+            <div style="background: white; border: 2px solid #e2e8f0; border-radius: 8px; padding: 20px; margin: 20px 0;">
+              <div style="font-size: 32px; font-weight: bold; color: #2563eb; letter-spacing: 8px;">${otp}</div>
+            </div>
+            <p style="color: #64748b; margin: 15px 0;">Enter this code to complete your login</p>
+            <p style="color: #ef4444; font-size: 14px; margin: 10px 0;">This code expires in 5 minutes</p>
+          </div>
+          
+          <div style="border-top: 1px solid #e2e8f0; padding-top: 20px; text-align: center;">
+            <p style="color: #94a3b8; font-size: 12px; margin: 5px 0;">
+              If you didn't request this code, please ignore this email.
+            </p>
+            <p style="color: #94a3b8; font-size: 12px; margin: 5px 0;">
+              SmartClinic - Your trusted healthcare partner
+            </p>
+          </div>
+        </div>
+      `,
+      text: `Your SmartClinic login code is: ${otp}\n\nThis code expires in 5 minutes.\n\nIf you didn't request this code, please ignore this email.\n\nSmartClinic - Your trusted healthcare partner`
+    };
+
     try {
+      // Try Resend first (real email delivery)
+      if (this.resend) {
+        const { data, error } = await this.resend.emails.send({
+          from: 'SmartClinic <onboarding@resend.dev>',
+          to: [email],
+          subject: emailContent.subject,
+          html: emailContent.html,
+          text: emailContent.text,
+        });
+
+        if (error) {
+          console.error('🔥 RESEND ERROR:', error);
+          throw new Error('Resend failed');
+        }
+
+        console.log(`🔥 EMAIL OTP SERVICE - Real email sent to ${email} via Resend`);
+        return { success: true, otp };
+      }
+
+      // Fallback to Ethereal Email (testing only)
       if (!this.transporter) {
-        await this.initializeTransporter();
+        await this.initializeServices();
       }
 
       if (!this.transporter) {
-        throw new Error('Email transporter not initialized');
+        throw new Error('No email service available');
       }
 
       const mailOptions = {
         from: '"SmartClinic" <noreply@smartclinic.com>',
         to: email,
-        subject: 'Your SmartClinic Login Code',
-        html: `
-          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-            <div style="text-align: center; margin-bottom: 30px;">
-              <h1 style="color: #2563eb; margin: 0;">SmartClinic</h1>
-              <p style="color: #666; margin: 5px 0;">Healthcare Management System</p>
-            </div>
-            
-            <div style="background: #f8fafc; border-radius: 8px; padding: 30px; text-align: center; margin-bottom: 20px;">
-              <h2 style="color: #1e293b; margin-bottom: 20px;">Your Login Code</h2>
-              <div style="background: white; border: 2px solid #e2e8f0; border-radius: 8px; padding: 20px; margin: 20px 0;">
-                <div style="font-size: 32px; font-weight: bold; color: #2563eb; letter-spacing: 8px;">${otp}</div>
-              </div>
-              <p style="color: #64748b; margin: 15px 0;">Enter this code to complete your login</p>
-              <p style="color: #ef4444; font-size: 14px; margin: 10px 0;">This code expires in 5 minutes</p>
-            </div>
-            
-            <div style="border-top: 1px solid #e2e8f0; padding-top: 20px; text-align: center;">
-              <p style="color: #94a3b8; font-size: 12px; margin: 5px 0;">
-                If you didn't request this code, please ignore this email.
-              </p>
-              <p style="color: #94a3b8; font-size: 12px; margin: 5px 0;">
-                SmartClinic - Your trusted healthcare partner
-              </p>
-            </div>
-          </div>
-        `,
-        text: `Your SmartClinic login code is: ${otp}\n\nThis code expires in 5 minutes.\n\nIf you didn't request this code, please ignore this email.\n\nSmartClinic - Your trusted healthcare partner`
+        subject: emailContent.subject,
+        html: emailContent.html,
+        text: emailContent.text
       };
 
       const info = await this.transporter.sendMail(mailOptions);
       const previewUrl = nodemailer.getTestMessageUrl(info);
       
-      console.log(`🔥 EMAIL OTP SERVICE - Email sent to ${email}`);
+      console.log(`🔥 EMAIL OTP SERVICE - Test email sent to ${email}`);
       console.log(`🔥 EMAIL PREVIEW URL: ${previewUrl}`);
       
       return { 
@@ -86,7 +121,7 @@ class EmailService {
     } catch (error) {
       console.error('🔥 EMAIL SERVICE ERROR:', error);
       
-      // Fallback: still return success but with console logging for development
+      // Final fallback: console logging for development
       console.log(`🔥 EMAIL FALLBACK - OTP for ${email}: ${otp}`);
       return { 
         success: true, 
