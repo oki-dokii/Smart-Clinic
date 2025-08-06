@@ -17,10 +17,8 @@ export default function PatientLogin() {
 
   const sendOtp = useMutation({
     mutationFn: async (emailAddress: string) => {
-      return apiRequest('/api/auth/send-email-otp', {
-        method: 'POST',
-        body: JSON.stringify({ email: emailAddress })
-      });
+      const response = await apiRequest('POST', '/api/auth/send-email-otp', { email: emailAddress });
+      return await response.json();
     },
     onSuccess: () => {
       setStep(2);
@@ -40,10 +38,8 @@ export default function PatientLogin() {
 
   const verifyLogin = useMutation({
     mutationFn: async ({ emailAddress, otpCode }: { emailAddress: string; otpCode: string }) => {
-      return apiRequest('/api/auth/verify-email-otp', {
-        method: 'POST',
-        body: JSON.stringify({ email: emailAddress, otp: otpCode })
-      });
+      const response = await apiRequest('POST', '/api/auth/verify-email-otp', { email: emailAddress, otp: otpCode });
+      return await response.json();
     },
     onSuccess: (data: any) => {
       if (data.token) {
