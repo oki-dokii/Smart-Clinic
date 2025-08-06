@@ -88,7 +88,7 @@ export class AuthService {
     if (!user) {
       // Create new user with patient role by default
       user = await storage.createUser({
-        phoneNumber: '', // Will be filled later
+        phoneNumber: null, // Email-based users don't need phone numbers initially
         email,
         role: 'patient',
         firstName: '',
@@ -102,23 +102,28 @@ export class AuthService {
       throw new Error('Account is deactivated. Please contact support');
     }
 
-    // Create session
-    const session = await storage.createSession({
-      userId: user.id,
-      ipAddress,
-      userAgent
-    });
-
-    // Generate JWT token
+    // Generate JWT token first
     const token = jwt.sign(
       { 
         userId: user.id,
-        sessionId: session.id,
         role: user.role 
       },
       JWT_SECRET,
       { expiresIn: '7d' }
     );
+
+    // Create session with the actual token
+    const expiresAt = new Date();
+    expiresAt.setDate(expiresAt.getDate() + 7); // 7 days from now
+
+    const session = await storage.createAuthSession({
+      userId: user.id,
+      token,
+      expiresAt,
+      ipAddress: ipAddress || '',
+      userAgent: userAgent || '',
+      lastActivity: new Date()
+    });
 
     return { token, user, isNewUser };
   }

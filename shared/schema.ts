@@ -15,7 +15,7 @@ export const prescriptionStatusEnum = pgEnum("prescription_status", ["active", "
 // Users table
 export const users = pgTable("users", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  phoneNumber: varchar("phone_number", { length: 20 }).notNull().unique(),
+  phoneNumber: varchar("phone_number", { length: 20 }).unique(),
   role: userRoleEnum("role").notNull().default("patient"),
   firstName: text("first_name").notNull(),
   lastName: text("last_name").notNull(),
