@@ -12,10 +12,23 @@ class EmailService {
 
   private async initializeServices() {
     try {
-      // Try to initialize Resend if API key is available
+      // Try Gmail SMTP first if credentials are available
+      if (process.env.GMAIL_USER && process.env.GMAIL_APP_PASSWORD) {
+        this.transporter = nodemailer.createTransport({
+          service: 'gmail',
+          auth: {
+            user: process.env.GMAIL_USER,
+            pass: process.env.GMAIL_APP_PASSWORD,
+          },
+        });
+        console.log('🔥 EMAIL SERVICE - Initialized with Gmail SMTP (real email delivery to any address)');
+        return;
+      }
+
+      // Try to initialize Resend if API key is available (limited to verified email only)
       if (process.env.RESEND_API_KEY) {
         this.resend = new Resend(process.env.RESEND_API_KEY);
-        console.log('🔥 EMAIL SERVICE - Initialized with Resend (real email delivery)');
+        console.log('🔥 EMAIL SERVICE - Initialized with Resend (limited to 44441100sf@gmail.com only)');
         return;
       }
 
@@ -71,8 +84,23 @@ class EmailService {
     };
 
     try {
-      // Try Resend first (real email delivery)
-      if (this.resend) {
+      // Try Gmail SMTP first (works with any email address)
+      if (this.transporter && process.env.GMAIL_USER) {
+        const mailOptions = {
+          from: `"SmartClinic" <${process.env.GMAIL_USER}>`,
+          to: email,
+          subject: emailContent.subject,
+          html: emailContent.html,
+          text: emailContent.text
+        };
+
+        await this.transporter.sendMail(mailOptions);
+        console.log(`🔥 EMAIL OTP SERVICE - Real email sent to ${email} via Gmail SMTP`);
+        return { success: true, otp };
+      }
+
+      // Try Resend (limited to verified email only)
+      if (this.resend && email === '44441100sf@gmail.com') {
         const { data, error } = await this.resend.emails.send({
           from: 'SmartClinic <onboarding@resend.dev>',
           to: [email],
