@@ -94,8 +94,10 @@ class EmailService {
           text: emailContent.text
         };
 
-        await this.transporter.sendMail(mailOptions);
+        const info = await this.transporter.sendMail(mailOptions);
+        console.log(`🔥 EMAIL OTP SERVICE - Gmail SMTP response:`, info);
         console.log(`🔥 EMAIL OTP SERVICE - Real email sent to ${email} via Gmail SMTP`);
+        console.log(`🔥 EMAIL OTP CODE for ${email}: ${otp}`);
         return { success: true, otp };
       }
 
