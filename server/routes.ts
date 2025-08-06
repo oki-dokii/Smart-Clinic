@@ -210,6 +210,181 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Public doctors endpoint for appointment booking (no auth required)
+  app.get('/api/doctors', async (req, res) => {
+    try {
+      const doctors = await storage.getUsersByRole('doctor');
+      const activeDoctors = doctors.filter(doctor => doctor.isActive);
+      res.json(activeDoctors);
+    } catch (error) {
+      console.error('Error fetching doctors:', error);
+      res.status(500).json({ error: 'Failed to fetch doctors' });
+    }
+  });
+
+  // Submit appointment request (no auth required for public booking)
+  app.post('/api/appointments/request', async (req, res) => {
+    try {
+      console.log('🔥 APPOINTMENT REQUEST RECEIVED:', req.body);
+      
+      const { patientInfo, appointmentDetails } = req.body;
+      
+      // First, check if patient exists or create new patient record
+      let patientId;
+      try {
+        const existingPatient = await storage.getUserByPhone(patientInfo.phoneNumber);
+        if (existingPatient) {
+          patientId = existingPatient.id;
+          console.log('🔥 Found existing patient:', patientId);
+        } else {
+          // Create new patient record
+          const newPatient = await storage.createUser({
+            phoneNumber: patientInfo.phoneNumber,
+            role: 'patient',
+            firstName: patientInfo.firstName,
+            lastName: patientInfo.lastName,
+            email: patientInfo.email || null,
+            dateOfBirth: patientInfo.dateOfBirth || null,
+            isActive: true,
+            isApproved: false // Will be approved when appointment is approved
+          });
+          patientId = newPatient.id;
+          console.log('🔥 Created new patient:', patientId);
+        }
+      } catch (error) {
+        console.error('Error handling patient:', error);
+        return res.status(500).json({ error: 'Failed to process patient information' });
+      }
+      
+      // Create appointment request
+      const appointmentData = {
+        patientId,
+        doctorId: appointmentDetails.doctorId,
+        appointmentDate: appointmentDetails.preferredDate,
+        duration: 30, // Default duration
+        type: appointmentDetails.type,
+        status: 'pending_approval',
+        symptoms: appointmentDetails.symptoms || '',
+        notes: appointmentDetails.notes || ''
+      };
+      
+      console.log('🔥 Creating appointment with data:', appointmentData);
+      const appointment = await storage.createAppointment(appointmentData);
+      
+      console.log('🔥 Appointment request created successfully:', appointment.id);
+      
+      // Send SMS notification to patient
+      try {
+        const doctor = await storage.getUserById(appointmentDetails.doctorId);
+        await smsService.sendAppointmentRequest(patientInfo.phoneNumber, {
+          doctorName: `Dr. ${doctor?.firstName} ${doctor?.lastName}`,
+          preferredDate: new Date(appointmentDetails.preferredDate).toLocaleDateString(),
+          appointmentId: appointment.id
+        });
+        console.log('🔥 SMS notification sent to patient');
+      } catch (smsError) {
+        console.error('SMS notification failed:', smsError);
+        // Don't fail the request if SMS fails
+      }
+      
+      res.json({ 
+        success: true, 
+        appointmentId: appointment.id,
+        patientId,
+        message: 'Appointment request submitted successfully. You will receive an SMS notification once reviewed.' 
+      });
+      
+    } catch (error) {
+      console.error('Error creating appointment request:', error);
+      res.status(500).json({ error: 'Failed to submit appointment request' });
+    }
+  });
+
+  // Get pending appointment requests for admin approval
+  app.get('/api/appointments/pending', authMiddleware, requireRole(['admin', 'staff']), async (req, res) => {
+    try {
+      console.log('🔥 FETCHING PENDING APPOINTMENTS FOR ADMIN');
+      const pendingAppointments = await storage.getPendingAppointments();
+      console.log('🔥 Found pending appointments:', pendingAppointments.length);
+      res.json(pendingAppointments);
+    } catch (error) {
+      console.error('Error fetching pending appointments:', error);
+      res.status(500).json({ error: 'Failed to fetch pending appointments' });
+    }
+  });
+
+  // Approve or reject appointment request
+  app.patch('/api/appointments/:id/status', authMiddleware, requireRole(['admin', 'staff']), async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { status, rejectionReason, confirmedDate, confirmedTime } = req.body;
+      
+      console.log('🔥 UPDATING APPOINTMENT STATUS:', { id, status, confirmedDate, confirmedTime });
+      
+      if (!['approved', 'rejected'].includes(status)) {
+        return res.status(400).json({ error: 'Invalid status. Must be approved or rejected.' });
+      }
+      
+      // Get appointment details
+      const appointment = await storage.getAppointmentById(id);
+      if (!appointment) {
+        return res.status(404).json({ error: 'Appointment not found' });
+      }
+      
+      // Update appointment status
+      const updateData: any = { status };
+      
+      if (status === 'approved') {
+        // If approved, set confirmed date/time and approve patient
+        if (confirmedDate && confirmedTime) {
+          updateData.appointmentDate = `${confirmedDate}T${confirmedTime}:00.000Z`;
+        }
+        
+        // Approve the patient if they were pending
+        await storage.updateUserStatus(appointment.patientId, { isApproved: true });
+        console.log('🔥 Patient approved:', appointment.patientId);
+      } else if (status === 'rejected') {
+        updateData.notes = rejectionReason || updateData.notes;
+      }
+      
+      const updatedAppointment = await storage.updateAppointment(id, updateData);
+      
+      // Send SMS notification
+      try {
+        const patient = await storage.getUserById(appointment.patientId);
+        const doctor = await storage.getUserById(appointment.doctorId);
+        
+        if (status === 'approved') {
+          await smsService.sendAppointmentApproved(patient?.phoneNumber || '', {
+            doctorName: `Dr. ${doctor?.firstName} ${doctor?.lastName}`,
+            appointmentDate: new Date(updateData.appointmentDate || appointment.appointmentDate).toLocaleDateString(),
+            appointmentTime: new Date(updateData.appointmentDate || appointment.appointmentDate).toLocaleTimeString(),
+            appointmentId: id
+          });
+        } else {
+          await smsService.sendAppointmentRejected(patient?.phoneNumber || '', {
+            doctorName: `Dr. ${doctor?.firstName} ${doctor?.lastName}`,
+            reason: rejectionReason || 'No reason provided',
+            appointmentId: id
+          });
+        }
+        console.log('🔥 Status update SMS sent to patient');
+      } catch (smsError) {
+        console.error('SMS notification failed:', smsError);
+      }
+      
+      res.json({ 
+        success: true, 
+        appointment: updatedAppointment,
+        message: `Appointment ${status} successfully` 
+      });
+      
+    } catch (error) {
+      console.error('Error updating appointment status:', error);
+      res.status(500).json({ error: 'Failed to update appointment status' });
+    }
+  });
+
   // Staff GPS verification routes
   app.post("/api/staff/checkin", authMiddleware, requireRole(['staff', 'doctor']), gpsVerificationMiddleware, async (req, res) => {
     try {

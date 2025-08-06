@@ -333,7 +333,10 @@ export default function ClinicDashboard() {
         appointmentDate: '',
         appointmentTime: '',
         consultationType: 'regular',
-        symptoms: ''
+        symptoms: '',
+        date: '',
+        time: '',
+        type: ''
       })
       setShowAppointmentModal(false)
       
@@ -458,7 +461,7 @@ export default function ClinicDashboard() {
       phoneNumber: patient.phoneNumber || '',
       email: patient.email || '',
       address: patient.address || '',
-      dateOfBirth: patient.dateOfBirth ? new Date(patient.dateOfBirth).toISOString().split('T')[0] : ''
+      dateOfBirth: (patient as any).dateOfBirth ? new Date((patient as any).dateOfBirth).toISOString().split('T')[0] : ''
     })
     setShowEditModal(true)
   }
@@ -615,7 +618,7 @@ export default function ClinicDashboard() {
       pdf.text('• Keep this medical history document updated and accessible', 25, yPos)
       
       // Footer
-      const pageCount = pdf.internal.getNumberOfPages()
+      const pageCount = (pdf as any).internal.getNumberOfPages()
       for (let i = 1; i <= pageCount; i++) {
         pdf.setPage(i)
         pdf.setFontSize(8)

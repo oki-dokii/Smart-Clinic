@@ -56,6 +56,10 @@ export interface IStorage {
   cancelAppointment(id: string): Promise<Appointment | undefined>;
   getAppointments(userId?: string): Promise<(Appointment & { patient: User; doctor: User })[]>;
   getAppointmentsByDateRange(startDate: Date, endDate: Date): Promise<(Appointment & { patient: User; doctor: User })[]>;
+  getAppointmentById(id: string): Promise<Appointment | null>;
+  getPendingAppointments(): Promise<(Appointment & { patient: User; doctor: User })[]>;
+  updateUserStatus(userId: string, status: { isApproved: boolean }): Promise<void>;
+  getUserByPhone(phoneNumber: string): Promise<User | null>;
   
   // Queue Management
   createQueueToken(token: InsertQueueToken): Promise<QueueToken>;
@@ -1141,6 +1145,85 @@ export class DatabaseStorage implements IStorage {
       .where(eq(appointments.id, id))
       .returning();
     return updatedAppointment || undefined;
+  }
+
+  async getAppointmentById(id: string): Promise<Appointment | null> {
+    const [appointment] = await db.select()
+      .from(appointments)
+      .where(eq(appointments.id, id));
+    return appointment || null;
+  }
+
+  async getPendingAppointments(): Promise<(Appointment & { patient: User; doctor: User })[]> {
+    const result = await db.select({
+      id: appointments.id,
+      patientId: appointments.patientId,
+      doctorId: appointments.doctorId,
+      appointmentDate: appointments.appointmentDate,
+      duration: appointments.duration,
+      type: appointments.type,
+      status: appointments.status,
+      location: appointments.location,
+      notes: appointments.notes,
+      symptoms: appointments.symptoms,
+      diagnosis: appointments.diagnosis,
+      treatmentPlan: appointments.treatmentPlan,
+      isDelayed: appointments.isDelayed,
+      delayMinutes: appointments.delayMinutes,
+      delayReason: appointments.delayReason,
+      createdAt: appointments.createdAt,
+      updatedAt: appointments.updatedAt,
+      patient: {
+        id: sql`patient.id`,
+        firstName: sql`patient.first_name`,
+        lastName: sql`patient.last_name`,
+        phoneNumber: sql`patient.phone_number`,
+        email: sql`patient.email`,
+        role: sql`patient.role`,
+        dateOfBirth: sql`patient.date_of_birth`,
+        address: sql`patient.address`,
+        emergencyContact: sql`patient.emergency_contact`,
+        isActive: sql`patient.is_active`,
+        isApproved: sql`patient.is_approved`,
+        createdAt: sql`patient.created_at`,
+        updatedAt: sql`patient.updated_at`,
+      },
+      doctor: {
+        id: sql`doctor.id`,
+        firstName: sql`doctor.first_name`,
+        lastName: sql`doctor.last_name`,
+        phoneNumber: sql`doctor.phone_number`,
+        email: sql`doctor.email`,
+        role: sql`doctor.role`,
+        dateOfBirth: sql`doctor.date_of_birth`,
+        address: sql`doctor.address`,
+        emergencyContact: sql`doctor.emergency_contact`,
+        isActive: sql`doctor.is_active`,
+        isApproved: sql`doctor.is_approved`,
+        createdAt: sql`doctor.created_at`,
+        updatedAt: sql`doctor.updated_at`,
+      }
+    })
+    .from(appointments)
+    .innerJoin(sql`${users} AS patient`, sql`${appointments.patientId} = patient.id`)
+    .innerJoin(sql`${users} AS doctor`, sql`${appointments.doctorId} = doctor.id`)
+    .where(eq(appointments.status, 'pending_approval'))
+    .orderBy(desc(appointments.createdAt));
+
+    return result as any[];
+  }
+
+  async updateUserStatus(userId: string, status: { isApproved: boolean }): Promise<void> {
+    await db.update(users)
+      .set({ isApproved: status.isApproved, updatedAt: new Date() })
+      .where(eq(users.id, userId));
+  }
+
+  async getUserByPhone(phoneNumber: string): Promise<User | null> {
+    const [user] = await db.select()
+      .from(users)
+      .where(eq(users.phoneNumber, phoneNumber));
+    return user || null;
   }
 }
 

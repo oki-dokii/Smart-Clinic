@@ -129,6 +129,63 @@ export class SmsService {
       }
     }
   }
+
+  async sendAppointmentRequest(phoneNumber: string, details: { doctorName: string; preferredDate: string; appointmentId: string }): Promise<void> {
+    const message = `SmartClinic: Your appointment request with ${details.doctorName} for ${details.preferredDate} has been submitted (ID: ${details.appointmentId}). You will receive a confirmation once reviewed.`;
+    
+    console.log(`Appointment request SMS to ${phoneNumber}: ${message}`);
+    
+    if (twilioClient && TWILIO_PHONE_NUMBER) {
+      try {
+        await twilioClient.messages.create({
+          body: message,
+          from: TWILIO_PHONE_NUMBER,
+          to: phoneNumber
+        });
+        console.log(`Appointment request SMS successfully sent to ${phoneNumber}`);
+      } catch (error) {
+        console.error('Failed to send appointment request SMS via Twilio:', error);
+      }
+    }
+  }
+
+  async sendAppointmentApproved(phoneNumber: string, details: { doctorName: string; appointmentDate: string; appointmentTime: string; appointmentId: string }): Promise<void> {
+    const message = `SmartClinic: Your appointment with ${details.doctorName} has been APPROVED for ${details.appointmentDate} at ${details.appointmentTime}. ID: ${details.appointmentId}`;
+    
+    console.log(`Appointment approved SMS to ${phoneNumber}: ${message}`);
+    
+    if (twilioClient && TWILIO_PHONE_NUMBER) {
+      try {
+        await twilioClient.messages.create({
+          body: message,
+          from: TWILIO_PHONE_NUMBER,
+          to: phoneNumber
+        });
+        console.log(`Appointment approved SMS successfully sent to ${phoneNumber}`);
+      } catch (error) {
+        console.error('Failed to send appointment approved SMS via Twilio:', error);
+      }
+    }
+  }
+
+  async sendAppointmentRejected(phoneNumber: string, details: { doctorName: string; reason: string; appointmentId: string }): Promise<void> {
+    const message = `SmartClinic: Your appointment request with ${details.doctorName} has been declined. Reason: ${details.reason}. Please contact us for alternative options. ID: ${details.appointmentId}`;
+    
+    console.log(`Appointment rejected SMS to ${phoneNumber}: ${message}`);
+    
+    if (twilioClient && TWILIO_PHONE_NUMBER) {
+      try {
+        await twilioClient.messages.create({
+          body: message,
+          from: TWILIO_PHONE_NUMBER,
+          to: phoneNumber
+        });
+        console.log(`Appointment rejected SMS successfully sent to ${phoneNumber}`);
+      } catch (error) {
+        console.error('Failed to send appointment rejected SMS via Twilio:', error);
+      }
+    }
+  }
 }
 
 export const smsService = new SmsService();

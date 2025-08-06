@@ -12,6 +12,7 @@ import StaffCheckinPage from "@/pages/staff-checkin";
 import ProfilePage from "@/pages/profile";
 import SettingsPage from "@/pages/settings";
 import MedicinesPage from "@/pages/medicines";
+import PatientBooking from "@/pages/patient-booking";
 import NotFound from "@/pages/not-found";
 
 // Auth wrapper component - simplified since auth is now handled in queryClient
@@ -30,6 +31,7 @@ function Router() {
       <Route path="/profile" component={ProfilePage} />
       <Route path="/settings" component={SettingsPage} />
       <Route path="/medicines" component={MedicinesPage} />
+      <Route path="/book-appointment" component={PatientBooking} />
       <Route path="/">
         {() => {
           const token = localStorage.getItem("auth_token");
