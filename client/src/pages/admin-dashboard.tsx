@@ -708,13 +708,40 @@ export default function ClinicDashboard() {
     refetchInterval: 30000
   })
 
-  // Patients data with force render dependency
-  const { data: patients, isLoading: patientsLoading, refetch: refetchPatients } = useQuery<User[]>({
+  // Patients data with force render dependency and proper auth
+  const { data: patients, isLoading: patientsLoading, refetch: refetchPatients, error: patientsError } = useQuery<User[]>({
     queryKey: ['/api/patients', forceRender],
+    queryFn: () => fetch('/api/patients', {
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('auth_token')}`,
+        'Content-Type': 'application/json'
+      }
+    }).then(res => {
+      if (!res.ok) throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+      return res.json();
+    }),
     refetchInterval: 60000,
     staleTime: 0, // Always consider data stale to force fresh fetch
-    cacheTime: 0 // Don't cache data to ensure fresh reads
+    cacheTime: 0, // Don't cache data to ensure fresh reads
+    retry: 3
   })
+  
+  // Debug patient query
+  React.useEffect(() => {
+    console.log('🔥 PATIENTS QUERY - Data:', patients?.length || 0, 'Loading:', patientsLoading, 'Error:', patientsError);
+    if (patientsError) {
+      console.log('🔥 PATIENTS QUERY ERROR DETAILS:', patientsError);
+    }
+    if (patients) {
+      console.log('🔥 PATIENTS DATA:', patients);
+    }
+  }, [patients, patientsLoading, patientsError]);
+
+  // Force initial patient data fetch on mount
+  React.useEffect(() => {
+    console.log('🔥 COMPONENT MOUNTED - Force rendering patients');
+    refetchPatients();
+  }, []);
 
   // All Users data (for staff management)  
   const { data: users, isLoading: usersLoading, error: usersError, refetch: refetchUsers } = useQuery<User[]>({
@@ -894,6 +921,7 @@ export default function ClinicDashboard() {
       await queryClient.invalidateQueries({ queryKey: ['/api/patients'] })
       await queryClient.removeQueries({ queryKey: ['/api/patients'] })
       await queryClient.refetchQueries({ queryKey: ['/api/patients'] })
+      await refetchPatients() // Direct refetch call
       
       // Force re-render
       setForceRender(prev => prev + 1)
