@@ -47,7 +47,7 @@ export default function PatientLogin() {
         
         // Redirect based on role
         if (data.user.role === 'patient') {
-          window.location.href = '/book-appointment';
+          window.location.href = '/dashboard';
         } else if (data.user.role === 'admin') {
           window.location.href = '/admin-dashboard';
         } else {
