@@ -372,16 +372,35 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getUserAppointments(userId: string, role: string): Promise<(Appointment & { patient: User; doctor: User })[]> {
-    const userField = role === 'patient' ? appointments.patientId : appointments.doctorId;
+    console.log(`Storage: Getting appointments for user ${userId} with role ${role}`);
     
-    return await db.query.appointments.findMany({
-      where: eq(userField, userId),
-      with: {
-        patient: true,
-        doctor: true,
-      },
-      orderBy: asc(appointments.appointmentDate),
-    });
+    // Use manual join approach like getAppointments for consistency
+    const userField = role === 'patient' ? appointments.patientId : appointments.doctorId;
+    const appointmentRecords = await db.select().from(appointments)
+      .where(eq(userField, userId))
+      .orderBy(asc(appointments.appointmentDate));
+    
+    console.log(`Storage: Found ${appointmentRecords.length} appointments for user ${userId}`);
+    
+    // Manually join with users
+    const appointmentsWithUsers = [];
+    for (const appointment of appointmentRecords) {
+      const [patient] = await db.select().from(users).where(eq(users.id, appointment.patientId));
+      const [doctor] = await db.select().from(users).where(eq(users.id, appointment.doctorId));
+      
+      if (patient && doctor) {
+        appointmentsWithUsers.push({
+          ...appointment,
+          patient,
+          doctor
+        });
+      } else {
+        console.log(`Storage: Missing user data for appointment ${appointment.id} - patient: ${!!patient}, doctor: ${!!doctor}`);
+      }
+    }
+    
+    console.log(`Storage: Returning ${appointmentsWithUsers.length} appointments with user data for user ${userId}`);
+    return appointmentsWithUsers;
   }
 
   async getAppointmentsByDate(date: Date, doctorId?: string): Promise<(Appointment & { patient: User; doctor: User })[]> {
