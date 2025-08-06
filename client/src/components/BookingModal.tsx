@@ -79,7 +79,9 @@ export default function BookingModal({ isOpen, onClose, selectedAppointment, res
       }
     },
     onSuccess: () => {
+      // Invalidate both patient and admin appointment queries for real-time sync
       queryClient.invalidateQueries({ queryKey: ['/api/appointments'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/appointments/admin'] });
       onClose();
       resetForm();
       toast({

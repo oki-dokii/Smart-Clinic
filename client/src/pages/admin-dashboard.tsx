@@ -166,7 +166,9 @@ export default function ClinicDashboard() {
           ? 'Patient will receive SMS confirmation' 
           : 'Patient will be notified of the rejection'
       })
+      // Invalidate both admin and patient appointment queries for real-time sync
       queryClient.invalidateQueries({ queryKey: ['/api/appointments/admin'] })
+      queryClient.invalidateQueries({ queryKey: ['/api/appointments'] })
     },
     onError: () => {
       toast({
@@ -726,10 +728,12 @@ export default function ClinicDashboard() {
     refetchInterval: 10000
   })
 
-  // Appointments data
+  // Appointments data - polling every 3 seconds for real-time patient bookings
   const { data: appointments, isLoading: appointmentsLoading } = useQuery<Appointment[]>({
     queryKey: ['/api/appointments/admin'],
-    refetchInterval: 30000
+    refetchInterval: 3000, // Poll every 3 seconds for real-time patient bookings
+    refetchOnWindowFocus: true,
+    staleTime: 0 // Always consider data stale for real-time sync
   })
 
   // Patients data with force render dependency and proper auth

@@ -60,6 +60,9 @@ export default function SmartClinicDashboard() {
   const { data: appointments = [] } = useQuery({
     queryKey: ["/api/appointments"],
     enabled: !!user,
+    refetchInterval: 3000, // Poll every 3 seconds for real-time updates
+    refetchOnWindowFocus: true,
+    staleTime: 0, // Always consider data stale for real-time sync
   });
 
   const { data: queuePosition } = useQuery({
@@ -531,6 +534,23 @@ export default function SmartClinicDashboard() {
                 }
               </div>
               {appointments?.length > 0 && (
+                <div className="mb-2">
+                  <Badge className={`text-xs ${
+                    appointments[0].status === 'pending_approval' 
+                      ? 'bg-yellow-100 text-yellow-800' 
+                      : appointments[0].status === 'scheduled' 
+                      ? 'bg-green-100 text-green-800'
+                      : appointments[0].status === 'cancelled'
+                      ? 'bg-red-100 text-red-800'
+                      : appointments[0].status === 'completed'
+                      ? 'bg-blue-100 text-blue-800'
+                      : 'bg-gray-100 text-gray-800'
+                  }`}>
+                    {appointments[0].status === 'pending_approval' ? 'Pending Approval' : appointments[0].status}
+                  </Badge>
+                </div>
+              )}
+              {appointments?.length > 0 && (
                 <div className="text-xs text-gray-500 mb-4">
                   {new Date(appointments[0].appointmentDate).toLocaleDateString('en-US', { 
                     weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' 
@@ -933,8 +953,18 @@ export default function SmartClinicDashboard() {
                           <span className="font-medium">
                             Dr. {appointment.doctor.firstName} {appointment.doctor.lastName}
                           </span>
-                          <Badge className="bg-green-100 text-green-800 text-xs">
-                            {appointment.status}
+                          <Badge className={`text-xs ${
+                            appointment.status === 'pending_approval' 
+                              ? 'bg-yellow-100 text-yellow-800' 
+                              : appointment.status === 'scheduled' 
+                              ? 'bg-green-100 text-green-800'
+                              : appointment.status === 'cancelled'
+                              ? 'bg-red-100 text-red-800'
+                              : appointment.status === 'completed'
+                              ? 'bg-blue-100 text-blue-800'
+                              : 'bg-gray-100 text-gray-800'
+                          }`}>
+                            {appointment.status === 'pending_approval' ? 'Pending Approval' : appointment.status}
                           </Badge>
                         </div>
                         <div className="flex items-center gap-1 text-sm text-gray-600">
