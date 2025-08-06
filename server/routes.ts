@@ -1242,18 +1242,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/patients", authMiddleware, async (req, res) => {
-    try {
-      if (req.user!.role !== 'admin') {
-        return res.status(403).json({ message: "Admin access required" });
-      }
 
-      const patients = await storage.getPatients();
-      res.json(patients);
-    } catch (error: any) {
-      res.status(400).json({ message: error.message });
-    }
-  });
 
   app.put("/api/users/:userId/approve", authMiddleware, async (req, res) => {
     try {
@@ -1473,13 +1462,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/patients", authMiddleware, async (req, res) => {
     try {
+      console.log('🔥 PATIENTS ENDPOINT - User:', req.user);
       if (req.user!.role !== 'admin' && req.user!.role !== 'staff') {
         return res.status(403).json({ message: "Admin or staff access required" });
       }
 
       const patients = await storage.getAllPatients();
+      console.log('🔥 PATIENTS ENDPOINT - Found patients:', patients.length);
       res.json(patients);
     } catch (error: any) {
+      console.error('🔥 PATIENTS ENDPOINT - Error:', error);
       res.status(400).json({ message: error.message });
     }
   });

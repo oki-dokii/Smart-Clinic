@@ -880,12 +880,23 @@ export default function ClinicDashboard() {
   // Patient form submission handler
   const handlePatientSubmit = async () => {
     try {
+      console.log('🔥 PATIENT SUBMIT - Starting registration');
       await apiRequest('POST', '/api/auth/register', {
         ...patientForm,
         role: 'patient',
         password: 'temp123', // Required password for new accounts
         isApproved: true // Auto-approve patients created by admin
       })
+      
+      console.log('🔥 PATIENT SUBMIT - Registration successful, refreshing cache');
+      
+      // Comprehensive cache invalidation
+      await queryClient.invalidateQueries({ queryKey: ['/api/patients'] })
+      await queryClient.removeQueries({ queryKey: ['/api/patients'] })
+      await queryClient.refetchQueries({ queryKey: ['/api/patients'] })
+      
+      // Force re-render
+      setForceRender(prev => prev + 1)
       
       // Reset form
       setPatientForm({
@@ -897,10 +908,10 @@ export default function ClinicDashboard() {
         address: ''
       })
       
-      // Refresh patients list
-      queryClient.invalidateQueries({ queryKey: ['/api/patients'] })
-      toast({ title: 'Success', description: 'Patient added successfully' })
+      console.log('🔥 PATIENT SUBMIT - Cache refreshed and form reset');
+      toast({ title: 'Success', description: 'Patient added successfully and records refreshed' })
     } catch (error: any) {
+      console.error('🔥 PATIENT SUBMIT - Error:', error);
       toast({ title: 'Error', description: error.message, variant: 'destructive' })
     }
   }
