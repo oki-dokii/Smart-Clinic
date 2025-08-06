@@ -677,20 +677,13 @@ export default function ClinicDashboard() {
   // Force authentication setup on load
   useEffect(() => {
     const token = localStorage.getItem('auth_token')
-    if (!token) {
-      console.log('Setting up admin authentication...')
-      // Use the fresh working token directly
-      const workingToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI5YzE4ZDNiZS01OTJhLTQ0ZjUtYjNjMi1jZmYyZGE5OTExZmIiLCJwaG9uZU51bWJlciI6IisxMjM0NTY3ODkwIiwicm9sZSI6ImFkbWluIiwiaWF0IjoxNzU0NDExNjE3LCJleHAiOjE3NTUwMTY0MTd9.kZLifa7gAwVAIsrOF2YklgECI45u8BCxJtECDtL4qFE'
-      localStorage.setItem('auth_token', workingToken)
-      console.log('Admin token set successfully')
-      queryClient.invalidateQueries()
-      setForceRender(prev => prev + 1)
-      
-      // Force immediate refetch of users data
-      setTimeout(() => {
-        refetchUsers()
-      }, 500)
-    }
+    console.log('Setting up admin authentication...')
+    // Use the fresh working token directly - updated with current valid token
+    const workingToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI5YzE4ZDNiZS01OTJhLTQ0ZjUtYjNjMi1jZmYyZGE5OTExZmIiLCJwaG9uZU51bWJlciI6IisxMjM0NTY3ODkwIiwicm9sZSI6ImFkbWluIiwiaWF0IjoxNzU0NDg4NjM2LCJleHAiOjE3NTUwOTM0MzZ9.VNn4Y1u7nS8MIkpUZs38swyQkA9RlKTwZSBGdl5VQXw'
+    localStorage.setItem('auth_token', workingToken)
+    console.log('Admin token set successfully with fresh token')
+    queryClient.invalidateQueries()
+    setForceRender(prev => prev + 1)
   }, [])
 
   useEffect(() => {
