@@ -73,8 +73,16 @@ export default function BookingModal({ isOpen, onClose, selectedAppointment, res
         const response = await apiRequest('PUT', `/api/appointments/${rescheduleData.appointmentId}`, appointment);
         return response.json();
       } else {
-        // Book new appointment
-        const response = await apiRequest('POST', '/api/appointments', appointment);
+        // Book new appointment with pending_approval status
+        const requestData = {
+          doctorId: appointment.doctorId,
+          type: appointment.type,
+          symptoms: appointment.symptoms,
+          preferredDate: appointment.appointmentDate,
+          urgency: 'normal',
+          notes: appointment.notes
+        };
+        const response = await apiRequest('POST', '/api/appointments/patient-request', requestData);
         return response.json();
       }
     },
