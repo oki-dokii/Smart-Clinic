@@ -222,6 +222,43 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Route to handle authenticated patient appointment requests
+  app.post('/api/appointments/patient-request', authMiddleware, async (req, res) => {
+    try {
+      console.log('🔥 PATIENT APPOINTMENT REQUEST:', req.body);
+      
+      const { doctorId, type, symptoms, preferredDate, urgency, notes } = req.body;
+      const patientId = req.user!.id;
+
+      // Create appointment request
+      const appointmentData = {
+        patientId,
+        doctorId,
+        appointmentDate: new Date(preferredDate),
+        duration: 30, // Default duration
+        type,
+        status: 'pending_approval',
+        symptoms: symptoms || '',
+        notes: notes || ''
+      };
+
+      console.log('🔥 Creating appointment with data:', appointmentData);
+      
+      const appointment = await storage.createAppointment(appointmentData);
+      console.log('🔥 Appointment created successfully:', appointment.id);
+
+      res.json({
+        success: true,
+        appointmentId: appointment.id,
+        message: "Appointment request submitted successfully. You will receive an SMS notification once reviewed."
+      });
+
+    } catch (error: any) {
+      console.error('Error creating patient appointment request:', error);
+      res.status(500).json({ error: 'Failed to submit appointment request' });
+    }
+  });
+
   // Submit appointment request (no auth required for public booking)
   app.post('/api/appointments/request', async (req, res) => {
     try {

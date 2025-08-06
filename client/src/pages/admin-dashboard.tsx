@@ -906,6 +906,27 @@ export default function ClinicDashboard() {
   const handleGenerateReport = () => {
     generateReport.mutate()
   }
+
+  // Appointment approval actions
+  const appointmentApproval = useMutation({
+    mutationFn: async ({ appointmentId, action, notes }: { appointmentId: string; action: 'approve' | 'reject'; notes?: string }) => {
+      return await apiRequest('PUT', `/api/appointments/${appointmentId}/status`, { 
+        status: action === 'approve' ? 'approved' : 'rejected',
+        rejectionReason: notes
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/appointments/admin'] });
+      toast({ title: 'Success', description: 'Appointment status updated successfully' });
+    },
+    onError: (error) => {
+      toast({ title: 'Error', description: error.message, variant: 'destructive' });
+    }
+  });
+
+  const handleAppointmentAction = (appointmentId: string, action: 'approve' | 'reject') => {
+    appointmentApproval.mutate({ appointmentId, action });
+  };
   
   // Patient form submission handler
   const handlePatientSubmit = async () => {

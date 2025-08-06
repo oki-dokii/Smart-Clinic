@@ -12,7 +12,8 @@ import StaffCheckinPage from "@/pages/staff-checkin";
 import ProfilePage from "@/pages/profile";
 import SettingsPage from "@/pages/settings";
 import MedicinesPage from "@/pages/medicines";
-import PatientBooking from "@/pages/patient-booking";
+import PatientBooking from "@/pages/patient-booking-new";
+import PatientLogin from "@/pages/patient-login";
 import NotFound from "@/pages/not-found";
 
 // Auth wrapper component - simplified since auth is now handled in queryClient
@@ -32,13 +33,14 @@ function Router() {
       <Route path="/settings" component={SettingsPage} />
       <Route path="/medicines" component={MedicinesPage} />
       <Route path="/book-appointment" component={PatientBooking} />
+      <Route path="/patient-login" component={PatientLogin} />
       <Route path="/">
         {() => {
           const token = localStorage.getItem("auth_token");
           if (token) {
             window.location.href = "/dashboard";
           } else {
-            window.location.href = "/login";
+            window.location.href = "/patient-login";
           }
           return null;
         }}

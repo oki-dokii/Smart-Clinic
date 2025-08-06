@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Calendar, Clock, User, MapPin, Video, Home, Stethoscope, Phone, CheckCircle } from 'lucide-react';
+import { Calendar, Clock, User, MapPin, Video, Home, Stethoscope, Phone, CheckCircle, LogOut } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { queryClient, apiRequest } from '@/lib/queryClient';
@@ -23,11 +23,6 @@ interface Doctor {
 export default function PatientBooking() {
   const [step, setStep] = useState(1);
   const [bookingData, setBookingData] = useState({
-    patientFirstName: '',
-    patientLastName: '',
-    patientPhone: '',
-    patientEmail: '',
-    dateOfBirth: '',
     symptoms: '',
     appointmentType: '',
     doctorId: '',
@@ -39,6 +34,39 @@ export default function PatientBooking() {
   const [isSubmitted, setIsSubmitted] = useState(false);
   const { toast } = useToast();
 
+  // Check authentication and redirect if not logged in
+  useEffect(() => {
+    const token = localStorage.getItem('auth_token');
+    if (!token) {
+      window.location.href = '/login';
+      return;
+    }
+  }, []);
+
+  // Get current patient info
+  const { data: currentPatient, isLoading: patientLoading } = useQuery<any>({
+    queryKey: ['/api/users/me'],
+    retry: (failureCount, error) => {
+      if (error && typeof error === 'object' && 'status' in error && error.status === 401) {
+        localStorage.removeItem('auth_token');
+        window.location.href = '/login';
+        return false;
+      }
+      return failureCount < 2;
+    }
+  });
+
+  // Redirect non-patients
+  useEffect(() => {
+    if (currentPatient && currentPatient.role !== 'patient') {
+      if (currentPatient.role === 'admin') {
+        window.location.href = '/admin-dashboard';
+      } else {
+        window.location.href = '/dashboard';
+      }
+    }
+  }, [currentPatient]);
+
   // Fetch available doctors
   const { data: doctors = [], isLoading: doctorsLoading } = useQuery<Doctor[]>({
     queryKey: ['/api/doctors'],
@@ -48,30 +76,21 @@ export default function PatientBooking() {
   // Submit appointment request mutation
   const submitAppointment = useMutation({
     mutationFn: async (data: typeof bookingData) => {
-      return apiRequest('/api/appointments/request', {
+      return apiRequest('/api/appointments/patient-request', {
         method: 'POST',
         body: JSON.stringify({
-          patientInfo: {
-            firstName: data.patientFirstName,
-            lastName: data.patientLastName,
-            phoneNumber: data.patientPhone,
-            email: data.patientEmail,
-            dateOfBirth: data.dateOfBirth
-          },
-          appointmentDetails: {
-            doctorId: data.doctorId,
-            type: data.appointmentType,
-            symptoms: data.symptoms,
-            preferredDate: `${data.preferredDate}T${data.preferredTime}:00.000Z`,
-            urgency: data.urgency,
-            notes: data.notes,
-            status: 'pending_approval'
-          }
+          doctorId: data.doctorId,
+          type: data.appointmentType,
+          symptoms: data.symptoms,
+          preferredDate: `${data.preferredDate}T${data.preferredTime}:00.000Z`,
+          urgency: data.urgency,
+          notes: data.notes
         })
       });
     },
     onSuccess: () => {
       setIsSubmitted(true);
+      queryClient.invalidateQueries({ queryKey: ['/api/appointments'] });
       toast({
         title: "Appointment Request Submitted!",
         description: "Your appointment request has been sent to the clinic for approval. You'll receive an SMS notification once it's reviewed.",
@@ -87,13 +106,33 @@ export default function PatientBooking() {
     }
   });
 
+  const handleLogout = () => {
+    localStorage.removeItem('auth_token');
+    window.location.href = '/login';
+  };
+
+  if (patientLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!currentPatient) {
+    return null; // Will redirect in useEffect
+  }
+
   const handleNext = () => {
     if (step === 1) {
-      // Validate patient info
-      if (!bookingData.patientFirstName || !bookingData.patientLastName || !bookingData.patientPhone) {
+      // Validate symptoms
+      if (!bookingData.symptoms) {
         toast({
           title: "Required Fields Missing",
-          description: "Please fill in your name and phone number.",
+          description: "Please describe your symptoms.",
           variant: "destructive"
         });
         return;
