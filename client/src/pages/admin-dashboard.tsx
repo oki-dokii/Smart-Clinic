@@ -157,9 +157,7 @@ export default function ClinicDashboard() {
   // Appointment approval mutation
   const appointmentApproval = useMutation({
     mutationFn: async ({ appointmentId, action }: { appointmentId: string; action: 'approve' | 'reject' }) => {
-      return apiRequest(`/api/appointments/admin/${appointmentId}/${action}`, {
-        method: 'POST'
-      })
+      return apiRequest('POST', `/api/appointments/admin/${appointmentId}/${action}`)
     },
     onSuccess: (_, variables) => {
       toast({

@@ -8,14 +8,14 @@ Preferred communication style: Simple, everyday language.
 
 # Recent Changes
 
-## 2025-08-06 - Complete Email Authentication System Working
-- COMPLETED: Full email-based patient authentication system with Gmail SMTP universal delivery
-- FIXED: Database schema to support nullable phone numbers for email-only users
-- RESOLVED: Authentication session creation with proper JWT token and database integration
-- CONFIGURED: Gmail SMTP for real email delivery to any email address (500 emails/day limit)
-- VERIFIED: Complete authentication flow working - OTP generation, email delivery, verification, user creation, and session management
-- ENHANCED: Professional HTML email templates with SmartClinic branding sent via Gmail SMTP
-- DATABASE: Updated users table schema to allow email-only authentication without phone number requirement
+## 2025-08-06 - Complete Email-to-Admin Appointment System Working
+- COMPLETED: Full patient email authentication → appointment booking → admin approval workflow
+- FIXED: Frontend API parameter order issues in both appointment booking and admin approval mutations
+- RESOLVED: Complete appointment request submission working with proper JWT authentication
+- VERIFIED: Patient appointment requests appearing correctly in admin dashboard for approval/rejection
+- CONFIGURED: Real email delivery via Gmail SMTP for OTP authentication (500 emails/day limit)
+- CONFIRMED: Admin dashboard showing multiple pending appointment requests with functional approve/reject buttons
+- WORKFLOW: Email OTP login → 3-step booking form → admin approval system → SMS notifications complete
 
 ## 2025-08-06 - Complete Registration System Fix and Validation Enhancement
 - RESOLVED: "Invalid time value" error completely fixed with enhanced date validation schema
