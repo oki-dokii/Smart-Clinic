@@ -72,7 +72,10 @@ export default function SmartClinicDashboard() {
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [showFeedbackModal, setShowFeedbackModal] = useState(false);
+  const [showDoctorsModal, setShowDoctorsModal] = useState(false);
   const [selectedAppointment, setSelectedAppointment] = useState<any>(null);
+  const [selectedDoctor, setSelectedDoctor] = useState<any>(null);
+  const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
     const token = localStorage.getItem("auth_token");
@@ -576,10 +579,13 @@ export default function SmartClinicDashboard() {
               <Calendar className="w-4 h-4 mr-2" />
               Book Appointment
             </Button>
-            <div className="bg-white rounded-lg px-4 py-3 flex-1 max-w-full sm:max-w-md">
+            <div className="bg-white rounded-lg px-4 py-3 flex-1 max-w-full sm:max-w-md cursor-pointer" onClick={() => setShowDoctorsModal(true)}>
               <Input
                 placeholder="Search doctors, specialties..."
-                className="border-0 p-0 focus-visible:ring-0 text-sm sm:text-base"
+                className="border-0 p-0 focus-visible:ring-0 text-sm sm:text-base cursor-pointer"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                readOnly
               />
             </div>
           </div>
@@ -1186,8 +1192,10 @@ export default function SmartClinicDashboard() {
         onClose={() => {
           setShowBookingModal(false);
           setSelectedAppointment(null);
+          setSelectedDoctor(null);
         }}
         selectedAppointment={selectedAppointment}
+        selectedDoctor={selectedDoctor}
         rescheduleData={selectedAppointment ? {
           appointmentId: selectedAppointment.id,
           doctorId: selectedAppointment.doctorId,
@@ -1375,6 +1383,107 @@ export default function SmartClinicDashboard() {
               </DialogFooter>
             </form>
           </Form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Search Doctors Modal */}
+      <Dialog open={showDoctorsModal} onOpenChange={setShowDoctorsModal}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Stethoscope className="w-5 h-5 text-blue-500" />
+              Search Doctors
+            </DialogTitle>
+            <DialogDescription>
+              Find and book appointments with available doctors
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            <div className="relative">
+              <Input
+                placeholder="Search by name, specialty, or location..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-4 pr-4"
+                data-testid="input-doctor-search"
+              />
+            </div>
+
+            {doctors && doctors.length > 0 ? (
+              <div className="max-h-96 overflow-y-auto space-y-3">
+                {doctors
+                  .filter((doctor: any) => 
+                    searchQuery === "" || 
+                    `${doctor.firstName} ${doctor.lastName}`.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                    doctor.address?.toLowerCase().includes(searchQuery.toLowerCase())
+                  )
+                  .map((doctor: any) => (
+                    <div
+                      key={doctor.id}
+                      className="p-4 border rounded-lg hover:bg-gray-50 transition-colors cursor-pointer"
+                      onClick={() => {
+                        setSelectedDoctor(doctor);
+                        setShowDoctorsModal(false);
+                        setShowBookingModal(true);
+                      }}
+                      data-testid={`doctor-card-${doctor.id}`}
+                    >
+                      <div className="flex items-start justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+                            <Stethoscope className="w-6 h-6 text-blue-600" />
+                          </div>
+                          <div>
+                            <h3 className="font-semibold text-gray-900">
+                              Dr. {doctor.firstName} {doctor.lastName}
+                            </h3>
+                            <p className="text-sm text-gray-600">General Practitioner</p>
+                            {doctor.address && (
+                              <div className="flex items-center gap-1 mt-1">
+                                <MapPin className="w-3 h-3 text-gray-400" />
+                                <p className="text-xs text-gray-500">{doctor.address}</p>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <div className="flex items-center gap-1 mb-1">
+                            <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                            <span className="text-xs text-green-600">Available</span>
+                          </div>
+                          <Button 
+                            size="sm"
+                            className="bg-blue-500 hover:bg-blue-600"
+                            data-testid={`button-book-${doctor.id}`}
+                          >
+                            <Calendar className="w-3 h-3 mr-1" />
+                            Book Now
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+              </div>
+            ) : (
+              <div className="text-center py-8">
+                <Stethoscope className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+                <h3 className="text-lg font-medium text-gray-900 mb-2">No Doctors Found</h3>
+                <p className="text-gray-600">Try adjusting your search terms</p>
+              </div>
+            )}
+
+            {searchQuery && doctors.filter((doctor: any) => 
+              `${doctor.firstName} ${doctor.lastName}`.toLowerCase().includes(searchQuery.toLowerCase()) ||
+              doctor.address?.toLowerCase().includes(searchQuery.toLowerCase())
+            ).length === 0 && (
+              <div className="text-center py-8">
+                <Stethoscope className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+                <h3 className="text-lg font-medium text-gray-900 mb-2">No Results</h3>
+                <p className="text-gray-600">No doctors match your search criteria</p>
+              </div>
+            )}
+          </div>
         </DialogContent>
       </Dialog>
     </div>

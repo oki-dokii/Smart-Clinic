@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -21,6 +21,7 @@ interface BookingModalProps {
   isOpen: boolean;
   onClose: () => void;
   selectedAppointment?: any;
+  selectedDoctor?: any;
   rescheduleData?: any;
 }
 
@@ -42,16 +43,16 @@ interface BookingData {
   symptoms: string;
 }
 
-export default function BookingModal({ isOpen, onClose, selectedAppointment, rescheduleData }: BookingModalProps) {
+export default function BookingModal({ isOpen, onClose, selectedAppointment, selectedDoctor, rescheduleData }: BookingModalProps) {
   const { toast } = useToast();
   const [selectedDate, setSelectedDate] = useState<Date>();
   const [selectedTime, setSelectedTime] = useState("");
   const [bookingData, setBookingData] = useState<BookingData>({
-    doctorId: "",
+    doctorId: selectedDoctor?.id || "",
     appointmentDate: "",
     type: "clinic",
     duration: 30,
-    location: "",
+    location: selectedDoctor?.address || "",
     notes: "",
     symptoms: ""
   });
@@ -106,15 +107,26 @@ export default function BookingModal({ isOpen, onClose, selectedAppointment, res
     }
   });
 
+  // Update booking data when selectedDoctor changes
+  useEffect(() => {
+    if (selectedDoctor) {
+      setBookingData(prev => ({
+        ...prev,
+        doctorId: selectedDoctor.id,
+        location: prev.type === 'clinic' ? selectedDoctor.address || '' : prev.location
+      }));
+    }
+  }, [selectedDoctor]);
+
   const resetForm = () => {
     setSelectedDate(undefined);
     setSelectedTime("");
     setBookingData({
-      doctorId: "",
+      doctorId: selectedDoctor?.id || "",
       appointmentDate: "",
       type: "clinic",
       duration: 30,
-      location: "",
+      location: selectedDoctor?.address || "",
       notes: "",
       symptoms: ""
     });
