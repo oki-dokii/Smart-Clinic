@@ -26,6 +26,8 @@ import {
   MessageCircle,
   Star,
   Eye,
+  Mail,
+  PhoneCall
 } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -162,6 +164,11 @@ export default function ClinicDashboard() {
     delayMinutes: '',
     reason: ''
   })
+  
+  // Feedback management state
+  const [isContactModalOpen, setIsContactModalOpen] = useState(false)
+  const [selectedFeedback, setSelectedFeedback] = useState<any>(null)
+  
   const { toast } = useToast()
   const queryClient = useQueryClient()
 
@@ -238,6 +245,37 @@ export default function ClinicDashboard() {
       delayMinutes: parseInt(delayForm.delayMinutes),
       reason: delayForm.reason || undefined
     })
+  }
+
+  // Feedback mark as read mutation
+  const markAsReadMutation = useMutation({
+    mutationFn: async (feedbackId: string) => {
+      return apiRequest('POST', `/api/feedback/${feedbackId}/read`)
+    },
+    onSuccess: () => {
+      toast({
+        title: 'Feedback Marked as Read',
+        description: 'The feedback has been marked as read'
+      })
+      queryClient.invalidateQueries({ queryKey: ['/api/feedback'] })
+    },
+    onError: () => {
+      toast({
+        title: 'Error',
+        description: 'Failed to mark feedback as read',
+        variant: 'destructive'
+      })
+    }
+  })
+
+  // Feedback handlers
+  const handleMarkAsRead = (feedbackId: string) => {
+    markAsReadMutation.mutate(feedbackId)
+  }
+
+  const handleContactPatient = (feedbackItem: any) => {
+    setSelectedFeedback(feedbackItem)
+    setIsContactModalOpen(true)
   }
   
   // Emergency alerts state
@@ -3664,12 +3702,25 @@ export default function ClinicDashboard() {
                           </div>
 
                           <div className="flex items-center gap-2 pt-2">
-                            <Button variant="outline" size="sm" className="flex items-center gap-1">
+                            <Button 
+                              variant="outline" 
+                              size="sm" 
+                              className="flex items-center gap-1"
+                              onClick={() => handleMarkAsRead(item.id)}
+                              disabled={markAsReadMutation.isPending}
+                              data-testid={`button-mark-read-${item.id}`}
+                            >
                               <Eye className="w-4 h-4" />
-                              Mark as Read
+                              {markAsReadMutation.isPending ? 'Marking...' : 'Mark as Read'}
                             </Button>
                             {!item.isAnonymous && (
-                              <Button variant="outline" size="sm" className="text-blue-600">
+                              <Button 
+                                variant="outline" 
+                                size="sm" 
+                                className="text-blue-600"
+                                onClick={() => handleContactPatient(item)}
+                                data-testid={`button-contact-patient-${item.id}`}
+                              >
                                 Contact Patient
                               </Button>
                             )}
@@ -4407,6 +4458,53 @@ export default function ClinicDashboard() {
               </Button>
             </div>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Contact Patient Modal */}
+      <Dialog open={isContactModalOpen} onOpenChange={setIsContactModalOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Contact Patient</DialogTitle>
+          </DialogHeader>
+          {selectedFeedback && (
+            <div className="space-y-4">
+              <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
+                <h4 className="font-medium mb-2">Patient Information:</h4>
+                <div className="space-y-1 text-sm">
+                  <p><span className="font-medium">Name:</span> {selectedFeedback.patient?.firstName} {selectedFeedback.patient?.lastName}</p>
+                  <p><span className="font-medium">Phone:</span> {selectedFeedback.patient?.phoneNumber}</p>
+                  {selectedFeedback.patient?.email && (
+                    <p><span className="font-medium">Email:</span> {selectedFeedback.patient.email}</p>
+                  )}
+                </div>
+              </div>
+              
+              <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg">
+                <h4 className="font-medium mb-2">Feedback Details:</h4>
+                <div className="space-y-1 text-sm">
+                  <p><span className="font-medium">Rating:</span> {selectedFeedback.rating}/5 stars</p>
+                  <p><span className="font-medium">Category:</span> {selectedFeedback.category}</p>
+                  <p><span className="font-medium">Comment:</span> "{selectedFeedback.comment}"</p>
+                  <p><span className="font-medium">Submitted:</span> {new Date(selectedFeedback.createdAt).toLocaleDateString()}</p>
+                </div>
+              </div>
+              
+              <div className="text-sm text-gray-600 dark:text-gray-400">
+                You can now contact this patient using their phone number or email address to follow up on their feedback.
+              </div>
+              
+              <div className="flex gap-2 pt-4">
+                <Button
+                  onClick={() => setIsContactModalOpen(false)}
+                  className="flex-1"
+                  data-testid="button-close-contact-modal"
+                >
+                  Close
+                </Button>
+              </div>
+            </div>
+          )}
         </DialogContent>
       </Dialog>
     </div>

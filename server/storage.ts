@@ -134,6 +134,13 @@ export interface IStorage {
   createMedicalHistory(history: InsertMedicalHistory): Promise<MedicalHistory>;
   getPatientMedicalHistory(patientId: string): Promise<(MedicalHistory & { doctor: User })[]>;
   getMedicalHistoryByAppointment(appointmentId: string): Promise<MedicalHistory | undefined>;
+
+  // Patient Feedback
+  createPatientFeedback(feedback: InsertPatientFeedback): Promise<PatientFeedback>;
+  getAllPatientFeedback(): Promise<(PatientFeedback & { patient?: User; appointment?: Appointment })[]>;
+  getPatientFeedbackById(id: string): Promise<PatientFeedback | null>;
+  getPatientFeedbackByPatientId(patientId: string): Promise<PatientFeedback[]>;
+  markFeedbackAsRead(id: string): Promise<PatientFeedback | null>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -918,6 +925,14 @@ export class DatabaseStorage implements IStorage {
     return await db.select().from(patientFeedback)
       .where(eq(patientFeedback.patientId, patientId))
       .orderBy(desc(patientFeedback.createdAt));
+  }
+
+  async markFeedbackAsRead(id: string): Promise<PatientFeedback | null> {
+    const [updatedFeedback] = await db.update(patientFeedback)
+      .set({ isRead: true })
+      .where(eq(patientFeedback.id, id))
+      .returning();
+    return updatedFeedback || null;
   }
 
   async resolveDelayNotification(id: string): Promise<DelayNotification | undefined> {

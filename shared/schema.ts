@@ -178,6 +178,7 @@ export const patientFeedback = pgTable("patient_feedback", {
   category: text("category").notNull(), // "service", "wait_time", "staff", "cleanliness", "overall"
   comment: text("comment"), // Changed from comments to comment to match API
   isAnonymous: boolean("is_anonymous").notNull().default(false),
+  isRead: boolean("is_read").notNull().default(false),
   createdAt: timestamp("created_at").notNull().default(sql`NOW()`),
 });
 

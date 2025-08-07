@@ -1345,6 +1345,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.put("/api/feedback/:id/read", authMiddleware, requireRole(['admin', 'staff']), async (req, res) => {
+    try {
+      const { id } = req.params;
+      const updatedFeedback = await storage.markFeedbackAsRead(id);
+      if (!updatedFeedback) {
+        return res.status(404).json({ message: "Feedback not found" });
+      }
+      res.json(updatedFeedback);
+    } catch (error: any) {
+      res.status(400).json({ message: error.message });
+    }
+  });
+
   // Home visit routes
   app.post("/api/home-visits", authMiddleware, requireRole(['doctor']), async (req, res) => {
     try {
