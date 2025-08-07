@@ -864,6 +864,12 @@ export class DatabaseStorage implements IStorage {
       .orderBy(desc(delayNotifications.createdAt));
   }
 
+  async getAllActiveDelayNotifications(): Promise<DelayNotification[]> {
+    return await db.select().from(delayNotifications)
+      .where(eq(delayNotifications.isResolved, false))
+      .orderBy(desc(delayNotifications.createdAt));
+  }
+
   async resolveDelayNotification(id: string): Promise<DelayNotification | undefined> {
     const [resolvedNotification] = await db.update(delayNotifications)
       .set({ isResolved: true, resolvedAt: new Date() })

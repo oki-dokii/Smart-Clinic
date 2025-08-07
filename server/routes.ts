@@ -1273,12 +1273,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/delays", authMiddleware, async (req, res) => {
+  // Public endpoint for delay notifications (patients should see all active delays)
+  app.get("/api/delays", async (req, res) => {
     try {
-      const { doctorId } = req.query;
-      const targetDoctorId = req.user!.role === 'doctor' ? req.user!.id : doctorId as string;
-      
-      const notifications = await storage.getActiveDelayNotifications(targetDoctorId);
+      // Get all active delay notifications for public viewing
+      const notifications = await storage.getAllActiveDelayNotifications();
       res.json(notifications);
     } catch (error: any) {
       res.status(400).json({ message: error.message });
