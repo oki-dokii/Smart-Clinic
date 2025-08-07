@@ -286,12 +286,7 @@ export default function ClinicDashboard() {
     instructions: ''
   })
 
-  const [doctorDelaysForm, setDoctorDelaysForm] = useState({
-    doctorId: '',
-    delayMinutes: '',
-    reason: '',
-    affectedPatients: ''
-  })
+
 
   const [staffForm, setStaffForm] = useState({
     firstName: '',
@@ -515,29 +510,7 @@ export default function ClinicDashboard() {
     })
   }
 
-  const handleDoctorDelaysSubmit = () => {
-    if (!doctorDelaysForm.doctorId || !doctorDelaysForm.delayMinutes) {
-      toast({
-        title: 'Missing Information',
-        description: 'Please select a doctor and specify delay duration.',
-        variant: 'destructive'
-      })
-      return
-    }
 
-    delayNotificationMutation.mutate({
-      doctorId: doctorDelaysForm.doctorId,
-      delayMinutes: parseInt(doctorDelaysForm.delayMinutes),
-      reason: doctorDelaysForm.reason || undefined
-    })
-    
-    setDoctorDelaysForm({
-      doctorId: '',
-      delayMinutes: '',
-      reason: '',
-      affectedPatients: ''
-    })
-  }
 
   // Patient record handlers
   const handleViewHistory = (patient: User) => {
@@ -2444,75 +2417,7 @@ export default function ClinicDashboard() {
                           </DialogContent>
                         </Dialog>
 
-                        {/* Doctor Delays Dialog */}
-                        <Dialog>
-                          <DialogTrigger asChild>
-                            <Button 
-                              variant="outline" 
-                              className="h-20 flex-col gap-2 bg-transparent"
-                              data-testid="button-quick-doctor-delays"
-                            >
-                              <Clock className="w-6 h-6" />
-                              <span>Doctor Delays</span>
-                            </Button>
-                          </DialogTrigger>
-                          <DialogContent className="max-w-md">
-                            <DialogHeader>
-                              <DialogTitle>Doctor Delays Management</DialogTitle>
-                            </DialogHeader>
-                            <div className="space-y-4">
-                              <div>
-                                <Label htmlFor="delayDoctor">Select Doctor</Label>
-                                <Select value={doctorDelaysForm.doctorId} onValueChange={(value) => setDoctorDelaysForm({...doctorDelaysForm, doctorId: value})}>
-                                  <SelectTrigger>
-                                    <SelectValue placeholder="Choose doctor..." />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    {staffMembers.filter(staff => staff.role === 'doctor').map((doctor) => (
-                                      <SelectItem key={doctor.id} value={doctor.id}>
-                                        Dr. {doctor.firstName} {doctor.lastName}
-                                      </SelectItem>
-                                    ))}
-                                  </SelectContent>
-                                </Select>
-                              </div>
-                              <div>
-                                <Label htmlFor="delayDuration">Delay Duration (minutes)</Label>
-                                <Input
-                                  id="delayDuration"
-                                  type="number"
-                                  min="1"
-                                  max="120"
-                                  value={doctorDelaysForm.delayMinutes}
-                                  onChange={(e) => setDoctorDelaysForm({...doctorDelaysForm, delayMinutes: e.target.value})}
-                                  placeholder="15"
-                                />
-                              </div>
-                              <div>
-                                <Label htmlFor="delayReason">Reason for Delay</Label>
-                                <Select value={doctorDelaysForm.reason} onValueChange={(value) => setDoctorDelaysForm({...doctorDelaysForm, reason: value})}>
-                                  <SelectTrigger>
-                                    <SelectValue placeholder="Select reason..." />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    <SelectItem value="emergency">Emergency Case</SelectItem>
-                                    <SelectItem value="traffic">Traffic/Transportation</SelectItem>
-                                    <SelectItem value="previous-appointment">Previous Appointment Running Long</SelectItem>
-                                    <SelectItem value="personal">Personal Emergency</SelectItem>
-                                    <SelectItem value="other">Other</SelectItem>
-                                  </SelectContent>
-                                </Select>
-                              </div>
-                              <Button 
-                                onClick={handleDoctorDelaysSubmit} 
-                                className="w-full"
-                                disabled={delayNotificationMutation.isPending}
-                              >
-                                {delayNotificationMutation.isPending ? 'Sending...' : 'Notify Affected Patients'}
-                              </Button>
-                            </div>
-                          </DialogContent>
-                        </Dialog>
+
                       </div>
                     </CardContent>
                   </Card>

@@ -84,6 +84,12 @@ export default function SmartClinicDashboard() {
     enabled: !!user,
   });
 
+  // Query for active delay notifications
+  const { data: delayNotifications = [] } = useQuery({
+    queryKey: ["/api/delays"],
+    refetchInterval: 30000, // Check every 30 seconds for real-time updates
+  });
+
   // Medicine reminder handlers
   const markTakenMutation = useMutation({
     mutationFn: async (reminderId: string) => {
@@ -662,13 +668,35 @@ export default function SmartClinicDashboard() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="flex items-center gap-2 mb-1">
-                <span className="text-2xl font-bold text-orange-600">Delayed</span>
-              </div>
-              <div className="text-sm text-gray-600 mb-4">Dr. Smith is running 15 minutes late</div>
+              {delayNotifications && delayNotifications.length > 0 ? (
+                delayNotifications.map((delay: any) => {
+                  const doctor = doctors.find(d => d.id === delay.doctorId);
+                  return (
+                    <div key={delay.id} className="mb-4">
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="text-2xl font-bold text-orange-600">Delayed</span>
+                      </div>
+                      <div className="text-sm text-gray-600 mb-4">
+                        Dr. {doctor?.firstName || 'Unknown'} {doctor?.lastName || 'Doctor'} is running {delay.delayMinutes} minutes late
+                        {delay.reason && (
+                          <div className="text-xs text-gray-500 mt-1">Reason: {delay.reason}</div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })
+              ) : (
+                <div>
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-2xl font-bold text-green-600">On Time</span>
+                  </div>
+                  <div className="text-sm text-gray-600 mb-4">All doctors are on schedule</div>
+                </div>
+              )}
               <Button 
                 className="w-full bg-blue-500 hover:bg-blue-600"
                 onClick={() => {
+                  queryClient.invalidateQueries({ queryKey: ["/api/delays"] });
                   queryClient.invalidateQueries({ queryKey: ["/api/appointments"] });
                   queryClient.invalidateQueries({ queryKey: ["/api/queue/position"] });
                   toast({
