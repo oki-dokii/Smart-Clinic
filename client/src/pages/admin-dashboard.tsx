@@ -250,7 +250,7 @@ export default function ClinicDashboard() {
   // Feedback mark as read mutation
   const markAsReadMutation = useMutation({
     mutationFn: async (feedbackId: string) => {
-      return apiRequest('POST', `/api/feedback/${feedbackId}/read`)
+      return apiRequest('PUT', `/api/feedback/${feedbackId}/read`)
     },
     onSuccess: () => {
       toast({
@@ -3618,7 +3618,7 @@ export default function ClinicDashboard() {
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
                     <p className="text-gray-600 mt-2">Loading feedback...</p>
                   </div>
-                ) : feedback.length === 0 ? (
+                ) : feedback.filter((item: any) => !item.isRead).length === 0 ? (
                   <Card>
                     <CardContent className="text-center py-12">
                       <MessageCircle className="w-12 h-12 text-gray-300 mx-auto mb-4" />
@@ -3628,7 +3628,7 @@ export default function ClinicDashboard() {
                   </Card>
                 ) : (
                   <div className="grid gap-6">
-                    {feedback.map((item: any) => (
+                    {feedback.filter((item: any) => !item.isRead).map((item: any) => (
                       <Card key={item.id} className="hover:shadow-lg transition-shadow">
                         <CardHeader className="pb-4">
                           <div className="flex items-start justify-between">
