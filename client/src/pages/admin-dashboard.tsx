@@ -23,6 +23,9 @@ import {
   Shield,
   Database,
   Download,
+  MessageCircle,
+  Star,
+  Eye,
 } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -831,6 +834,15 @@ export default function ClinicDashboard() {
   // Medicines/Inventory data
   const { data: medicines = [], isLoading: medicinesLoading, refetch: refetchMedicines } = useQuery<Medicine[]>({
     queryKey: ['/api/medicines'],
+    staleTime: 0,
+    gcTime: 0,
+    refetchOnWindowFocus: true
+  })
+
+  // Feedback data
+  const { data: feedback = [], isLoading: feedbackLoading } = useQuery({
+    queryKey: ['/api/feedback'],
+    enabled: !!currentUser,
     staleTime: 0,
     gcTime: 0,
     refetchOnWindowFocus: true
@@ -1909,7 +1921,7 @@ export default function ClinicDashboard() {
       <div className="bg-white border-b border-gray-200">
         <div className="px-6">
           <Tabs defaultValue="dashboard" className="w-full">
-            <TabsList className="grid w-full grid-cols-7 bg-transparent border-0 h-auto p-0">
+            <TabsList className="grid w-full grid-cols-8 bg-transparent border-0 h-auto p-0">
               <TabsTrigger
                 value="dashboard"
                 className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-blue-600 data-[state=active]:text-blue-600 rounded-none py-4 px-6"
@@ -1947,8 +1959,14 @@ export default function ClinicDashboard() {
                 Staff
               </TabsTrigger>
               <TabsTrigger
-                value="reports"
+                value="feedback"
                 className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-blue-600 data-[state=active]:text-blue-600 rounded-none py-4 px-6"
+              >
+                Feedback
+              </TabsTrigger>
+              <TabsTrigger
+                value="reports"
+                className="data-[state=active]:bg-transparent data-[state-active]:border-b-2 data-[state=active]:border-blue-600 data-[state=active]:text-blue-600 rounded-none py-4 px-6"
               >
                 Reports
               </TabsTrigger>
@@ -3540,6 +3558,125 @@ export default function ClinicDashboard() {
                         </Button>
                       </Card>
                     )}
+                  </div>
+                )}
+              </div>
+            </TabsContent>
+
+            <TabsContent value="feedback" className="mt-0">
+              <div className="p-6">
+                <div className="flex items-center justify-between mb-6">
+                  <div>
+                    <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+                      <MessageCircle className="w-6 h-6 text-orange-500" />
+                      Patient Feedback
+                    </h2>
+                    <p className="text-gray-600 mt-1">View and manage patient feedback responses</p>
+                  </div>
+                </div>
+
+                {feedbackLoading ? (
+                  <div className="text-center py-8">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+                    <p className="text-gray-600 mt-2">Loading feedback...</p>
+                  </div>
+                ) : feedback.length === 0 ? (
+                  <Card>
+                    <CardContent className="text-center py-12">
+                      <MessageCircle className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+                      <h3 className="text-lg font-medium text-gray-900 mb-2">No Feedback Yet</h3>
+                      <p className="text-gray-600">Patient feedback will appear here once submitted.</p>
+                    </CardContent>
+                  </Card>
+                ) : (
+                  <div className="grid gap-6">
+                    {feedback.map((item: any) => (
+                      <Card key={item.id} className="hover:shadow-lg transition-shadow">
+                        <CardHeader className="pb-4">
+                          <div className="flex items-start justify-between">
+                            <div className="flex items-center gap-3">
+                              <div className="flex items-center">
+                                {Array.from({ length: 5 }, (_, index) => (
+                                  <Star
+                                    key={index}
+                                    className={`w-5 h-5 ${
+                                      index < item.rating
+                                        ? "text-yellow-400 fill-current"
+                                        : "text-gray-300"
+                                    }`}
+                                  />
+                                ))}
+                                <span className="ml-2 text-lg font-semibold text-gray-900">
+                                  {item.rating}/5
+                                </span>
+                              </div>
+                              <Badge
+                                variant="outline"
+                                className={
+                                  item.rating >= 4
+                                    ? "border-green-200 text-green-700 bg-green-50"
+                                    : item.rating >= 3
+                                    ? "border-yellow-200 text-yellow-700 bg-yellow-50"
+                                    : "border-red-200 text-red-700 bg-red-50"
+                                }
+                              >
+                                {item.rating >= 4 ? "Positive" : item.rating >= 3 ? "Neutral" : "Negative"}
+                              </Badge>
+                            </div>
+                            <div className="text-sm text-gray-500">
+                              {new Date(item.createdAt).toLocaleDateString('en-US', {
+                                year: 'numeric',
+                                month: 'short',
+                                day: 'numeric',
+                                hour: '2-digit',
+                                minute: '2-digit'
+                              })}
+                            </div>
+                          </div>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                            <div>
+                              <span className="font-medium text-gray-700">Category:</span>
+                              <span className="ml-2 capitalize">
+                                {item.category.replace('_', ' ')}
+                              </span>
+                            </div>
+                            <div>
+                              <span className="font-medium text-gray-700">Submitted by:</span>
+                              <span className="ml-2">
+                                {item.isAnonymous ? "Anonymous Patient" : `${item.patient?.firstName || 'Patient'} ${item.patient?.lastName || ''}`}
+                              </span>
+                            </div>
+                            {item.appointmentId && (
+                              <div>
+                                <span className="font-medium text-gray-700">Related Appointment:</span>
+                                <span className="ml-2 text-blue-600">#{item.appointmentId.slice(-6)}</span>
+                              </div>
+                            )}
+                          </div>
+                          
+                          <div className="border-t pt-4">
+                            <h4 className="font-medium text-gray-900 mb-2">Comments:</h4>
+                            <p className="text-gray-700 bg-gray-50 p-3 rounded-lg">
+                              "{item.comment}"
+                            </p>
+                          </div>
+
+                          <div className="flex items-center gap-2 pt-2">
+                            <Button variant="outline" size="sm" className="flex items-center gap-1">
+                              <Eye className="w-4 h-4" />
+                              Mark as Read
+                            </Button>
+                            {!item.isAnonymous && (
+                              <Button variant="outline" size="sm" className="text-blue-600">
+                                Contact Patient
+                              </Button>
+                            )}
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
                   </div>
                 )}
               </div>

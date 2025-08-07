@@ -6,7 +6,7 @@ import {
   insertUserSchema, insertAppointmentSchema, insertQueueTokenSchema, 
   insertMedicineSchema, insertPrescriptionSchema, insertMedicineReminderSchema,
   insertDelayNotificationSchema, insertHomeVisitSchema, insertMedicalHistorySchema,
-  insertStaffVerificationSchema
+  insertStaffVerificationSchema, insertPatientFeedbackSchema
 } from "@shared/schema";
 import { z } from "zod";
 import { authMiddleware, requireRole } from "./middleware/auth";
@@ -1294,6 +1294,52 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       res.json(notification);
+    } catch (error: any) {
+      res.status(400).json({ message: error.message });
+    }
+  });
+
+  // Patient Feedback routes
+  app.post("/api/feedback", async (req, res) => {
+    try {
+      const feedbackData = insertPatientFeedbackSchema.parse(req.body);
+      
+      // Check if user is authenticated, if so use their ID, otherwise allow anonymous feedback
+      if (req.headers.authorization) {
+        try {
+          const token = req.headers.authorization.split(' ')[1];
+          const jwt = require('jsonwebtoken');
+          const decoded = jwt.verify(token, process.env.JWT_SECRET || 'smartclinic-secret') as any;
+          feedbackData.patientId = decoded.id;
+        } catch {
+          // Invalid token, but still allow feedback submission
+          feedbackData.patientId = null;
+        }
+      } else {
+        feedbackData.patientId = null;
+      }
+      
+      const feedback = await storage.createPatientFeedback(feedbackData);
+      res.json(feedback);
+    } catch (error: any) {
+      res.status(400).json({ message: error.message });
+    }
+  });
+
+  app.get("/api/feedback", authMiddleware, requireRole(['admin', 'staff']), async (req, res) => {
+    try {
+      const feedback = await storage.getAllPatientFeedback();
+      res.json(feedback);
+    } catch (error: any) {
+      res.status(400).json({ message: error.message });
+    }
+  });
+
+  app.get("/api/feedback/patient/:patientId", authMiddleware, requireRole(['admin', 'staff', 'doctor']), async (req, res) => {
+    try {
+      const { patientId } = req.params;
+      const feedback = await storage.getPatientFeedbackByPatientId(patientId);
+      res.json(feedback);
     } catch (error: any) {
       res.status(400).json({ message: error.message });
     }

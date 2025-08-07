@@ -1,14 +1,15 @@
 import { 
   users, otpSessions, emailOtpSessions, authSessions, staffVerifications, appointments, 
   queueTokens, medicines, prescriptions, medicineReminders, delayNotifications,
-  homeVisits, medicalHistory,
+  homeVisits, medicalHistory, patientFeedback,
   type User, type InsertUser, type OtpSession, type InsertOtpSession,
   type EmailOtpSession, type InsertEmailOtpSession,
   type AuthSession, type InsertAuthSession, type StaffVerification, type InsertStaffVerification,
   type Appointment, type InsertAppointment, type QueueToken, type InsertQueueToken,
   type Medicine, type InsertMedicine, type Prescription, type InsertPrescription,
   type MedicineReminder, type InsertMedicineReminder, type DelayNotification, type InsertDelayNotification,
-  type HomeVisit, type InsertHomeVisit, type MedicalHistory, type InsertMedicalHistory
+  type HomeVisit, type InsertHomeVisit, type MedicalHistory, type InsertMedicalHistory,
+  type PatientFeedback, type InsertPatientFeedback
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, gte, lte, desc, asc, sql } from "drizzle-orm";
@@ -868,6 +869,51 @@ export class DatabaseStorage implements IStorage {
     return await db.select().from(delayNotifications)
       .where(eq(delayNotifications.isResolved, false))
       .orderBy(desc(delayNotifications.createdAt));
+  }
+
+  // Patient Feedback Methods
+  async createPatientFeedback(feedback: InsertPatientFeedback): Promise<PatientFeedback> {
+    const [newFeedback] = await db.insert(patientFeedback).values(feedback).returning();
+    return newFeedback;
+  }
+
+  async getAllPatientFeedback(): Promise<(PatientFeedback & { patient: User; appointment?: Appointment })[]> {
+    const feedbackRecords = await db.select().from(patientFeedback)
+      .orderBy(desc(patientFeedback.createdAt));
+    
+    // Manually join with users and appointments
+    const feedbackWithUsers = [];
+    for (const feedback of feedbackRecords) {
+      const [patient] = await db.select().from(users).where(eq(users.id, feedback.patientId));
+      let appointment = undefined;
+      if (feedback.appointmentId) {
+        const [apt] = await db.select().from(appointments).where(eq(appointments.id, feedback.appointmentId));
+        appointment = apt;
+      }
+      
+      if (patient) {
+        feedbackWithUsers.push({
+          ...feedback,
+          patient,
+          appointment
+        });
+      }
+    }
+    
+    return feedbackWithUsers;
+  }
+
+  async getPatientFeedbackById(id: string): Promise<PatientFeedback | null> {
+    const [feedback] = await db.select()
+      .from(patientFeedback)
+      .where(eq(patientFeedback.id, id));
+    return feedback || null;
+  }
+
+  async getPatientFeedbackByPatientId(patientId: string): Promise<PatientFeedback[]> {
+    return await db.select().from(patientFeedback)
+      .where(eq(patientFeedback.patientId, patientId))
+      .orderBy(desc(patientFeedback.createdAt));
   }
 
   async resolveDelayNotification(id: string): Promise<DelayNotification | undefined> {

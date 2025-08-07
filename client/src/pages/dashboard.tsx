@@ -16,6 +16,9 @@ import {
   CheckCircle,
   XCircle,
   AlertCircle,
+  MessageCircle,
+  Star,
+  Send,
 } from "lucide-react";
 import BookingModal from "@/components/BookingModal";
 import EmergencyModal from "@/components/EmergencyModal";
@@ -26,12 +29,37 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { useTheme } from "@/components/ThemeProvider";
+
+// Feedback form schema
+const feedbackSchema = z.object({
+  rating: z.string().refine((val) => parseInt(val) >= 1 && parseInt(val) <= 5, {
+    message: "Please provide a rating between 1 and 5",
+  }),
+  comment: z.string().min(10, {
+    message: "Comment must be at least 10 characters long",
+  }),
+  category: z.string().min(1, {
+    message: "Please select a feedback category",
+  }),
+  appointmentId: z.string().optional(),
+  isAnonymous: z.boolean().default(false),
+});
+
+type FeedbackFormData = z.infer<typeof feedbackSchema>;
 
 export default function SmartClinicDashboard() {
   const [, setLocation] = useLocation();
@@ -43,6 +71,7 @@ export default function SmartClinicDashboard() {
   const [showEmergencyModal, setShowEmergencyModal] = useState(false);
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
+  const [showFeedbackModal, setShowFeedbackModal] = useState(false);
   const [selectedAppointment, setSelectedAppointment] = useState<any>(null);
 
   useEffect(() => {
@@ -403,6 +432,49 @@ export default function SmartClinicDashboard() {
   const handleCancelAppointment = (appointment: any) => {
     setSelectedAppointment(appointment);
     setShowCancelModal(true);
+  };
+
+  // Feedback form setup
+  const feedbackForm = useForm<FeedbackFormData>({
+    resolver: zodResolver(feedbackSchema),
+    defaultValues: {
+      rating: "",
+      comment: "",
+      category: "",
+      appointmentId: "",
+      isAnonymous: false,
+    },
+  });
+
+  // Feedback submission mutation
+  const submitFeedbackMutation = useMutation({
+    mutationFn: async (feedbackData: FeedbackFormData) => {
+      const response = await apiRequest("POST", "/api/feedback", {
+        ...feedbackData,
+        rating: parseInt(feedbackData.rating),
+        appointmentId: feedbackData.appointmentId || null,
+      });
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Feedback Submitted",
+        description: "Thank you for your feedback! It helps us improve our service.",
+      });
+      setShowFeedbackModal(false);
+      feedbackForm.reset();
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Submission Failed",
+        description: error.message || "Failed to submit feedback",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleSubmitFeedback = (data: FeedbackFormData) => {
+    submitFeedbackMutation.mutate(data);
   };
 
   if (!user) {
@@ -1097,15 +1169,10 @@ export default function SmartClinicDashboard() {
                 <Button
                   variant="outline"
                   className="h-16 sm:h-20 flex-col gap-1 sm:gap-2 bg-transparent text-xs sm:text-sm"
-                  onClick={() => {
-                    toast({
-                      title: "Home Care Service",
-                      description: "Home care appointment booking initiated. Our team will contact you within 30 minutes.",
-                    });
-                  }}
+                  onClick={() => setShowFeedbackModal(true)}
                 >
-                  <Home className="w-5 h-5 sm:w-6 sm:h-6 text-purple-500" />
-                  <span>Home Care</span>
+                  <MessageCircle className="w-5 h-5 sm:w-6 sm:h-6 text-orange-500" />
+                  <span>Feedback</span>
                 </Button>
               </div>
             </CardContent>
@@ -1144,6 +1211,172 @@ export default function SmartClinicDashboard() {
         onClose={() => setShowDetailsModal(false)}
         appointment={selectedAppointment}
       />
+
+      {/* Feedback Modal */}
+      <Dialog open={showFeedbackModal} onOpenChange={setShowFeedbackModal}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <MessageCircle className="w-5 h-5 text-orange-500" />
+              Share Your Feedback
+            </DialogTitle>
+            <DialogDescription>
+              Help us improve SmartClinic by sharing your experience with us.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <Form {...feedbackForm}>
+            <form onSubmit={feedbackForm.handleSubmit(handleSubmitFeedback)} className="space-y-4">
+              <FormField
+                control={feedbackForm.control}
+                name="rating"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Overall Rating</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select rating (1-5 stars)" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="5">⭐⭐⭐⭐⭐ Excellent</SelectItem>
+                        <SelectItem value="4">⭐⭐⭐⭐ Very Good</SelectItem>
+                        <SelectItem value="3">⭐⭐⭐ Good</SelectItem>
+                        <SelectItem value="2">⭐⭐ Fair</SelectItem>
+                        <SelectItem value="1">⭐ Poor</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={feedbackForm.control}
+                name="category"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Feedback Category</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select category" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="service_quality">Service Quality</SelectItem>
+                        <SelectItem value="wait_time">Wait Time</SelectItem>
+                        <SelectItem value="staff_behavior">Staff Behavior</SelectItem>
+                        <SelectItem value="facility">Facility & Cleanliness</SelectItem>
+                        <SelectItem value="appointment_booking">Appointment Booking</SelectItem>
+                        <SelectItem value="app_usability">App Experience</SelectItem>
+                        <SelectItem value="other">Other</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {appointments?.length > 0 && (
+                <FormField
+                  control={feedbackForm.control}
+                  name="appointmentId"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Related Appointment (Optional)</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select appointment" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="">No specific appointment</SelectItem>
+                          {appointments.map((appointment: any) => (
+                            <SelectItem key={appointment.id} value={appointment.id}>
+                              {new Date(appointment.appointmentDate).toLocaleDateString()} - Dr. {appointment.doctor?.firstName}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </FormItem>
+                  )}
+                />
+              )}
+
+              <FormField
+                control={feedbackForm.control}
+                name="comment"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Your Comments</FormLabel>
+                    <FormControl>
+                      <Textarea
+                        placeholder="Please share your detailed feedback, suggestions, or concerns..."
+                        className="min-h-[100px]"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormDescription>
+                      Minimum 10 characters required
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={feedbackForm.control}
+                name="isAnonymous"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
+                    <div className="space-y-0.5">
+                      <FormLabel className="text-base">
+                        Submit Anonymously
+                      </FormLabel>
+                      <FormDescription>
+                        Your name will not be associated with this feedback
+                      </FormDescription>
+                    </div>
+                    <FormControl>
+                      <Switch
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                      />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+
+              <DialogFooter className="gap-2">
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  onClick={() => setShowFeedbackModal(false)}
+                >
+                  Cancel
+                </Button>
+                <Button 
+                  type="submit" 
+                  disabled={submitFeedbackMutation.isPending}
+                  className="bg-orange-500 hover:bg-orange-600"
+                >
+                  {submitFeedbackMutation.isPending ? (
+                    "Submitting..."
+                  ) : (
+                    <>
+                      <Send className="w-4 h-4 mr-2" />
+                      Submit Feedback
+                    </>
+                  )}
+                </Button>
+              </DialogFooter>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

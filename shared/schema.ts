@@ -169,6 +169,18 @@ export const delayNotifications = pgTable("delay_notifications", {
   resolvedAt: timestamp("resolved_at"),
 });
 
+// Patient feedback table
+export const patientFeedback = pgTable("patient_feedback", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  patientId: varchar("patient_id").references(() => users.id, { onDelete: "cascade" }),
+  appointmentId: varchar("appointment_id").references(() => appointments.id, { onDelete: "set null" }),
+  rating: integer("rating").notNull(), // 1-5 star rating
+  category: text("category").notNull(), // "service", "wait_time", "staff", "cleanliness", "overall"
+  comment: text("comment"), // Changed from comments to comment to match API
+  isAnonymous: boolean("is_anonymous").notNull().default(false),
+  createdAt: timestamp("created_at").notNull().default(sql`NOW()`),
+});
+
 // Home visits table
 export const homeVisits = pgTable("home_visits", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -360,6 +372,13 @@ export const insertMedicalHistorySchema = createInsertSchema(medicalHistory).omi
   createdAt: true,
 });
 
+export const insertPatientFeedbackSchema = createInsertSchema(patientFeedback).omit({
+  id: true,
+  createdAt: true,
+}).extend({
+  patientId: z.string().nullable().optional(),
+});
+
 // Types
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
@@ -387,3 +406,5 @@ export type HomeVisit = typeof homeVisits.$inferSelect;
 export type InsertHomeVisit = z.infer<typeof insertHomeVisitSchema>;
 export type MedicalHistory = typeof medicalHistory.$inferSelect;
 export type InsertMedicalHistory = z.infer<typeof insertMedicalHistorySchema>;
+export type PatientFeedback = typeof patientFeedback.$inferSelect;
+export type InsertPatientFeedback = z.infer<typeof insertPatientFeedbackSchema>;
