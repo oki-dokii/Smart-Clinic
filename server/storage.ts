@@ -877,27 +877,31 @@ export class DatabaseStorage implements IStorage {
     return newFeedback;
   }
 
-  async getAllPatientFeedback(): Promise<(PatientFeedback & { patient: User; appointment?: Appointment })[]> {
+  async getAllPatientFeedback(): Promise<(PatientFeedback & { patient?: User; appointment?: Appointment })[]> {
     const feedbackRecords = await db.select().from(patientFeedback)
       .orderBy(desc(patientFeedback.createdAt));
     
-    // Manually join with users and appointments
+    // Manually join with users and appointments - handle anonymous feedback
     const feedbackWithUsers = [];
     for (const feedback of feedbackRecords) {
-      const [patient] = await db.select().from(users).where(eq(users.id, feedback.patientId));
+      let patient = undefined;
+      if (feedback.patientId) {
+        const [patientRecord] = await db.select().from(users).where(eq(users.id, feedback.patientId));
+        patient = patientRecord;
+      }
+      
       let appointment = undefined;
       if (feedback.appointmentId) {
         const [apt] = await db.select().from(appointments).where(eq(appointments.id, feedback.appointmentId));
         appointment = apt;
       }
       
-      if (patient) {
-        feedbackWithUsers.push({
-          ...feedback,
-          patient,
-          appointment
-        });
-      }
+      // Include feedback regardless of whether patient exists (for anonymous feedback)
+      feedbackWithUsers.push({
+        ...feedback,
+        patient,
+        appointment
+      });
     }
     
     return feedbackWithUsers;
