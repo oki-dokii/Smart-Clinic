@@ -1254,10 +1254,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Delay notification routes
-  app.post("/api/delays", authMiddleware, requireRole(['doctor', 'staff']), async (req, res) => {
+  app.post("/api/delays", authMiddleware, requireRole(['doctor', 'staff', 'admin']), async (req, res) => {
     try {
       const delayData = insertDelayNotificationSchema.parse(req.body);
-      delayData.doctorId = req.user!.role === 'doctor' ? req.user!.id : delayData.doctorId;
+      // For doctors, use their own ID; for staff/admin, use the provided doctorId
+      if (req.user!.role === 'doctor') {
+        delayData.doctorId = req.user!.id;
+      }
       
       const notification = await storage.createDelayNotification(delayData);
       

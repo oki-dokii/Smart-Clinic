@@ -151,6 +151,14 @@ export default function ClinicDashboard() {
   const [forceRender, setForceRender] = useState(0)
   const [isAddStaffOpen, setIsAddStaffOpen] = useState(false)
   const [showAppointmentModal, setShowAppointmentModal] = useState(false)
+  const [isDelayModalOpen, setIsDelayModalOpen] = useState(false)
+  
+  // Delay notification form state
+  const [delayForm, setDelayForm] = useState({
+    doctorId: '',
+    delayMinutes: '',
+    reason: ''
+  })
   const { toast } = useToast()
   const queryClient = useQueryClient()
 
@@ -183,6 +191,50 @@ export default function ClinicDashboard() {
   const handleAppointmentAction = (appointmentId: string, action: 'approve' | 'reject') => {
     console.log('🔥 Button clicked:', action, 'for appointment:', appointmentId)
     appointmentApproval.mutate({ appointmentId, action })
+  }
+
+  // Delay notification mutation
+  const delayNotificationMutation = useMutation({
+    mutationFn: async (delayData: { doctorId: string; delayMinutes: number; reason?: string }) => {
+      return apiRequest('POST', '/api/delays', delayData)
+    },
+    onSuccess: (data) => {
+      toast({
+        title: 'Doctor Running Late Notification Sent',
+        description: `SMS notifications sent to all affected patients about ${data.delayMinutes} minute delay`
+      })
+      setIsDelayModalOpen(false)
+      setDelayForm({ doctorId: '', delayMinutes: '', reason: '' })
+      // Invalidate queries to refresh data
+      queryClient.invalidateQueries({ queryKey: ['/api/appointments/admin'] })
+      queryClient.invalidateQueries({ queryKey: ['/api/appointments'] })
+      queryClient.invalidateQueries({ queryKey: ['/api/delays'] })
+    },
+    onError: () => {
+      toast({
+        title: 'Error',
+        description: 'Failed to send delay notification',
+        variant: 'destructive'
+      })
+    }
+  })
+
+  // Handler for delay notification
+  const handleDelaySubmit = () => {
+    if (!delayForm.doctorId || !delayForm.delayMinutes) {
+      toast({
+        title: 'Missing Information',
+        description: 'Please select a doctor and specify delay minutes',
+        variant: 'destructive'
+      })
+      return
+    }
+    
+    delayNotificationMutation.mutate({
+      doctorId: delayForm.doctorId,
+      delayMinutes: parseInt(delayForm.delayMinutes),
+      reason: delayForm.reason || undefined
+    })
   }
   
   // Emergency alerts state
@@ -234,12 +286,11 @@ export default function ClinicDashboard() {
     instructions: ''
   })
 
-  const [dischargeForm, setDischargeForm] = useState({
-    patientId: '',
-    dischargeDate: '',
-    condition: '',
-    followUpInstructions: '',
-    medications: ''
+  const [doctorDelaysForm, setDoctorDelaysForm] = useState({
+    doctorId: '',
+    delayMinutes: '',
+    reason: '',
+    affectedPatients: ''
   })
 
   const [staffForm, setStaffForm] = useState({
@@ -464,17 +515,27 @@ export default function ClinicDashboard() {
     })
   }
 
-  const handleDischargeSubmit = () => {
-    toast({
-      title: 'Patient Discharged',
-      description: 'Patient discharge has been processed successfully.',
+  const handleDoctorDelaysSubmit = () => {
+    if (!doctorDelaysForm.doctorId || !doctorDelaysForm.delayMinutes) {
+      toast({
+        title: 'Missing Information',
+        description: 'Please select a doctor and specify delay duration.',
+        variant: 'destructive'
+      })
+      return
+    }
+
+    delayNotificationMutation.mutate({
+      doctorId: doctorDelaysForm.doctorId,
+      delayMinutes: parseInt(doctorDelaysForm.delayMinutes),
+      reason: doctorDelaysForm.reason || undefined
     })
-    setDischargeForm({
-      patientId: '',
-      dischargeDate: '',
-      condition: '',
-      followUpInstructions: '',
-      medications: ''
+    
+    setDoctorDelaysForm({
+      doctorId: '',
+      delayMinutes: '',
+      reason: '',
+      affectedPatients: ''
     })
   }
 
@@ -2056,6 +2117,80 @@ export default function ClinicDashboard() {
                     </CardHeader>
                     <CardContent>
                       <div className="grid grid-cols-2 gap-4">
+                        {/* Doctor Running Late Dialog */}
+                        <Dialog open={isDelayModalOpen} onOpenChange={setIsDelayModalOpen}>
+                          <DialogTrigger asChild>
+                            <Button 
+                              className="h-20 flex-col gap-2 bg-orange-600 hover:bg-orange-700"
+                              data-testid="button-doctor-delay"
+                            >
+                              <Clock className="w-6 h-6" />
+                              <span>Doctor Running Late</span>
+                            </Button>
+                          </DialogTrigger>
+                          <DialogContent className="max-w-md">
+                            <DialogHeader>
+                              <DialogTitle>Doctor Running Late Notification</DialogTitle>
+                            </DialogHeader>
+                            <div className="space-y-4">
+                              <div>
+                                <Label htmlFor="doctorSelect">Select Doctor</Label>
+                                <Select value={delayForm.doctorId} onValueChange={(value) => setDelayForm({...delayForm, doctorId: value})}>
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="Select a doctor..." />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    {staffMembers.filter(staff => staff.role === 'doctor').map((doctor) => (
+                                      <SelectItem key={doctor.id} value={doctor.id}>
+                                        Dr. {doctor.firstName} {doctor.lastName}
+                                      </SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                              <div>
+                                <Label htmlFor="delayMinutes">Delay Duration (minutes)</Label>
+                                <Input
+                                  id="delayMinutes"
+                                  type="number"
+                                  min="1"
+                                  max="120"
+                                  value={delayForm.delayMinutes}
+                                  onChange={(e) => setDelayForm({...delayForm, delayMinutes: e.target.value})}
+                                  placeholder="15"
+                                />
+                              </div>
+                              <div>
+                                <Label htmlFor="delayReason">Reason (Optional)</Label>
+                                <Textarea
+                                  id="delayReason"
+                                  value={delayForm.reason}
+                                  onChange={(e) => setDelayForm({...delayForm, reason: e.target.value})}
+                                  placeholder="Emergency case, traffic, etc..."
+                                  rows={3}
+                                />
+                              </div>
+                              <div className="flex gap-2">
+                                <Button 
+                                  onClick={handleDelaySubmit} 
+                                  className="flex-1"
+                                  disabled={delayNotificationMutation.isPending}
+                                  data-testid="button-send-delay"
+                                >
+                                  {delayNotificationMutation.isPending ? 'Sending...' : 'Send SMS Notifications'}
+                                </Button>
+                                <Button 
+                                  variant="outline" 
+                                  onClick={() => setIsDelayModalOpen(false)}
+                                  className="flex-1"
+                                >
+                                  Cancel
+                                </Button>
+                              </div>
+                            </div>
+                          </DialogContent>
+                        </Dialog>
+
                         {/* Add Patient Dialog */}
                         <Dialog>
                           <DialogTrigger asChild>
@@ -2309,76 +2444,71 @@ export default function ClinicDashboard() {
                           </DialogContent>
                         </Dialog>
 
-                        {/* Discharge Dialog */}
+                        {/* Doctor Delays Dialog */}
                         <Dialog>
                           <DialogTrigger asChild>
                             <Button 
                               variant="outline" 
                               className="h-20 flex-col gap-2 bg-transparent"
-                              data-testid="button-quick-discharge"
+                              data-testid="button-quick-doctor-delays"
                             >
-                              <UserCheck className="w-6 h-6" />
-                              <span>Discharge</span>
+                              <Clock className="w-6 h-6" />
+                              <span>Doctor Delays</span>
                             </Button>
                           </DialogTrigger>
                           <DialogContent className="max-w-md">
                             <DialogHeader>
-                              <DialogTitle>Patient Discharge</DialogTitle>
+                              <DialogTitle>Doctor Delays Management</DialogTitle>
                             </DialogHeader>
                             <div className="space-y-4">
                               <div>
-                                <Label htmlFor="dischargePatient">Patient</Label>
-                                <Input
-                                  id="dischargePatient"
-                                  value={dischargeForm.patientId}
-                                  onChange={(e) => setDischargeForm({...dischargeForm, patientId: e.target.value})}
-                                  placeholder="Search patient by name or ID"
-                                />
-                              </div>
-                              <div>
-                                <Label htmlFor="dischargeDate">Discharge Date</Label>
-                                <Input
-                                  id="dischargeDate"
-                                  type="date"
-                                  value={dischargeForm.dischargeDate}
-                                  onChange={(e) => setDischargeForm({...dischargeForm, dischargeDate: e.target.value})}
-                                />
-                              </div>
-                              <div>
-                                <Label htmlFor="condition">Condition at Discharge</Label>
-                                <Select onValueChange={(value) => setDischargeForm({...dischargeForm, condition: value})}>
+                                <Label htmlFor="delayDoctor">Select Doctor</Label>
+                                <Select value={doctorDelaysForm.doctorId} onValueChange={(value) => setDoctorDelaysForm({...doctorDelaysForm, doctorId: value})}>
                                   <SelectTrigger>
-                                    <SelectValue placeholder="Select condition" />
+                                    <SelectValue placeholder="Choose doctor..." />
                                   </SelectTrigger>
                                   <SelectContent>
-                                    <SelectItem value="stable">Stable</SelectItem>
-                                    <SelectItem value="improved">Improved</SelectItem>
-                                    <SelectItem value="recovered">Fully Recovered</SelectItem>
-                                    <SelectItem value="transfer">Transfer to Specialist</SelectItem>
+                                    {staffMembers.filter(staff => staff.role === 'doctor').map((doctor) => (
+                                      <SelectItem key={doctor.id} value={doctor.id}>
+                                        Dr. {doctor.firstName} {doctor.lastName}
+                                      </SelectItem>
+                                    ))}
                                   </SelectContent>
                                 </Select>
                               </div>
                               <div>
-                                <Label htmlFor="followUpInstructions">Follow-up Instructions</Label>
-                                <Textarea
-                                  id="followUpInstructions"
-                                  value={dischargeForm.followUpInstructions}
-                                  onChange={(e) => setDischargeForm({...dischargeForm, followUpInstructions: e.target.value})}
-                                  placeholder="Return in 1 week, rest for 3 days, etc."
+                                <Label htmlFor="delayDuration">Delay Duration (minutes)</Label>
+                                <Input
+                                  id="delayDuration"
+                                  type="number"
+                                  min="1"
+                                  max="120"
+                                  value={doctorDelaysForm.delayMinutes}
+                                  onChange={(e) => setDoctorDelaysForm({...doctorDelaysForm, delayMinutes: e.target.value})}
+                                  placeholder="15"
                                 />
                               </div>
                               <div>
-                                <Label htmlFor="dischargeMedications">Discharge Medications</Label>
-                                <Textarea
-                                  id="dischargeMedications"
-                                  value={dischargeForm.medications}
-                                  onChange={(e) => setDischargeForm({...dischargeForm, medications: e.target.value})}
-                                  placeholder="List medications to continue at home"
-                                />
+                                <Label htmlFor="delayReason">Reason for Delay</Label>
+                                <Select value={doctorDelaysForm.reason} onValueChange={(value) => setDoctorDelaysForm({...doctorDelaysForm, reason: value})}>
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="Select reason..." />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="emergency">Emergency Case</SelectItem>
+                                    <SelectItem value="traffic">Traffic/Transportation</SelectItem>
+                                    <SelectItem value="previous-appointment">Previous Appointment Running Long</SelectItem>
+                                    <SelectItem value="personal">Personal Emergency</SelectItem>
+                                    <SelectItem value="other">Other</SelectItem>
+                                  </SelectContent>
+                                </Select>
                               </div>
-                              <Button onClick={handleDischargeSubmit} className="w-full">
-                                <UserCheck className="w-4 h-4 mr-2" />
-                                Process Discharge
+                              <Button 
+                                onClick={handleDoctorDelaysSubmit} 
+                                className="w-full"
+                                disabled={delayNotificationMutation.isPending}
+                              >
+                                {delayNotificationMutation.isPending ? 'Sending...' : 'Notify Affected Patients'}
                               </Button>
                             </div>
                           </DialogContent>
