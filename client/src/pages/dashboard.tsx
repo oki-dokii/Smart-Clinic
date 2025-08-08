@@ -182,20 +182,21 @@ export default function SmartClinicDashboard() {
   // Get admin queue data for full queue view - use admin endpoint for modal
   const { data: apiAdminQueue = [] } = useQuery({
     queryKey: ["/api/queue/admin"], 
-    refetchInterval: 3000,
+    refetchInterval: 2000, // Faster refresh to pick up changes
     retry: false, // Don't retry if unauthorized
+    staleTime: 0, // Always fetch fresh data
+    cacheTime: 0, // Don't cache data
   });
 
-  // Use live data if available, otherwise fallback to API data
-  const rawAdminQueue = liveAdminQueue || apiAdminQueue || [];
+  // Prioritize live WebSocket data and filter out completed patients
+  const rawAdminQueue = liveAdminQueue && liveAdminQueue.length > 0 ? liveAdminQueue : apiAdminQueue || [];
   
-  // Sort queue by appointment time (ascending) for proper order
+  // Filter out completed patients and sort by token number for proper queue display
   const adminQueue = Array.isArray(rawAdminQueue) ? 
-    [...rawAdminQueue].sort((a: any, b: any) => {
-      const aTime = a.appointment?.appointmentDate || a.createdAt;
-      const bTime = b.appointment?.appointmentDate || b.createdAt;
-      return new Date(aTime).getTime() - new Date(bTime).getTime();
-    }) : [];
+    [...rawAdminQueue]
+      .filter((item: any) => item.status && !['completed', 'cancelled'].includes(item.status)) // Filter out completed patients
+      .sort((a: any, b: any) => (a.tokenNumber || 0) - (b.tokenNumber || 0)) // Sort by token number
+    : [];
 
   // Process delay notifications
   const delayNotificationsArray = Array.isArray(delayNotifications) ? delayNotifications : [];
