@@ -127,6 +127,18 @@ export default function SmartClinicDashboard() {
     enabled: !!user,
   });
 
+  // Debug logging for missed doses
+  console.log('🔥 DASHBOARD DEBUG - missedDoses:', missedDoses);
+  const totalOverdue = missedDoses?.reduce((total: number, md: any) => {
+    const missed = (md.missedDoses || 0);
+    const overdue = (md.overdueToday || 0);
+    console.log(`🔥 Medicine ${md.medicineName}: missed=${missed}, overdue=${overdue}`);
+    return total + missed + overdue;
+  }, 0) || 0;
+  console.log('🔥 DASHBOARD DEBUG - Total overdue count:', totalOverdue);
+  const hasOverdue = missedDoses?.some((md: any) => (md.missedDoses || 0) > 0 || (md.overdueToday || 0) > 0);
+  console.log('🔥 DASHBOARD DEBUG - Has overdue medicines:', hasOverdue);
+
   const { data: doctors = [] } = useQuery({
     queryKey: ["/api/users", "doctor"],
     queryFn: async () => {
@@ -741,16 +753,14 @@ export default function SmartClinicDashboard() {
                 <span className="text-2xl font-bold">
                   {reminders?.filter((r: any) => !r.isTaken).length || 0}
                 </span>
-                {missedDoses?.some((md: any) => md.missedDoses > 0 || md.overdueToday > 0) && (
+                {hasOverdue && (
                   <Badge className="bg-red-500 text-white text-xs pulse-urgent">Urgent</Badge>
                 )}
               </div>
               <div className={`text-sm text-gray-600 mb-4 ${
-                missedDoses?.some((md: any) => md.missedDoses > 0 || md.overdueToday > 0)
-                  ? 'flash-urgent text-red-600' 
-                  : ''
+                hasOverdue ? 'flash-urgent text-red-600' : ''
               }`}>
-                {missedDoses?.reduce((total: number, md: any) => total + (md.missedDoses || 0) + (md.overdueToday || 0), 0) || 0} dose(s) overdue
+                {totalOverdue} dose(s) overdue
               </div>
               <Button 
                 className="w-full bg-orange-500 hover:bg-orange-600"
@@ -958,7 +968,7 @@ export default function SmartClinicDashboard() {
           ) : null}
 
           {/* Medicine Reminders */}
-          <Card className={missedDoses?.some((md: any) => md.missedDoses > 0 || md.overdueToday > 0) ? 'glow-urgent' : ''}>
+          <Card className={hasOverdue ? 'glow-urgent' : ''}>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Pill className="w-5 h-5 text-orange-500" />
