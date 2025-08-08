@@ -175,7 +175,7 @@ export const patientFeedback = pgTable("patient_feedback", {
   patientId: varchar("patient_id").references(() => users.id, { onDelete: "cascade" }),
   appointmentId: varchar("appointment_id").references(() => appointments.id, { onDelete: "set null" }),
   rating: integer("rating").notNull(), // 1-5 star rating
-  category: text("category").notNull(), // "service", "wait_time", "staff", "cleanliness", "overall"
+  categories: text("categories").array().notNull(), // ["service", "wait_time", "staff", "cleanliness", "overall"]
   comment: text("comment"), // Changed from comments to comment to match API
   isAnonymous: boolean("is_anonymous").notNull().default(false),
   isRead: boolean("is_read").notNull().default(false),

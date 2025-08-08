@@ -34,6 +34,7 @@ import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, For
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
+import { Checkbox } from "@/components/ui/checkbox";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -52,8 +53,8 @@ const feedbackSchema = z.object({
   comment: z.string().min(10, {
     message: "Comment must be at least 10 characters long",
   }),
-  category: z.string().min(1, {
-    message: "Please select a feedback category",
+  categories: z.array(z.string()).min(1, {
+    message: "Please select at least one feedback category",
   }),
   appointmentId: z.string().optional(),
   isAnonymous: z.boolean().default(false),
@@ -443,7 +444,7 @@ export default function SmartClinicDashboard() {
     defaultValues: {
       rating: "",
       comment: "",
-      category: "",
+      categories: [],
       appointmentId: "",
       isAnonymous: false,
     },
@@ -1262,26 +1263,59 @@ export default function SmartClinicDashboard() {
 
               <FormField
                 control={feedbackForm.control}
-                name="category"
-                render={({ field }) => (
+                name="categories"
+                render={() => (
                   <FormItem>
-                    <FormLabel>Feedback Category</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select category" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="service_quality">Service Quality</SelectItem>
-                        <SelectItem value="wait_time">Wait Time</SelectItem>
-                        <SelectItem value="staff_behavior">Staff Behavior</SelectItem>
-                        <SelectItem value="facility">Facility & Cleanliness</SelectItem>
-                        <SelectItem value="appointment_booking">Appointment Booking</SelectItem>
-                        <SelectItem value="app_usability">App Experience</SelectItem>
-                        <SelectItem value="other">Other</SelectItem>
-                      </SelectContent>
-                    </Select>
+                    <div className="mb-4">
+                      <FormLabel className="text-base">Feedback Categories</FormLabel>
+                      <p className="text-sm text-muted-foreground">
+                        Select all areas you'd like to provide feedback on
+                      </p>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      {[
+                        { id: "service_quality", label: "Service Quality" },
+                        { id: "wait_time", label: "Wait Time" },
+                        { id: "staff_behavior", label: "Staff Behavior" },
+                        { id: "facility", label: "Facility & Cleanliness" },
+                        { id: "appointment_booking", label: "Appointment Booking" },
+                        { id: "app_usability", label: "App Experience" },
+                        { id: "other", label: "Other" }
+                      ].map((item) => (
+                        <FormField
+                          key={item.id}
+                          control={feedbackForm.control}
+                          name="categories"
+                          render={({ field }) => {
+                            return (
+                              <FormItem
+                                key={item.id}
+                                className="flex flex-row items-start space-x-3 space-y-0"
+                              >
+                                <FormControl>
+                                  <Checkbox
+                                    data-testid={`checkbox-${item.id}`}
+                                    checked={field.value?.includes(item.id)}
+                                    onCheckedChange={(checked) => {
+                                      return checked
+                                        ? field.onChange([...field.value, item.id])
+                                        : field.onChange(
+                                            field.value?.filter(
+                                              (value: string) => value !== item.id
+                                            )
+                                          )
+                                    }}
+                                  />
+                                </FormControl>
+                                <FormLabel className="text-sm font-normal">
+                                  {item.label}
+                                </FormLabel>
+                              </FormItem>
+                            )
+                          }}
+                        />
+                      ))}
+                    </div>
                     <FormMessage />
                   </FormItem>
                 )}
