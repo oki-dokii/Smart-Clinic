@@ -2645,6 +2645,154 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Clinic-specific endpoints for individual clinic admin dashboards
+
+  // Get clinic-specific appointments
+  app.get("/api/appointments/clinic/:clinicId", authMiddleware, async (req, res) => {
+    try {
+      const { clinicId } = req.params;
+      const appointments = await storage.getAppointmentsByClinic(clinicId);
+      res.json(appointments);
+    } catch (error: any) {
+      res.status(400).json({ message: error.message });
+    }
+  });
+
+  app.get('/api/users/clinic/:clinicId', authMiddleware, async (req, res) => {
+    try {
+      const { clinicId } = req.params;
+      const users = await storage.getUsersByClinic(clinicId);
+      res.json(users);
+    } catch (error: any) {
+      res.status(500).json({ error: 'Failed to fetch clinic users' });
+    }
+  });
+
+  app.get('/api/patients/clinic/:clinicId', authMiddleware, async (req, res) => {
+    try {
+      const { clinicId } = req.params;
+      const patients = await storage.getPatientsByClinic(clinicId);
+      res.json(patients);
+    } catch (error: any) {
+      res.status(500).json({ error: 'Failed to fetch clinic patients' });
+    }
+  });
+
+  app.get('/api/queue/clinic/:clinicId', authMiddleware, async (req, res) => {
+    try {
+      const { clinicId } = req.params;
+      const queue = await storage.getQueueTokensByClinic(clinicId);
+      res.json(queue);
+    } catch (error: any) {
+      res.status(500).json({ error: 'Failed to fetch clinic queue' });
+    }
+  });
+
+  app.get('/api/clinic/dashboard-stats/:clinicId', authMiddleware, async (req, res) => {
+    try {
+      const { clinicId } = req.params;
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const tomorrow = new Date(today);
+      tomorrow.setDate(tomorrow.getDate() + 1);
+
+      // Get today's appointments for this clinic
+      const todayAppointments = await storage.getAppointmentsByDateRange(today, tomorrow, clinicId);
+      const completedAppointments = todayAppointments.filter(apt => apt.status === 'completed');
+      const activeStaff = await storage.getActiveStaffCountByClinic(clinicId);
+
+      const stats = {
+        patientsToday: todayAppointments.length,
+        completedAppointments: completedAppointments.length,
+        revenue: completedAppointments.length * 150, // Assume $150 per appointment
+        activeStaff: activeStaff
+      };
+
+      res.json(stats);
+    } catch (error: any) {
+      res.status(500).json({ error: 'Failed to fetch clinic dashboard stats' });
+    }
+  });
+
+  // Get clinic-specific staff/users
+  app.get("/api/users/clinic/:clinicId", authMiddleware, async (req, res) => {
+    try {
+      const { clinicId } = req.params;
+      const users = await storage.getUsersByClinic(clinicId);
+      res.json(users);
+    } catch (error: any) {
+      res.status(400).json({ message: error.message });
+    }
+  });
+
+  // Get clinic-specific patients
+  app.get("/api/patients/clinic/:clinicId", authMiddleware, async (req, res) => {
+    try {
+      const { clinicId } = req.params;
+      const patients = await storage.getPatientsByClinic(clinicId);
+      res.json(patients);
+    } catch (error: any) {
+      res.status(400).json({ message: error.message });
+    }
+  });
+
+  // Get clinic-specific queue
+  app.get("/api/queue/clinic/:clinicId", authMiddleware, async (req, res) => {
+    try {
+      const { clinicId } = req.params;
+      const queue = await storage.getQueueTokensByClinic(clinicId);
+      res.json(queue);
+    } catch (error: any) {
+      res.status(400).json({ message: error.message });
+    }
+  });
+
+  // Get clinic-specific dashboard stats
+  app.get("/api/clinic/dashboard-stats/:clinicId", authMiddleware, async (req, res) => {
+    try {
+      const { clinicId } = req.params;
+      
+      // Calculate today's date range
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const tomorrow = new Date(today);
+      tomorrow.setDate(tomorrow.getDate() + 1);
+
+      console.log(`🔥 CLINIC DASHBOARD STATS - Date range for ${clinicId}:`, {
+        today: today.toISOString(),
+        tomorrow: tomorrow.toISOString(),
+        todayLocal: today.toLocaleDateString(),
+        tomorrowLocal: tomorrow.toLocaleDateString()
+      });
+
+      // Get appointments for today at this clinic
+      const todayAppointments = await storage.getAppointmentsByDateRange(today, tomorrow, clinicId);
+      console.log(`🔥 CLINIC DASHBOARD STATS - Found appointments for clinic ${clinicId}:`, todayAppointments.length);
+
+      const completedAppointments = todayAppointments.filter(apt => apt.status === 'completed');
+      console.log(`🔥 CLINIC DASHBOARD STATS - Completed appointments for clinic ${clinicId}:`, completedAppointments.length);
+
+      // Calculate revenue (assuming $150 per completed appointment)
+      const revenue = completedAppointments.length * 150;
+
+      // Get active staff count for this clinic
+      const activeStaff = await storage.getActiveStaffCountByClinic(clinicId);
+
+      const stats = {
+        patientsToday: todayAppointments.length,
+        completedAppointments: completedAppointments.length,
+        revenue,
+        activeStaff: activeStaff.toString()
+      };
+
+      console.log(`🔥 CLINIC DASHBOARD STATS - Final stats for clinic ${clinicId}:`, stats);
+      res.json(stats);
+    } catch (error: any) {
+      console.error(`🔥 CLINIC DASHBOARD STATS - Error for clinic ${req.params.clinicId}:`, error);
+      res.status(400).json({ message: error.message });
+    }
+  });
+
   // Get clinic statistics
   app.get("/api/clinics/:id/stats", authMiddleware, requireRole(['admin']), async (req, res) => {
     try {

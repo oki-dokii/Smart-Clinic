@@ -167,6 +167,14 @@ export interface IStorage {
     totalMedicines: number;
     activeStaff: number;
   }>;
+
+  // Clinic-specific data methods
+  getAppointmentsByClinic(clinicId: string): Promise<(Appointment & { patient: User; doctor: User })[]>;
+  getUsersByClinic(clinicId: string): Promise<User[]>;
+  getPatientsByClinic(clinicId: string): Promise<User[]>;
+  getQueueTokensByClinic(clinicId: string): Promise<(QueueToken & { patient: User; doctor: User })[]>;
+  getAppointmentsByDateRange(startDate: Date, endDate: Date, clinicId?: string): Promise<(Appointment & { patient: User; doctor: User })[]>;
+  getActiveStaffCountByClinic(clinicId: string): Promise<number>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -1462,11 +1470,21 @@ export class DatabaseStorage implements IStorage {
     return await db.select().from(users).where(eq(users.role, 'patient')).orderBy(asc(users.firstName));
   }
 
-  async getAppointmentsByDateRange(startDate: Date, endDate: Date): Promise<any[]> {
+  async getAppointmentsByDateRange(startDate: Date, endDate: Date, clinicId?: string): Promise<any[]> {
+    let whereConditions = [
+      gte(appointments.appointmentDate, startDate),
+      lte(appointments.appointmentDate, endDate)
+    ];
+    
+    if (clinicId) {
+      whereConditions.push(eq(appointments.clinicId, clinicId));
+    }
+    
     return await db.select({
       id: appointments.id,
       patientId: appointments.patientId,
       doctorId: appointments.doctorId,
+      clinicId: appointments.clinicId,
       appointmentDate: appointments.appointmentDate,
       duration: appointments.duration,
       type: appointments.type,
@@ -1488,6 +1506,14 @@ export class DatabaseStorage implements IStorage {
         phoneNumber: sql`patient.phone_number`,
         email: sql`patient.email`,
         role: sql`patient.role`,
+        dateOfBirth: sql`patient.date_of_birth`,
+        address: sql`patient.address`,
+        emergencyContact: sql`patient.emergency_contact`,
+        clinicId: sql`patient.clinic_id`,
+        isActive: sql`patient.is_active`,
+        isApproved: sql`patient.is_approved`,
+        createdAt: sql`patient.created_at`,
+        updatedAt: sql`patient.updated_at`
       },
       doctor: {
         id: sql`doctor.id`,
@@ -1496,15 +1522,20 @@ export class DatabaseStorage implements IStorage {
         phoneNumber: sql`doctor.phone_number`,
         email: sql`doctor.email`,
         role: sql`doctor.role`,
+        dateOfBirth: sql`doctor.date_of_birth`,
+        address: sql`doctor.address`,
+        emergencyContact: sql`doctor.emergency_contact`,
+        clinicId: sql`doctor.clinic_id`,
+        isActive: sql`doctor.is_active`,
+        isApproved: sql`doctor.is_approved`,
+        createdAt: sql`doctor.created_at`,
+        updatedAt: sql`doctor.updated_at`
       }
     })
     .from(appointments)
     .innerJoin(sql`${users} AS patient`, sql`${appointments.patientId} = patient.id`)
     .innerJoin(sql`${users} AS doctor`, sql`${appointments.doctorId} = doctor.id`)
-    .where(and(
-      gte(appointments.appointmentDate, startDate),
-      lte(appointments.appointmentDate, endDate)
-    ))
+    .where(and(...whereConditions))
     .orderBy(desc(appointments.appointmentDate));
   }
 
@@ -1781,6 +1812,143 @@ export class DatabaseStorage implements IStorage {
       totalMedicines: medicineCount.count,
       activeStaff: activeStaffCount.count
     };
+  }
+
+  // Clinic-specific data methods
+
+  async getAppointmentsByClinic(clinicId: string): Promise<(Appointment & { patient: User; doctor: User })[]> {
+    return await db.select({
+      id: appointments.id,
+      patientId: appointments.patientId,
+      doctorId: appointments.doctorId,
+      clinicId: appointments.clinicId,
+      appointmentDate: appointments.appointmentDate,
+      duration: appointments.duration,
+      type: appointments.type,
+      status: appointments.status,
+      location: appointments.location,
+      notes: appointments.notes,
+      symptoms: appointments.symptoms,
+      diagnosis: appointments.diagnosis,
+      treatmentPlan: appointments.treatmentPlan,
+      isDelayed: appointments.isDelayed,
+      delayMinutes: appointments.delayMinutes,
+      delayReason: appointments.delayReason,
+      createdAt: appointments.createdAt,
+      updatedAt: appointments.updatedAt,
+      patient: {
+        id: sql`${users.id}`.as('patient_id'),
+        phoneNumber: sql`${users.phoneNumber}`.as('patient_phone'),
+        role: sql`${users.role}`.as('patient_role'),
+        firstName: sql`${users.firstName}`.as('patient_first_name'),
+        lastName: sql`${users.lastName}`.as('patient_last_name'),
+        email: sql`${users.email}`.as('patient_email'),
+        dateOfBirth: sql`${users.dateOfBirth}`.as('patient_dob'),
+        address: sql`${users.address}`.as('patient_address'),
+        emergencyContact: sql`${users.emergencyContact}`.as('patient_emergency'),
+        clinicId: sql`${users.clinicId}`.as('patient_clinic_id'),
+        isActive: sql`${users.isActive}`.as('patient_is_active'),
+        isApproved: sql`${users.isApproved}`.as('patient_is_approved'),
+        createdAt: sql`${users.createdAt}`.as('patient_created_at'),
+        updatedAt: sql`${users.updatedAt}`.as('patient_updated_at')
+      },
+      doctor: {
+        id: sql`doctor.id`.as('doctor_id'),
+        phoneNumber: sql`doctor.phone_number`.as('doctor_phone'),
+        role: sql`doctor.role`.as('doctor_role'),
+        firstName: sql`doctor.first_name`.as('doctor_first_name'),
+        lastName: sql`doctor.last_name`.as('doctor_last_name'),
+        email: sql`doctor.email`.as('doctor_email'),
+        dateOfBirth: sql`doctor.date_of_birth`.as('doctor_dob'),
+        address: sql`doctor.address`.as('doctor_address'),
+        emergencyContact: sql`doctor.emergency_contact`.as('doctor_emergency'),
+        clinicId: sql`doctor.clinic_id`.as('doctor_clinic_id'),
+        isActive: sql`doctor.is_active`.as('doctor_is_active'),
+        isApproved: sql`doctor.is_approved`.as('doctor_is_approved'),
+        createdAt: sql`doctor.created_at`.as('doctor_created_at'),
+        updatedAt: sql`doctor.updated_at`.as('doctor_updated_at')
+      }
+    })
+    .from(appointments)
+    .leftJoin(users, eq(appointments.patientId, users.id))
+    .leftJoin(sql`${users} as doctor`, sql`${appointments.doctorId} = doctor.id`)
+    .where(eq(appointments.clinicId, clinicId))
+    .orderBy(desc(appointments.appointmentDate)) as any;
+  }
+
+  async getUsersByClinic(clinicId: string): Promise<User[]> {
+    return await db.select().from(users).where(eq(users.clinicId, clinicId));
+  }
+
+  async getPatientsByClinic(clinicId: string): Promise<User[]> {
+    return await db.select().from(users)
+      .where(and(eq(users.clinicId, clinicId), eq(users.role, 'patient')));
+  }
+
+  async getQueueTokensByClinic(clinicId: string): Promise<(QueueToken & { patient: User; doctor: User })[]> {
+    return await db.select({
+      id: queueTokens.id,
+      patientId: queueTokens.patientId,
+      doctorId: queueTokens.doctorId,
+      clinicId: queueTokens.clinicId,
+      tokenNumber: queueTokens.tokenNumber,
+      status: queueTokens.status,
+      estimatedWaitTime: queueTokens.estimatedWaitTime,
+      checkedInAt: queueTokens.checkedInAt,
+      calledAt: queueTokens.calledAt,
+      completedAt: queueTokens.completedAt,
+      createdAt: queueTokens.createdAt,
+      updatedAt: queueTokens.updatedAt,
+      patient: {
+        id: sql`${users.id}`.as('patient_id'),
+        phoneNumber: sql`${users.phoneNumber}`.as('patient_phone'),
+        role: sql`${users.role}`.as('patient_role'),
+        firstName: sql`${users.firstName}`.as('patient_first_name'),
+        lastName: sql`${users.lastName}`.as('patient_last_name'),
+        email: sql`${users.email}`.as('patient_email'),
+        dateOfBirth: sql`${users.dateOfBirth}`.as('patient_dob'),
+        address: sql`${users.address}`.as('patient_address'),
+        emergencyContact: sql`${users.emergencyContact}`.as('patient_emergency'),
+        clinicId: sql`${users.clinicId}`.as('patient_clinic_id'),
+        isActive: sql`${users.isActive}`.as('patient_is_active'),
+        isApproved: sql`${users.isApproved}`.as('patient_is_approved'),
+        createdAt: sql`${users.createdAt}`.as('patient_created_at'),
+        updatedAt: sql`${users.updatedAt}`.as('patient_updated_at')
+      },
+      doctor: {
+        id: sql`doctor.id`.as('doctor_id'),
+        phoneNumber: sql`doctor.phone_number`.as('doctor_phone'),
+        role: sql`doctor.role`.as('doctor_role'),
+        firstName: sql`doctor.first_name`.as('doctor_first_name'),
+        lastName: sql`doctor.last_name`.as('doctor_last_name'),
+        email: sql`doctor.email`.as('doctor_email'),
+        dateOfBirth: sql`doctor.date_of_birth`.as('doctor_dob'),
+        address: sql`doctor.address`.as('doctor_address'),
+        emergencyContact: sql`doctor.emergency_contact`.as('doctor_emergency'),
+        clinicId: sql`doctor.clinic_id`.as('doctor_clinic_id'),
+        isActive: sql`doctor.is_active`.as('doctor_is_active'),
+        isApproved: sql`doctor.is_approved`.as('doctor_is_approved'),
+        createdAt: sql`doctor.created_at`.as('doctor_created_at'),
+        updatedAt: sql`doctor.updated_at`.as('doctor_updated_at')
+      }
+    })
+    .from(queueTokens)
+    .leftJoin(users, eq(queueTokens.patientId, users.id))
+    .leftJoin(sql`${users} as doctor`, sql`${queueTokens.doctorId} = doctor.id`)
+    .where(eq(queueTokens.clinicId, clinicId))
+    .orderBy(asc(queueTokens.tokenNumber)) as any;
+  }
+
+  async getActiveStaffCountByClinic(clinicId: string): Promise<number> {
+    const [result] = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(users)
+      .where(and(
+        eq(users.clinicId, clinicId),
+        eq(users.isActive, true),
+        sql`${users.role} IN ('staff', 'doctor')`
+      ));
+    return result.count;
   }
 
 }
