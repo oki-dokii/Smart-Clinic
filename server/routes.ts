@@ -976,6 +976,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         doctorId: z.string()
       }).parse(req.body);
 
+      console.log('🔥 MANUAL REORDER - Starting for doctor:', doctorId);
       await storage.reorderQueueByAppointmentTime(doctorId);
       
       // Trigger WebSocket broadcast for live queue updates
@@ -984,6 +985,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ success: true, message: "Queue reordered by appointment time" });
     } catch (error: any) {
       console.error('🔥 QUEUE REORDER ERROR:', error);
+      res.status(400).json({ message: error.message });
+    }
+  });
+
+
+
+  // Test reorder directly
+  app.get("/api/queue/test-reorder", authMiddleware, requireRole(['admin']), async (req, res) => {
+    try {
+      const doctorId = "f3c906ec-c286-4a3c-b345-efb174acddad";
+      console.log('🔥 TEST REORDER - Starting for doctor:', doctorId);
+      await storage.reorderQueueByAppointmentTime(doctorId);
+      
+      // Get updated queue after reorder
+      const updatedQueue = await storage.getAllQueueTokens();
+      
+      // Broadcast updates
+      await queueService.broadcastWebSocketUpdate(doctorId);
+      
+      res.json({ success: true, message: "Queue reordered", queue: updatedQueue });
+    } catch (error: any) {
+      console.error('🔥 TEST REORDER ERROR:', error);
       res.status(400).json({ message: error.message });
     }
   });

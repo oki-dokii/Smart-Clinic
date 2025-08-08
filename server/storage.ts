@@ -637,19 +637,27 @@ export class DatabaseStorage implements IStorage {
     const tomorrow = new Date(today);
     tomorrow.setDate(tomorrow.getDate() + 1);
 
-    const queueTokens = await db.select()
-      .from(queueTokens)
-      .leftJoin(appointments, eq(queueTokens.appointmentId, appointments.id))
-      .where(and(
-        eq(queueTokens.doctorId, doctorId),
-        gte(queueTokens.createdAt, today),
-        lte(queueTokens.createdAt, tomorrow)
-      ));
+    const result = await db.select({
+      token: queueTokens,
+      appointment: appointments
+    })
+    .from(queueTokens)
+    .leftJoin(appointments, eq(queueTokens.appointmentId, appointments.id))
+    .where(and(
+      eq(queueTokens.doctorId, doctorId),
+      eq(queueTokens.status, 'waiting'),
+      gte(queueTokens.createdAt, today),
+      lte(queueTokens.createdAt, tomorrow)
+    ));
 
+    console.log('🔥 REORDER - Found tokens:', result.length);
+    
     // Sort tokens by appointment time (with walk-ins last)
-    const sortedTokens = queueTokens.sort((a, b) => {
-      const aTime = a.appointments?.appointmentDate;
-      const bTime = b.appointments?.appointmentDate;
+    const sortedTokens = result.sort((a, b) => {
+      const aTime = a.appointment?.appointmentDate;
+      const bTime = b.appointment?.appointmentDate;
+      
+      console.log(`🔥 REORDER - Comparing: ${a.token.id} (${aTime}) vs ${b.token.id} (${bTime})`);
       
       // If both have appointments, sort by appointment time
       if (aTime && bTime) {
@@ -661,20 +669,32 @@ export class DatabaseStorage implements IStorage {
       if (!aTime && bTime) return 1;
       
       // If neither has an appointment, sort by creation time (walk-ins)
-      return new Date(a.queue_tokens.createdAt).getTime() - new Date(b.queue_tokens.createdAt).getTime();
+      return new Date(a.token.createdAt).getTime() - new Date(b.token.createdAt).getTime();
+    });
+
+    console.log('🔥 REORDER - Sorted order:');
+    sortedTokens.forEach((item, index) => {
+      const appointmentTime = item.appointment?.appointmentDate || 'No appointment';
+      console.log(`  ${index + 1}. Token ${item.token.id} - Appointment: ${appointmentTime}`);
     });
 
     // Update token numbers to match the new order
     for (let i = 0; i < sortedTokens.length; i++) {
-      const token = sortedTokens[i];
+      const item = sortedTokens[i];
       const newTokenNumber = i + 1;
       
-      if (token.queue_tokens.tokenNumber !== newTokenNumber) {
+      console.log(`🔥 REORDER - Updating token ${item.token.id}: ${item.token.tokenNumber} -> ${newTokenNumber}`);
+      
+      if (item.token.tokenNumber !== newTokenNumber) {
         await db.update(queueTokens)
           .set({ tokenNumber: newTokenNumber })
-          .where(eq(queueTokens.id, token.queue_tokens.id));
+          .where(eq(queueTokens.id, item.token.id));
+        
+        console.log(`🔥 REORDER - Updated token ${item.token.id} to position ${newTokenNumber}`);
       }
     }
+    
+    console.log('🔥 REORDER - Queue reordering completed');
   }
 
   async updateQueueTokenStatus(id: string, status: string, timestamp?: Date): Promise<QueueToken | undefined> {
