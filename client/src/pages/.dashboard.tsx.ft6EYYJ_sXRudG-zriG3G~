@@ -917,63 +917,68 @@ export default function SmartClinicDashboard() {
               </div>
 
               <div className="space-y-3">
-                <div className="text-xs text-orange-600 mb-2 font-medium">
-                  ⚠️ Delays Expected - {adminQueue.filter((t: any) => t.status === 'waiting').length} patients waiting
-                </div>
+                <div className="text-xs text-orange-600 mb-2 font-medium">⚠️ Delays Expected - 6 patients waiting</div>
                 
-                {/* Display real queue data from admin API */}
-                {adminQueue && adminQueue.length > 0 ? (
-                  adminQueue.slice(0, 3).map((token: any, index: number) => {
-                    const isInProgress = token.status === 'called' || token.status === 'in_progress';
-                    const isNext = index === 0 && token.status === 'waiting';
-                    const bgColor = isInProgress ? 'bg-green-50' : isNext ? 'bg-blue-50' : 'bg-orange-50';
-                    const badgeColor = isInProgress ? 'bg-green-500' : isNext ? 'bg-blue-500' : 'bg-orange-500';
-                    const borderColor = isInProgress ? 'border-green-500' : '';
-                    const statusText = isInProgress ? 'In Progress' : isNext ? 'Next' : '';
-                    
-                    return (
-                      <div key={token.id} className={`flex items-center justify-between p-3 ${bgColor} rounded-lg ${borderColor ? 'border-l-4 ' + borderColor : ''}`}>
-                        <div className="flex items-center gap-3">
-                          <Badge className={`${badgeColor} text-white`}>#{token.tokenNumber}</Badge>
-                          <div>
-                            <div className="text-sm font-medium">
-                              {token.patient?.firstName} {token.patient?.lastName} {statusText && `- ${statusText}`}
-                            </div>
-                            <div className="text-xs text-gray-500">
-                              {isInProgress ? `Started at ${new Date(token.calledAt || Date.now()).toLocaleTimeString('en-IN', {hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Kolkata'})}` : 
-                               `Est. wait: ${token.estimatedWaitTime || 15} min`}
-                            </div>
-                          </div>
-                        </div>
-                        <div className="text-right">
-                          <div className={`text-sm font-medium ${isInProgress ? 'text-green-600' : ''}`}>
-                            {isInProgress ? 'Active' : `~${token.estimatedWaitTime || 15}min`}
-                          </div>
-                          <div className="text-xs text-gray-500">
-                            {isInProgress ? 'in session' : 'est. wait'}
-                          </div>
-                        </div>
+                {/* Currently being served */}
+                <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg border-l-4 border-green-500">
+                  <div className="flex items-center gap-3">
+                    <Badge className="bg-green-500 text-white">#1</Badge>
+                    <div>
+                      <div className="text-sm font-medium">
+                        {adminQueue.find((t: any) => t.status === 'called' || t.status === 'in_progress')?.patient?.firstName || 'No patient'} {adminQueue.find((t: any) => t.status === 'called' || t.status === 'in_progress')?.patient?.lastName || ''} - In Progress
                       </div>
-                    );
-                  })
-                ) : (
-                  <div className="text-center py-4 text-gray-500">
-                    <div className="text-sm">No patients in queue currently</div>
-                    <div className="text-xs">Queue data will appear here</div>
+                      <div className="text-xs text-gray-500">Started at {new Date(Date.now() - 12 * 60000).toLocaleTimeString('en-IN', {hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Kolkata'})}</div>
+                    </div>
                   </div>
-                )}
+                  <div className="text-right">
+                    <div className="text-sm font-medium text-green-600">Active</div>
+                    <div className="text-xs text-gray-500">12 min ago</div>
+                  </div>
+                </div>
 
-                {/* Show additional waiting patients if any */}
-                {adminQueue.filter((t: any) => t.status === 'waiting').length > 3 && (
-                  <div className="space-y-2 mt-3">
-                    {adminQueue.filter((t: any) => t.status === 'waiting').slice(3, 6).map((token: any, index: number) => (
-                      <div key={token.id} className="flex items-center justify-between text-xs text-gray-500">
-                        <span>#{token.tokenNumber} - {token.patient?.firstName} {token.patient?.lastName}</span>
-                        <span>~{token.estimatedWaitTime || (15 * (index + 4))}min wait</span>
-                      </div>
-                    ))}
+                {/* Next patients in queue */}
+                <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg">
+                  <div className="flex items-center gap-3">
+                    <Badge className="bg-blue-500 text-white">#2</Badge>
+                    <div>
+                      <div className="text-sm font-medium">Michael Chen - Next</div>
+                      <div className="text-xs text-gray-500">Waiting since {new Date(Date.now() - 35 * 60000).toLocaleTimeString('en-IN', {hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Kolkata'})}</div>
+                    </div>
                   </div>
-                )}
+                  <div className="text-right">
+                    <div className="text-sm font-medium">~8min</div>
+                    <div className="text-xs text-gray-500">est. wait</div>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between p-3 bg-orange-50 rounded-lg">
+                  <div className="flex items-center gap-3">
+                    <Badge className="bg-orange-500 text-white">#3</Badge>
+                    <div>
+                      <div className="text-sm font-medium">Emma Rodriguez</div>
+                      <div className="text-xs text-gray-500">Waiting since {new Date(Date.now() - 45 * 60000).toLocaleTimeString('en-IN', {hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Kolkata'})}</div>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-sm font-medium">~25min</div>
+                    <div className="text-xs text-gray-500">est. wait</div>
+                  </div>
+                </div>
+
+                <div className="space-y-2 mt-3">
+                  <div className="flex items-center justify-between text-xs text-gray-500">
+                    <span>#4 - David Kim</span>
+                    <span>~40min wait</span>
+                  </div>
+                  <div className="flex items-center justify-between text-xs text-gray-500">
+                    <span>#5 - Lisa Thompson</span>
+                    <span>~55min wait</span>
+                  </div>
+                  <div className="flex items-center justify-between text-xs text-gray-500">
+                    <span>#6 - You (Alex Parker)</span>
+                    <span>~70min wait</span>
+                  </div>
+                </div>
               </div>
 
               <div className="flex gap-2 mt-4">
