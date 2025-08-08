@@ -17,6 +17,7 @@ import PatientLogin from "@/pages/patient-login";
 import LiveQueueTracker from "@/pages/live-queue";
 import ClinicManagement from "@/pages/clinic-management";
 import ClinicAdminDashboard from "@/pages/clinic-admin-dashboard";
+import Homepage from "@/pages/homepage";
 import NotFound from "@/pages/not-found";
 
 // Auth wrapper component - simplified since auth is now handled in queryClient
@@ -40,17 +41,7 @@ function Router() {
       <Route path="/live-queue" component={LiveQueueTracker} />
       <Route path="/clinic-management" component={ClinicManagement} />
       <Route path="/clinic-admin/:clinicId" component={ClinicAdminDashboard} />
-      <Route path="/">
-        {() => {
-          const token = localStorage.getItem("auth_token");
-          if (token) {
-            window.location.href = "/dashboard";
-          } else {
-            window.location.href = "/patient-login";
-          }
-          return null;
-        }}
-      </Route>
+      <Route path="/" component={Homepage} />
       <Route component={NotFound} />
     </Switch>
   );

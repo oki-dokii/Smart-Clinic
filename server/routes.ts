@@ -2582,6 +2582,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Public clinic registration endpoint for homepage
+  app.post("/api/clinics/register", async (req, res) => {
+    try {
+      const { clinicData, adminData } = req.body;
+      
+      // Validate clinic data
+      const validatedClinicData = insertClinicSchema.parse(clinicData);
+      
+      // Validate admin data
+      const validatedAdminData = insertUserSchema.parse({
+        ...adminData,
+        role: 'admin',
+        isActive: true,
+        isApproved: true
+      });
+      
+      // Create clinic first
+      const clinic = await storage.createClinic(validatedClinicData);
+      
+      // Create admin user for the clinic
+      const adminUser = await storage.createUser({
+        ...validatedAdminData,
+        clinicId: clinic.id
+      });
+      
+      res.json({ 
+        clinic, 
+        admin: adminUser,
+        message: 'Clinic registered successfully! Your admin account has been created.'
+      });
+    } catch (error: any) {
+      res.status(400).json({ message: error.message });
+    }
+  });
+
   app.get("/api/clinics", authMiddleware, requireRole(['admin']), async (req, res) => {
     try {
       const clinics = await storage.getAllClinics();
