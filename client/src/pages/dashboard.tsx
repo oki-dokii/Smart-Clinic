@@ -178,9 +178,6 @@ export default function SmartClinicDashboard() {
     queryKey: ["/api/queue/admin"], 
     refetchInterval: 3000,
     retry: false, // Don't retry if unauthorized
-    onError: (error) => {
-      console.log("Admin queue access denied, using empty data");
-    }
   });
 
   // Process delay notifications
@@ -919,7 +916,7 @@ export default function SmartClinicDashboard() {
                 </div>
                 <Button 
                   className="w-full bg-green-600 hover:bg-green-700 text-white font-medium"
-                  onClick={() => setShowLiveQueueModal(true)}
+                  onClick={() => setLocation("/live-queue")}
                   data-testid="button-track-live"
                 >
                   Track Live
@@ -1677,9 +1674,6 @@ function LiveQueueContent({
     queryKey: ["/api/queue/admin"], 
     refetchInterval: 3000,
     retry: false, // Don't retry if unauthorized
-    onError: (error) => {
-      console.log("Admin queue access denied, using sample data for modal");
-    }
   });
 
   const queueArray = Array.isArray(adminQueue) ? adminQueue : [];

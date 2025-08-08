@@ -14,6 +14,7 @@ import SettingsPage from "@/pages/settings";
 import MedicinesPage from "@/pages/medicines";
 import PatientBooking from "@/pages/patient-booking-new";
 import PatientLogin from "@/pages/patient-login";
+import LiveQueueTracker from "@/pages/live-queue";
 import NotFound from "@/pages/not-found";
 
 // Auth wrapper component - simplified since auth is now handled in queryClient
@@ -34,6 +35,7 @@ function Router() {
       <Route path="/medicines" component={MedicinesPage} />
       <Route path="/book-appointment" component={PatientBooking} />
       <Route path="/patient-login" component={PatientLogin} />
+      <Route path="/live-queue" component={LiveQueueTracker} />
       <Route path="/">
         {() => {
           const token = localStorage.getItem("auth_token");
