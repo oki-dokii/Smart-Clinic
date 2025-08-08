@@ -2819,9 +2819,17 @@ export default function ClinicDashboard() {
                                       <Button 
                                         className="w-full"
                                         onClick={() => {
+                                          console.log('🔥 BUTTON CLICKED - Reschedule button clicked!');
+                                          console.log('🔥 FORM DATA - appointmentId:', appointment.id);
+                                          console.log('🔥 FORM DATA - newDate:', rescheduleForm.newDate);
+                                          console.log('🔥 FORM DATA - newTime:', rescheduleForm.newTime);
+                                          console.log('🔥 FORM DATA - rescheduleForm:', rescheduleForm);
+                                          
                                           if (rescheduleForm.newDate && rescheduleForm.newTime) {
+                                            console.log('🔥 CALLING RESCHEDULE - About to call handleReschedule...');
                                             handleReschedule(appointment.id, rescheduleForm.newDate, rescheduleForm.newTime)
                                           } else {
+                                            console.log('🔥 ERROR - Missing date or time');
                                             toast({ 
                                               title: 'Error', 
                                               description: 'Please select both date and time',
