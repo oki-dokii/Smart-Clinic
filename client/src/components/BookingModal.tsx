@@ -66,6 +66,18 @@ export default function BookingModal({ isOpen, onClose, selectedAppointment, sel
     },
   });
 
+  // Fetch doctor's appointments for selected date to check availability
+  const { data: existingAppointments = [] } = useQuery({
+    queryKey: ['/api/appointments', 'availability', bookingData.doctorId, selectedDate?.toISOString()],
+    queryFn: async () => {
+      if (!bookingData.doctorId || !selectedDate) return [];
+      const dateStr = selectedDate.toISOString().split('T')[0];
+      const response = await apiRequest('GET', `/api/appointments?date=${dateStr}&doctorId=${bookingData.doctorId}`);
+      return response.json();
+    },
+    enabled: !!bookingData.doctorId && !!selectedDate,
+  });
+
   // Book or reschedule appointment mutation
   const bookAppointmentMutation = useMutation({
     mutationFn: async (appointment: BookingData) => {
@@ -184,11 +196,39 @@ export default function BookingModal({ isOpen, onClose, selectedAppointment, sel
 
   const canSubmit = bookingData.doctorId && bookingData.appointmentDate && bookingData.symptoms.trim();
 
-  const timeSlots = [
+  const baseTimeSlots = [
     "09:00", "09:30", "10:00", "10:30", "11:00", "11:30",
     "14:00", "14:30", "15:00", "15:30", "16:00", "16:30",
     "17:00", "17:30", "18:00", "18:30"
   ];
+
+  // Filter out time slots that conflict with existing appointments
+  const availableTimeSlots = baseTimeSlots.filter(timeSlot => {
+    if (!selectedDate || !existingAppointments.length) return true;
+    
+    const [hours, minutes] = timeSlot.split(':').map(Number);
+    const slotDateTime = new Date(selectedDate);
+    slotDateTime.setHours(hours, minutes, 0, 0);
+    
+    // Check if this time slot conflicts with any existing appointment
+    return !existingAppointments.some((appointment: any) => {
+      const appointmentStart = new Date(appointment.appointmentDate);
+      const appointmentEnd = new Date(appointmentStart.getTime() + (appointment.duration || 30) * 60000);
+      
+      // Check for overlap: appointment is active status and times overlap
+      const isActiveStatus = ['scheduled', 'confirmed', 'pending_approval'].includes(appointment.status);
+      const timesOverlap = slotDateTime >= appointmentStart && slotDateTime < appointmentEnd;
+      
+      return isActiveStatus && timesOverlap;
+    });
+  });
+
+  // Clinic operating hours for display
+  const clinicHours = {
+    morning: "9:00 AM - 12:00 PM",
+    afternoon: "2:00 PM - 7:00 PM",
+    closed: "Sundays"
+  };
 
   const getTypeIcon = (type: string) => {
     switch (type) {
@@ -281,6 +321,19 @@ export default function BookingModal({ isOpen, onClose, selectedAppointment, sel
             </div>
           </div>
 
+          {/* Clinic Hours Info */}
+          <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+            <h4 className="font-medium text-blue-900 mb-2 flex items-center gap-2">
+              <Clock className="w-4 h-4" />
+              Clinic Hours
+            </h4>
+            <div className="text-sm text-blue-800 space-y-1">
+              <p><strong>Morning:</strong> {clinicHours.morning}</p>
+              <p><strong>Afternoon:</strong> {clinicHours.afternoon}</p>
+              <p><strong>Closed:</strong> {clinicHours.closed}</p>
+            </div>
+          </div>
+
           {/* Date and Time Selection */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
@@ -301,7 +354,8 @@ export default function BookingModal({ isOpen, onClose, selectedAppointment, sel
                       const today = new Date();
                       today.setHours(0, 0, 0, 0);
                       const maxDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
-                      return date < today || date > maxDate;
+                      const isSunday = date.getDay() === 0; // Sunday = 0
+                      return date < today || date > maxDate || isSunday;
                     }}
                     initialFocus
                   />
@@ -311,21 +365,51 @@ export default function BookingModal({ isOpen, onClose, selectedAppointment, sel
 
             <div>
               <Label>Select Time</Label>
-              <Select value={selectedTime} onValueChange={handleTimeSelect}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Choose time" />
-                </SelectTrigger>
-                <SelectContent>
-                  {timeSlots.map((time) => (
-                    <SelectItem key={time} value={time}>
-                      <div className="flex items-center gap-2">
-                        <Clock className="w-4 h-4" />
-                        {time}
-                      </div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              {!bookingData.doctorId ? (
+                <div className="text-sm text-gray-500 py-3 px-4 border rounded-md">
+                  Please select a doctor first
+                </div>
+              ) : !selectedDate ? (
+                <div className="text-sm text-gray-500 py-3 px-4 border rounded-md">
+                  Please select a date first
+                </div>
+              ) : availableTimeSlots.length === 0 ? (
+                <div className="text-sm text-red-500 py-3 px-4 border rounded-md bg-red-50">
+                  No available time slots for this date
+                </div>
+              ) : (
+                <Select value={selectedTime} onValueChange={handleTimeSelect}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Choose available time" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {availableTimeSlots.map((time) => {
+                      const isBooked = baseTimeSlots.includes(time) && !availableTimeSlots.includes(time);
+                      return (
+                        <SelectItem key={time} value={time}>
+                          <div className="flex items-center gap-2">
+                            <Clock className="w-4 h-4" />
+                            <span>{time}</span>
+                            <Badge 
+                              variant="outline" 
+                              className={`text-xs ml-auto ${
+                                isBooked ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'
+                              }`}
+                            >
+                              {isBooked ? 'Booked' : 'Available'}
+                            </Badge>
+                          </div>
+                        </SelectItem>
+                      );
+                    })}
+                  </SelectContent>
+                </Select>
+              )}
+              {bookingData.doctorId && selectedDate && existingAppointments.length > 0 && (
+                <p className="text-xs text-gray-600 mt-1">
+                  {existingAppointments.length} existing appointment(s) on this date
+                </p>
+              )}
             </div>
           </div>
 
@@ -386,9 +470,12 @@ export default function BookingModal({ isOpen, onClose, selectedAppointment, sel
 
           {/* Booking Summary */}
           {bookingData.doctorId && bookingData.appointmentDate && (
-            <div className="bg-blue-50 p-4 rounded-lg">
-              <h4 className="font-medium mb-2">Booking Summary</h4>
-              <div className="space-y-1 text-sm">
+            <div className="bg-green-50 p-4 rounded-lg border border-green-200">
+              <h4 className="font-medium mb-2 text-green-900 flex items-center gap-2">
+                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                Booking Summary - Time Slot Available
+              </h4>
+              <div className="space-y-1 text-sm text-green-800">
                 <p><strong>Doctor:</strong> {doctors.find((d: Doctor) => d.id === bookingData.doctorId)?.firstName} {doctors.find((d: Doctor) => d.id === bookingData.doctorId)?.lastName}</p>
                 <p><strong>Date & Time:</strong> {selectedDate && format(selectedDate, "PPP")} at {selectedTime}</p>
                 <p><strong>Type:</strong> 
