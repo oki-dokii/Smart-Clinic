@@ -1062,17 +1062,22 @@ export default function ClinicDashboard() {
   // Reschedule appointment handler
   const handleReschedule = async (appointmentId: string, newDate: string, newTime: string) => {
     try {
-      console.log('🔥 FRONTEND RESCHEDULE - Starting reschedule for appointment:', appointmentId)
-      console.log('🔥 FRONTEND RESCHEDULE - New date:', newDate, 'New time:', newTime)
+      alert('🚨 INSIDE handleReschedule function!');
+      console.log('🚨🚨🚨 FRONTEND RESCHEDULE - Starting reschedule for appointment:', appointmentId)
+      console.log('🚨 FRONTEND RESCHEDULE - New date:', newDate, 'New time:', newTime)
       
       const newDateTime = new Date(`${newDate}T${newTime}:00`)
-      console.log('🔥 FRONTEND RESCHEDULE - Calculated new datetime:', newDateTime.toISOString())
+      console.log('🚨 FRONTEND RESCHEDULE - Calculated new datetime:', newDateTime.toISOString())
       
-      console.log('🔥 FRONTEND RESCHEDULE - Making API call to backend...')
-      await apiRequest('PUT', `/api/appointments/${appointmentId}`, {
+      console.log('🚨 FRONTEND RESCHEDULE - Making API call to backend...')
+      alert('🚨 About to make API call to: PUT /api/appointments/' + appointmentId);
+      
+      const response = await apiRequest('PUT', `/api/appointments/${appointmentId}`, {
         appointmentDate: newDateTime.toISOString()
       })
-      console.log('🔥 FRONTEND RESCHEDULE - API call completed successfully!')
+      
+      console.log('🚨 FRONTEND RESCHEDULE - API call completed successfully!', response)
+      alert('🚨 API call completed! Check console and server logs.');
       
       // Reset form
       setRescheduleForm({
@@ -1083,8 +1088,10 @@ export default function ClinicDashboard() {
       
       // Refresh appointments list
       queryClient.invalidateQueries({ queryKey: ['/api/appointments/admin'] })
-      toast({ title: 'Success', description: 'Appointment rescheduled successfully' })
+      toast({ title: 'Success', description: 'Appointment rescheduled successfully - Check email!' })
     } catch (error: any) {
+      console.error('🚨 FRONTEND RESCHEDULE ERROR:', error);
+      alert('🚨 ERROR in handleReschedule: ' + error.message);
       toast({ title: 'Error', description: error.message, variant: 'destructive' })
     }
   }
@@ -2819,17 +2826,22 @@ export default function ClinicDashboard() {
                                       <Button 
                                         className="w-full"
                                         onClick={() => {
-                                          console.log('🔥 BUTTON CLICKED - Reschedule button clicked!');
-                                          console.log('🔥 FORM DATA - appointmentId:', appointment.id);
-                                          console.log('🔥 FORM DATA - newDate:', rescheduleForm.newDate);
-                                          console.log('🔥 FORM DATA - newTime:', rescheduleForm.newTime);
-                                          console.log('🔥 FORM DATA - rescheduleForm:', rescheduleForm);
+                                          alert('🚨 RESCHEDULE BUTTON CLICKED! Check console for details.');
+                                          console.log('🚨🚨🚨 BUTTON CLICKED - Reschedule button clicked!');
+                                          console.log('🚨 FORM DATA - appointmentId:', appointment.id);
+                                          console.log('🚨 FORM DATA - newDate:', rescheduleForm.newDate);
+                                          console.log('🚨 FORM DATA - newTime:', rescheduleForm.newTime);
+                                          console.log('🚨 FORM DATA - rescheduleForm:', rescheduleForm);
+                                          console.log('🚨 VALIDATION CHECK - Has newDate?', !!rescheduleForm.newDate);
+                                          console.log('🚨 VALIDATION CHECK - Has newTime?', !!rescheduleForm.newTime);
                                           
                                           if (rescheduleForm.newDate && rescheduleForm.newTime) {
-                                            console.log('🔥 CALLING RESCHEDULE - About to call handleReschedule...');
+                                            console.log('🚨 VALIDATION PASSED - About to call handleReschedule...');
+                                            alert('🚨 About to call handleReschedule - watch console!');
                                             handleReschedule(appointment.id, rescheduleForm.newDate, rescheduleForm.newTime)
                                           } else {
-                                            console.log('🔥 ERROR - Missing date or time');
+                                            console.log('🚨 VALIDATION FAILED - Missing date or time');
+                                            alert('🚨 VALIDATION FAILED - You need both date AND time!');
                                             toast({ 
                                               title: 'Error', 
                                               description: 'Please select both date and time',
