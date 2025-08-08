@@ -1078,14 +1078,43 @@ export default function ClinicDashboard() {
         data: { appointmentDate: newDateTime.toISOString() }
       });
       
-      const response = await apiRequest('PUT', `/api/appointments/${appointmentId}`, {
-        appointmentDate: newDateTime.toISOString()
-      })
+      // Add timeout to the API request
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
       
-      console.log('🚨 FRONTEND RESCHEDULE - API call completed successfully!', response)
-      console.log('🚨 FRONTEND RESCHEDULE - Response status:', response.status)
-      console.log('🚨 FRONTEND RESCHEDULE - Response ok:', response.ok)
-      alert('🚨 API call completed! Status: ' + response.status);
+      try {
+        const response = await fetch(`/api/appointments/${appointmentId}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
+          },
+          body: JSON.stringify({ appointmentDate: newDateTime.toISOString() }),
+          signal: controller.signal
+        });
+        
+        clearTimeout(timeoutId);
+        
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        
+        console.log('🚨 FRONTEND RESCHEDULE - API call completed successfully!', response)
+        console.log('🚨 FRONTEND RESCHEDULE - Response status:', response.status)
+        console.log('🚨 FRONTEND RESCHEDULE - Response ok:', response.ok)
+        alert('🚨 API call completed! Status: ' + response.status);
+      } catch (fetchError) {
+        clearTimeout(timeoutId);
+        if (fetchError.name === 'AbortError') {
+          console.error('🚨 FETCH TIMEOUT - Request timed out after 10 seconds');
+          alert('🚨 TIMEOUT ERROR: Request timed out after 10 seconds');
+          throw new Error('Request timeout - API call took too long');
+        } else {
+          console.error('🚨 FETCH ERROR:', fetchError);
+          alert('🚨 FETCH ERROR: ' + fetchError.message);
+          throw fetchError;
+        }
+      }
       
       // Reset form
       setRescheduleForm({
