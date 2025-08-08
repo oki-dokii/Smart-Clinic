@@ -173,12 +173,29 @@ export default function SmartClinicDashboard() {
     refetchInterval: 30000, // Check every 30 seconds for real-time updates
   });
 
+  // WebSocket connection for real-time admin queue updates  
+  const { adminQueue: liveAdminQueue } = useQueueSocket(
+    user?.id, 
+    user?.role === 'admin' || user?.role === 'staff'
+  );
+
   // Get admin queue data for full queue view - use admin endpoint for modal
-  const { data: adminQueue = [] } = useQuery({
+  const { data: apiAdminQueue = [] } = useQuery({
     queryKey: ["/api/queue/admin"], 
     refetchInterval: 3000,
     retry: false, // Don't retry if unauthorized
   });
+
+  // Use live data if available, otherwise fallback to API data
+  const rawAdminQueue = liveAdminQueue || apiAdminQueue || [];
+  
+  // Sort queue by appointment time (ascending) for proper order
+  const adminQueue = Array.isArray(rawAdminQueue) ? 
+    [...rawAdminQueue].sort((a: any, b: any) => {
+      const aTime = a.appointment?.appointmentDate || a.createdAt;
+      const bTime = b.appointment?.appointmentDate || b.createdAt;
+      return new Date(aTime).getTime() - new Date(bTime).getTime();
+    }) : [];
 
   // Process delay notifications
   const delayNotificationsArray = Array.isArray(delayNotifications) ? delayNotifications : [];
@@ -1657,14 +1674,29 @@ function LiveQueueContent({
   joinQueuePending: boolean;
   isInQueue: boolean;
 }) {
+  // WebSocket connection for real-time admin queue updates
+  const { adminQueue: liveAdminQueue } = useQueueSocket(
+    undefined, // No specific user ID for modal view
+    true // Admin mode for full queue access
+  );
+
   // Get admin queue data for full queue view - use admin endpoint for modal
-  const { data: adminQueue = [] } = useQuery({
+  const { data: apiAdminQueue = [] } = useQuery({
     queryKey: ["/api/queue/admin"], 
     refetchInterval: 3000,
     retry: false, // Don't retry if unauthorized
   });
 
-  const queueArray = Array.isArray(adminQueue) ? adminQueue : [];
+  // Use live data if available, otherwise fallback to API data, and sort by appointment time
+  const rawAdminQueue = liveAdminQueue || apiAdminQueue || [];
+  const adminQueue = Array.isArray(rawAdminQueue) ? 
+    [...rawAdminQueue].sort((a: any, b: any) => {
+      const aTime = a.appointment?.appointmentDate || a.createdAt;
+      const bTime = b.appointment?.appointmentDate || b.createdAt;
+      return new Date(aTime).getTime() - new Date(bTime).getTime();
+    }) : [];
+
+  const queueArray = adminQueue;
   const currentlyServing = queueArray.find((token: any) => token.status === 'called' || token.status === 'in_progress');
   const waitingQueue = queueArray.filter((token: any) => token.status === 'waiting').slice(0, 4);
 
