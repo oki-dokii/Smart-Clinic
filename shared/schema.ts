@@ -132,6 +132,7 @@ export const prescriptions = pgTable("prescriptions", {
   appointmentId: varchar("appointment_id").references(() => appointments.id, { onDelete: "cascade" }),
   dosage: text("dosage").notNull(),
   frequency: medicineFrequencyEnum("frequency").notNull(),
+  timings: text("timings").array(), // Custom timing schedules like ["08:00", "14:00", "20:00"]
   instructions: text("instructions"),
   startDate: timestamp("start_date").notNull(),
   endDate: timestamp("end_date"),

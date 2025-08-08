@@ -766,31 +766,33 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getPatientReminders(patientId: string, date?: Date): Promise<any[]> {
-    const baseConditions = [eq(prescriptions.patientId, patientId)];
-    if (date) {
-      const startOfDay = new Date(date);
-      startOfDay.setHours(0, 0, 0, 0);
-      const endOfDay = new Date(date);
-      endOfDay.setHours(23, 59, 59, 999);
-      
-      baseConditions.push(
-        gte(medicineReminders.scheduledAt, startOfDay),
-        lte(medicineReminders.scheduledAt, endOfDay)
-      );
-    }
-    
-    // Use Drizzle's query API for nested relations
+    // Use Drizzle's query API with proper filtering
     return await db.query.medicineReminders.findMany({
-      where: and(...baseConditions),
+      where: date ? and(
+        gte(medicineReminders.scheduledAt, (() => {
+          const startOfDay = new Date(date);
+          startOfDay.setHours(0, 0, 0, 0);
+          return startOfDay;
+        })()),
+        lte(medicineReminders.scheduledAt, (() => {
+          const endOfDay = new Date(date);
+          endOfDay.setHours(23, 59, 59, 999);
+          return endOfDay;
+        })())
+      ) : undefined,
       with: {
         prescription: {
+          where: eq(prescriptions.patientId, patientId),
           with: {
             medicine: true
           }
         }
       },
       orderBy: asc(medicineReminders.scheduledAt)
-    });
+    }).then(reminders => 
+      // Filter out reminders where prescription is null (not belonging to this patient)
+      reminders.filter(reminder => reminder.prescription)
+    );
   }
 
   async getDueReminders(): Promise<any[]> {

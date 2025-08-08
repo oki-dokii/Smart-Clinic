@@ -920,13 +920,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         manufacturer: 'Patient Added'
       });
       
-      // Update prescription
+      // Update prescription with custom timings
       const updatedPrescription = await storage.updatePrescription(id, {
         dosage,
         frequency,
         instructions,
         startDate: new Date(startDate),
-        endDate: endDate ? new Date(endDate) : null
+        endDate: endDate ? new Date(endDate) : null,
+        timings: timings || null
       });
       
       res.json({ 
@@ -1000,6 +1001,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         instructions,
         startDate: new Date(startDate),
         endDate: endDate ? new Date(endDate) : undefined,
+        timings: timings || null,
         totalDoses: 30, // Default
         status: 'active'
       });
@@ -1026,8 +1028,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const customMedicines = prescriptions
         .filter(p => p.medicine.manufacturer === 'Patient Added')
         .map(p => {
-          // Generate timings based on frequency
-          const timings = generateTimingsFromFrequency(p.frequency);
+          // Use custom timings if available, otherwise fall back to frequency-based defaults
+          const timings = p.timings && p.timings.length > 0 
+            ? p.timings 
+            : generateTimingsFromFrequency(p.frequency);
           
           return {
             id: p.id,

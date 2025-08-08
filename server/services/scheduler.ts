@@ -107,8 +107,10 @@ export class SchedulerService {
       const startDate = new Date(prescription.startDate);
       const endDate = prescription.endDate ? new Date(prescription.endDate) : null;
       
-      // Calculate reminder times based on frequency
-      const reminderTimes = this.calculateReminderTimes(prescription.frequency);
+      // Use custom timings if available, otherwise fall back to frequency-based defaults
+      const reminderTimes = prescription.timings && prescription.timings.length > 0
+        ? this.parseCustomTimings(prescription.timings)
+        : this.calculateReminderTimes(prescription.frequency);
       
       const currentDate = new Date(startDate);
       const maxDate = endDate || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000); // 30 days max
@@ -138,6 +140,16 @@ export class SchedulerService {
       console.error('Failed to create medicine reminders:', error);
       throw error;
     }
+  }
+
+  private parseCustomTimings(timings: string[]): { hour: number; minute: number }[] {
+    return timings.map(time => {
+      const [hourStr, minuteStr] = time.split(':');
+      return {
+        hour: parseInt(hourStr, 10),
+        minute: parseInt(minuteStr, 10)
+      };
+    });
   }
 
   private calculateReminderTimes(frequency: string): { hour: number; minute: number }[] {
