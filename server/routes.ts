@@ -1011,6 +1011,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // API endpoint to clean up duplicate queue entries
+  app.post("/api/queue/cleanup", authMiddleware, requireRole(['admin']), async (req, res) => {
+    try {
+      await storage.removeDuplicateQueueTokens();
+      res.json({ success: true, message: "Queue cleanup completed" });
+    } catch (error: any) {
+      console.error('🔥 CLEANUP ERROR:', error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+
   app.post("/api/queue/test-add", authMiddleware, requireRole(['admin']), async (req, res) => {
     try {
       const { patientId, doctorId } = z.object({

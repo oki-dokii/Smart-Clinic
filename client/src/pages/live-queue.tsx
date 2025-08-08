@@ -87,9 +87,17 @@ export default function LiveQueueTracker() {
   // Use live queue position if available, otherwise fallback to API data
   const queuePosition = liveQueuePosition || currentQueuePosition || null;
 
-  const queueArray = Array.isArray(adminQueue) ? adminQueue : [];
-  const currentlyServing = queueArray.find((token: any) => token.status === 'called' || token.status === 'in_progress');
-  const waitingQueue = queueArray.filter((token: any) => token.status === 'waiting');
+  // Remove duplicates and filter queue data
+  const queueArray = Array.isArray(adminQueue) ? 
+    adminQueue.filter((token: any, index: number, array: any[]) => 
+      array.findIndex(t => t.id === token.id) === index
+    ) : [];
+    
+  // Find the first patient in queue (lowest token number) as currently serving
+  const sortedQueue = queueArray.filter((token: any) => token.status === 'waiting' || token.status === 'called' || token.status === 'in_progress')
+    .sort((a: any, b: any) => a.tokenNumber - b.tokenNumber);
+  const currentlyServing = sortedQueue[0]; // First patient is being served
+  const waitingQueue = sortedQueue.slice(1); // Rest are waiting
 
   // Real-time countdown state
   const [countdown, setCountdown] = useState(0);

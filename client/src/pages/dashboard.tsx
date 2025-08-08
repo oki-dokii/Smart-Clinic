@@ -1689,12 +1689,19 @@ function LiveQueueContent({
 
   // Use live data if available, otherwise fallback to API data, and sort by appointment time
   const rawAdminQueue = liveAdminQueue || apiAdminQueue || [];
+  
+  // Remove duplicates and sort by appointment time
   const adminQueue = Array.isArray(rawAdminQueue) ? 
-    [...rawAdminQueue].sort((a: any, b: any) => {
-      const aTime = a.appointment?.appointmentDate || a.createdAt;
-      const bTime = b.appointment?.appointmentDate || b.createdAt;
-      return new Date(aTime).getTime() - new Date(bTime).getTime();
-    }) : [];
+    [...rawAdminQueue]
+      // Remove duplicates by ID
+      .filter((token: any, index: number, array: any[]) => 
+        array.findIndex(t => t.id === token.id) === index
+      )
+      .sort((a: any, b: any) => {
+        const aTime = a.appointment?.appointmentDate || a.createdAt;
+        const bTime = b.appointment?.appointmentDate || b.createdAt;
+        return new Date(aTime).getTime() - new Date(bTime).getTime();
+      }) : [];
 
   const queueArray = adminQueue;
   // Find the first patient in queue (lowest token number) as currently serving

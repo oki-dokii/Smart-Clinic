@@ -722,6 +722,52 @@ export class DatabaseStorage implements IStorage {
     return updatedToken || undefined;
   }
 
+  async removeDuplicateQueueTokens(): Promise<void> {
+    console.log('🔥 CLEANUP - Starting duplicate queue token removal...');
+    
+    // Find duplicate tokens (same patient + doctor combination)
+    const duplicates = await db.select({
+      patientId: queueTokens.patientId,
+      doctorId: queueTokens.doctorId,
+      count: sql<number>`COUNT(*)`
+    })
+    .from(queueTokens)
+    .where(eq(queueTokens.status, 'waiting'))
+    .groupBy(queueTokens.patientId, queueTokens.doctorId)
+    .having(sql`COUNT(*) > 1`);
+
+    console.log(`🔥 CLEANUP - Found ${duplicates.length} duplicate patient-doctor combinations`);
+
+    for (const duplicate of duplicates) {
+      console.log(`🔥 CLEANUP - Processing duplicates for patient ${duplicate.patientId} with doctor ${duplicate.doctorId}`);
+      
+      // Get all tokens for this patient-doctor combination, ordered by creation date (keep the oldest)
+      const tokens = await db.select()
+        .from(queueTokens)
+        .where(and(
+          eq(queueTokens.patientId, duplicate.patientId),
+          eq(queueTokens.doctorId, duplicate.doctorId),
+          eq(queueTokens.status, 'waiting')
+        ))
+        .orderBy(asc(queueTokens.createdAt));
+
+      if (tokens.length > 1) {
+        // Keep the first (oldest) token, remove the rest
+        const tokenToKeep = tokens[0];
+        const tokensToRemove = tokens.slice(1);
+
+        console.log(`🔥 CLEANUP - Keeping token ${tokenToKeep.id}, removing ${tokensToRemove.length} duplicates`);
+
+        for (const tokenToRemove of tokensToRemove) {
+          await db.delete(queueTokens).where(eq(queueTokens.id, tokenToRemove.id));
+          console.log(`🔥 CLEANUP - Removed duplicate token ${tokenToRemove.id}`);
+        }
+      }
+    }
+
+    console.log('🔥 CLEANUP - Duplicate removal completed');
+  }
+
   async updateQueueTokenWaitTime(id: string, estimatedWaitTime: number): Promise<QueueToken | undefined> {
     const [updatedToken] = await db.update(queueTokens)
       .set({ estimatedWaitTime })
