@@ -112,8 +112,9 @@ export default function SmartClinicDashboard() {
     staleTime: 0, // Always consider data stale for real-time sync
   });
 
-  // Use WebSocket for real-time queue updates - only for patients, not admins
-  const shouldUseQueueSocket = user?.role === "patient";
+  // Use WebSocket for real-time queue updates - for patients and admins with appointments
+  const appointmentsArray = Array.isArray(appointments) ? appointments : [];
+  const shouldUseQueueSocket = user?.role === "patient" || (user?.role === "admin" && appointmentsArray.length > 0);
   const { queuePosition: liveQueuePosition, isConnected: queueConnected, refreshQueue } = useQueueSocket(
     shouldUseQueueSocket ? user.id : undefined,
     false // explicitly set isAdmin to false for regular dashboard
@@ -122,7 +123,7 @@ export default function SmartClinicDashboard() {
   // Fallback to API query if WebSocket not connected
   const { data: queuePosition } = useQuery({
     queryKey: ["/api/queue/position"],
-    enabled: !!user && user.role === "patient" && !queueConnected,
+    enabled: !!user && (user.role === "patient" || user.role === "admin") && !queueConnected,
   });
   
   // Use live queue position if available, otherwise fallback to API data
