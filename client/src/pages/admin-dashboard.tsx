@@ -44,6 +44,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { apiRequest } from "@/lib/queryClient"
 import { useToast } from "@/hooks/use-toast"
 import { useQueueSocket } from "@/hooks/useQueueSocket"
+import ClinicManagement from "@/pages/clinic-management"
 import jsPDF from 'jspdf'
 
 interface User {
@@ -2108,7 +2109,7 @@ export default function ClinicDashboard() {
       <div className="bg-white border-b border-gray-200">
         <div className="px-6">
           <Tabs defaultValue="dashboard" className="w-full">
-            <TabsList className="grid w-full grid-cols-8 bg-transparent border-0 h-auto p-0">
+            <TabsList className="grid w-full grid-cols-9 bg-transparent border-0 h-auto p-0">
               <TabsTrigger
                 value="dashboard"
                 className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-blue-600 data-[state=active]:text-blue-600 rounded-none py-4 px-6"
@@ -2156,6 +2157,12 @@ export default function ClinicDashboard() {
                 className="data-[state=active]:bg-transparent data-[state-active]:border-b-2 data-[state=active]:border-blue-600 data-[state=active]:text-blue-600 rounded-none py-4 px-6"
               >
                 Reports
+              </TabsTrigger>
+              <TabsTrigger
+                value="clinics"
+                className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-blue-600 data-[state=active]:text-blue-600 rounded-none py-4 px-6"
+              >
+                Clinics
               </TabsTrigger>
             </TabsList>
 
@@ -4275,6 +4282,20 @@ export default function ClinicDashboard() {
                       </div>
                     </CardContent>
                   </Card>
+                </div>
+              </div>
+            </TabsContent>
+
+            <TabsContent value="clinics" className="mt-0">
+              <div className="p-6">
+                <div className="flex justify-between items-center mb-6">
+                  <h2 className="text-2xl font-bold">Clinic Management</h2>
+                  <p className="text-gray-600">Manage multiple clinic locations</p>
+                </div>
+                
+                {/* Embed the clinic management component */}
+                <div className="bg-white rounded-lg shadow p-6">
+                  <ClinicManagement />
                 </div>
               </div>
             </TabsContent>

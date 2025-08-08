@@ -5,7 +5,7 @@ import {
   insertUserSchema, insertAppointmentSchema, insertQueueTokenSchema, 
   insertMedicineSchema, insertPrescriptionSchema, insertMedicineReminderSchema,
   insertDelayNotificationSchema, insertHomeVisitSchema, insertMedicalHistorySchema,
-  insertStaffVerificationSchema, insertPatientFeedbackSchema
+  insertStaffVerificationSchema, insertPatientFeedbackSchema, insertClinicSchema
 } from "@shared/schema";
 import { z } from "zod";
 import { authMiddleware, requireRole } from "./middleware/auth";
@@ -2566,6 +2566,91 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const staffPresence = await storage.getStaffPresenceForDate(targetDate);
       res.json(staffPresence);
+    } catch (error: any) {
+      res.status(400).json({ message: error.message });
+    }
+  });
+
+  // Clinic management routes
+  app.post("/api/clinics", authMiddleware, requireRole(['admin']), async (req, res) => {
+    try {
+      const clinicData = insertClinicSchema.parse(req.body);
+      const clinic = await storage.createClinic(clinicData);
+      res.json(clinic);
+    } catch (error: any) {
+      res.status(400).json({ message: error.message });
+    }
+  });
+
+  app.get("/api/clinics", authMiddleware, requireRole(['admin']), async (req, res) => {
+    try {
+      const clinics = await storage.getAllClinics();
+      res.json(clinics);
+    } catch (error: any) {
+      res.status(400).json({ message: error.message });
+    }
+  });
+
+  app.get("/api/clinics/:id", authMiddleware, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const clinic = await storage.getClinicById(id);
+      
+      if (!clinic) {
+        return res.status(404).json({ message: "Clinic not found" });
+      }
+
+      res.json(clinic);
+    } catch (error: any) {
+      res.status(400).json({ message: error.message });
+    }
+  });
+
+  app.put("/api/clinics/:id", authMiddleware, requireRole(['admin']), async (req, res) => {
+    try {
+      const { id } = req.params;
+      const clinicData = insertClinicSchema.partial().parse(req.body);
+      
+      const updatedClinic = await storage.updateClinic(id, clinicData);
+      if (!updatedClinic) {
+        return res.status(404).json({ message: "Clinic not found" });
+      }
+
+      res.json(updatedClinic);
+    } catch (error: any) {
+      res.status(400).json({ message: error.message });
+    }
+  });
+
+  app.delete("/api/clinics/:id", authMiddleware, requireRole(['admin']), async (req, res) => {
+    try {
+      const { id } = req.params;
+      
+      // Check if clinic has any associated data
+      const hasUsers = await storage.getClinicUserCount(id);
+      if (hasUsers > 0) {
+        return res.status(400).json({ 
+          message: "Cannot delete clinic with associated users. Please transfer or remove users first." 
+        });
+      }
+
+      const deleted = await storage.deleteClinic(id);
+      if (!deleted) {
+        return res.status(404).json({ message: "Clinic not found" });
+      }
+
+      res.json({ message: "Clinic deleted successfully" });
+    } catch (error: any) {
+      res.status(400).json({ message: error.message });
+    }
+  });
+
+  // Get clinic statistics
+  app.get("/api/clinics/:id/stats", authMiddleware, requireRole(['admin']), async (req, res) => {
+    try {
+      const { id } = req.params;
+      const stats = await storage.getClinicStats(id);
+      res.json(stats);
     } catch (error: any) {
       res.status(400).json({ message: error.message });
     }

@@ -1,7 +1,7 @@
 import { 
   users, otpSessions, emailOtpSessions, authSessions, staffVerifications, staffPresence, appointments, 
   queueTokens, medicines, prescriptions, medicineReminders, delayNotifications,
-  homeVisits, medicalHistory, patientFeedback,
+  homeVisits, medicalHistory, patientFeedback, clinics,
   type User, type InsertUser, type OtpSession, type InsertOtpSession,
   type EmailOtpSession, type InsertEmailOtpSession,
   type AuthSession, type InsertAuthSession, type StaffVerification, type InsertStaffVerification,
@@ -10,7 +10,7 @@ import {
   type Medicine, type InsertMedicine, type Prescription, type InsertPrescription,
   type MedicineReminder, type InsertMedicineReminder, type DelayNotification, type InsertDelayNotification,
   type HomeVisit, type InsertHomeVisit, type MedicalHistory, type InsertMedicalHistory,
-  type PatientFeedback, type InsertPatientFeedback
+  type PatientFeedback, type InsertPatientFeedback, type Clinic, type InsertClinic
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, gte, lte, desc, asc, sql } from "drizzle-orm";
@@ -153,6 +153,20 @@ export interface IStorage {
   getPatientFeedbackById(id: string): Promise<PatientFeedback | null>;
   getPatientFeedbackByPatientId(patientId: string): Promise<PatientFeedback[]>;
   markFeedbackAsRead(id: string): Promise<PatientFeedback | null>;
+
+  // Clinic Management
+  createClinic(clinic: InsertClinic): Promise<Clinic>;
+  getAllClinics(): Promise<Clinic[]>;
+  getClinicById(id: string): Promise<Clinic | null>;
+  updateClinic(id: string, clinic: Partial<InsertClinic>): Promise<Clinic | null>;
+  deleteClinic(id: string): Promise<boolean>;
+  getClinicUserCount(clinicId: string): Promise<number>;
+  getClinicStats(clinicId: string): Promise<{
+    totalUsers: number;
+    totalAppointments: number;
+    totalMedicines: number;
+    activeStaff: number;
+  }>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -1690,6 +1704,83 @@ export class DatabaseStorage implements IStorage {
       })
       .returning();
     return newPresence;
+  }
+
+  // Clinic Management
+  async createClinic(clinic: InsertClinic): Promise<Clinic> {
+    const [newClinic] = await db.insert(clinics)
+      .values(clinic)
+      .returning();
+    return newClinic;
+  }
+
+  async getAllClinics(): Promise<Clinic[]> {
+    return await db.select().from(clinics);
+  }
+
+  async getClinicById(id: string): Promise<Clinic | null> {
+    const [clinic] = await db.select().from(clinics).where(eq(clinics.id, id));
+    return clinic || null;
+  }
+
+  async updateClinic(id: string, clinic: Partial<InsertClinic>): Promise<Clinic | null> {
+    const [updated] = await db.update(clinics)
+      .set({ ...clinic, updatedAt: new Date() })
+      .where(eq(clinics.id, id))
+      .returning();
+    return updated || null;
+  }
+
+  async deleteClinic(id: string): Promise<boolean> {
+    const result = await db.delete(clinics)
+      .where(eq(clinics.id, id));
+    return result.rowCount > 0;
+  }
+
+  async getClinicUserCount(clinicId: string): Promise<number> {
+    const [result] = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(users)
+      .where(eq(users.clinicId, clinicId));
+    return result.count;
+  }
+
+  async getClinicStats(clinicId: string): Promise<{
+    totalUsers: number;
+    totalAppointments: number;
+    totalMedicines: number;
+    activeStaff: number;
+  }> {
+    const [userCount] = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(users)
+      .where(eq(users.clinicId, clinicId));
+
+    const [appointmentCount] = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(appointments)
+      .where(eq(appointments.clinicId, clinicId));
+
+    const [medicineCount] = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(medicines)
+      .where(eq(medicines.clinicId, clinicId));
+
+    const [activeStaffCount] = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(users)
+      .where(and(
+        eq(users.clinicId, clinicId),
+        eq(users.isActive, true),
+        sql`${users.role} IN ('staff', 'doctor')`
+      ));
+
+    return {
+      totalUsers: userCount.count,
+      totalAppointments: appointmentCount.count,
+      totalMedicines: medicineCount.count,
+      activeStaff: activeStaffCount.count
+    };
   }
 
 }
