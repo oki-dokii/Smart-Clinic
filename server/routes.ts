@@ -916,7 +916,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Update medicine details
       const updatedMedicine = await storage.updateMedicine(prescription.medicineId, {
         name,
-        dosage: dosage || '1 tablet',
+        strength: dosage || '1 tablet',
         manufacturer: 'Patient Added'
       });
       
@@ -939,6 +939,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.log('🔥 Medicine reminders regenerated with new timings');
       } catch (error) {
         console.error('Error regenerating reminders:', error);
+      }
+      
+      if (!updatedPrescription || !updatedMedicine) {
+        return res.status(500).json({ message: "Failed to update medicine" });
       }
       
       res.json({ 
@@ -972,13 +976,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Delete associated reminders first
-      await storage.deletePrescriptionReminders(id);
+      await storage.deleteFutureReminders(id);
       
       // Delete prescription
       await storage.deletePrescription(id);
       
-      // Delete medicine if it was patient-added
-      if (prescription.medicine.manufacturer === 'Patient Added') {
+      // Delete medicine if it was patient-added (get medicine info first)
+      const medicine = await storage.getMedicine(prescription.medicineId);
+      if (medicine && medicine.manufacturer === 'Patient Added') {
         await storage.deleteMedicine(prescription.medicineId);
       }
       
