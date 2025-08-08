@@ -85,7 +85,7 @@ export default function LiveQueueTracker() {
   );
 
   // Use live queue position if available, otherwise fallback to API data
-  const queuePosition = liveQueuePosition || currentQueuePosition || {};
+  const queuePosition = liveQueuePosition || currentQueuePosition || null;
 
   const queueArray = Array.isArray(adminQueue) ? adminQueue : [];
   const currentlyServing = queueArray.find((token: any) => token.status === 'called' || token.status === 'in_progress');
@@ -208,7 +208,7 @@ export default function LiveQueueTracker() {
                     </div>
                   )}
                 </div>
-                {queuePosition?.status === 'called' && (
+                {queuePosition && queuePosition.status === 'called' && (
                   <Badge className="bg-green-600 text-white text-lg px-4 py-2">
                     <AlertCircle className="w-4 h-4 mr-2" />
                     You're being called! Please proceed to the doctor.
@@ -297,7 +297,7 @@ export default function LiveQueueTracker() {
                     
                     // Calculate dynamic wait time for this token
                     const tokenPosition = index + 1;
-                    const tokenDynamicWaitTime = calculateDynamicWaitTime(token, tokenPosition);
+                    const tokenDynamicWaitTime = token.estimatedWaitTime || Math.max(0, (tokenPosition - 1) * 15);
                     
                     return (
                       <div key={token.id} className={`flex items-center justify-between p-4 rounded-lg ${bgColor} ${borderColor}`}>
