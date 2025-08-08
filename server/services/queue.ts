@@ -1,5 +1,6 @@
 import { Response } from 'express';
 import { storage } from '../storage';
+import { WebSocket } from 'ws';
 
 interface QueueClient {
   response: Response;
@@ -8,6 +9,7 @@ interface QueueClient {
 
 export class QueueService {
   private clients: Map<string, QueueClient[]> = new Map();
+  private wsClients: Set<WebSocket> = new Set();
 
   addClient(doctorId: string, response: Response): void {
     if (!this.clients.has(doctorId)) {
@@ -40,6 +42,55 @@ export class QueueService {
 
     for (const client of clients) {
       await this.sendQueueUpdate(doctorId, client.response);
+    }
+  }
+
+  addWebSocketClient(ws: WebSocket): void {
+    this.wsClients.add(ws);
+  }
+
+  removeWebSocketClient(ws: WebSocket): void {
+    this.wsClients.delete(ws);
+  }
+
+  async broadcastWebSocketUpdate(doctorId?: string): Promise<void> {
+    try {
+      // Get all queue tokens for admin view
+      const allQueueTokens = await storage.getAllQueueTokens();
+      
+      // Broadcast to all connected WebSocket clients
+      this.wsClients.forEach(ws => {
+        if (ws.readyState === WebSocket.OPEN) {
+          try {
+            // Send admin queue update
+            if ((ws as any).isAdmin) {
+              ws.send(JSON.stringify({ 
+                type: 'admin_queue_update', 
+                data: allQueueTokens 
+              }));
+            }
+            
+            // Send patient-specific updates
+            if ((ws as any).patientId) {
+              storage.getPatientQueuePosition((ws as any).patientId).then(position => {
+                if (ws.readyState === WebSocket.OPEN) {
+                  ws.send(JSON.stringify({ 
+                    type: 'queue_position', 
+                    data: position || { tokenNumber: null, position: null, estimatedWaitTime: 0 } 
+                  }));
+                }
+              }).catch(console.error);
+            }
+          } catch (error) {
+            console.error('WebSocket send error:', error);
+            this.wsClients.delete(ws);
+          }
+        } else {
+          this.wsClients.delete(ws);
+        }
+      });
+    } catch (error) {
+      console.error('Failed to broadcast WebSocket update:', error);
     }
   }
 

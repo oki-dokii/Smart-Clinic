@@ -44,6 +44,7 @@ import { useLocation } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { useTheme } from "@/components/ThemeProvider";
+import { useQueueSocket } from "@/hooks/useQueueSocket";
 
 // Feedback form schema
 const feedbackSchema = z.object({
@@ -111,10 +112,19 @@ export default function SmartClinicDashboard() {
     staleTime: 0, // Always consider data stale for real-time sync
   });
 
+  // Use WebSocket for real-time queue updates
+  const { queuePosition: liveQueuePosition, isConnected: queueConnected, refreshQueue } = useQueueSocket(
+    user?.role === "patient" ? user.id : undefined
+  );
+  
+  // Fallback to API query if WebSocket not connected
   const { data: queuePosition } = useQuery({
     queryKey: ["/api/queue/position"],
-    enabled: !!user && user.role === "patient",
+    enabled: !!user && user.role === "patient" && !queueConnected,
   });
+  
+  // Use live queue position if available, otherwise fallback to API data
+  const currentQueuePosition = liveQueuePosition || queuePosition;
 
   const { data: reminders = [] } = useQuery({
     queryKey: ["/api/reminders"],
@@ -706,10 +716,13 @@ export default function SmartClinicDashboard() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold mb-1">
-                {queuePosition ? `#${queuePosition.tokenNumber}` : "Not in queue"}
+                {currentQueuePosition ? `#${currentQueuePosition.tokenNumber}` : "Not in queue"}
               </div>
               <div className="text-sm text-gray-600 mb-4">
-                {queuePosition ? "Estimated wait: 45 minutes" : "Join queue when you arrive"}
+                {currentQueuePosition ? 
+                  `Estimated wait: ${currentQueuePosition.estimatedWaitTime || 0} minutes` : 
+                  "Join queue when you arrive"
+                }
               </div>
               <Button 
                 className="w-full bg-green-500 hover:bg-green-600"
@@ -862,13 +875,17 @@ export default function SmartClinicDashboard() {
             <CardContent>
               <div className="bg-blue-500 text-white rounded-lg p-6 text-center mb-6">
                 <div className="text-sm mb-2">
-                  {queuePosition?.status === 'waiting' ? 'Your Position' : 'Queue Status'}
+                  {currentQueuePosition?.status === 'waiting' ? 'Your Position' : 'Queue Status'}
+                  {queueConnected && <span className="ml-2 text-green-400">● Live</span>}
                 </div>
                 <div className="text-4xl font-bold mb-2">
-                  #{queuePosition?.status === 'waiting' ? queuePosition.tokenNumber : '6'}
+                  #{currentQueuePosition?.tokenNumber || 'N/A'}
                 </div>
                 <div className="text-sm">
-                  {queuePosition?.status === 'waiting' ? `You are ${queuePosition.tokenNumber - 1} patients away` : 'Current Token'}
+                  {currentQueuePosition?.status === 'waiting' ? 
+                    `You are ${(currentQueuePosition.position || 0)} patients away` : 
+                    currentQueuePosition?.tokenNumber ? 'You are in queue' : 'Not in queue'
+                  }
                 </div>
               </div>
 

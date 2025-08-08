@@ -42,6 +42,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { apiRequest } from "@/lib/queryClient"
 import { useToast } from "@/hooks/use-toast"
+import { useQueueSocket } from "@/hooks/useQueueSocket"
 import jsPDF from 'jspdf'
 
 interface User {
@@ -802,11 +803,18 @@ export default function ClinicDashboard() {
     refetchInterval: 30000
   })
 
-  // Queue data
-  const { data: queueTokens, isLoading: queueLoading } = useQuery<QueueToken[]>({
+  // Live queue data via WebSocket
+  const { queueTokens: liveQueueTokens, isConnected: queueConnected } = useQueueSocket(undefined, true);
+  
+  // Fallback to API polling if WebSocket not connected
+  const { data: fallbackQueueTokens, isLoading: queueLoading } = useQuery<QueueToken[]>({
     queryKey: ['/api/queue/admin'],
-    refetchInterval: 10000
-  })
+    refetchInterval: queueConnected ? 30000 : 10000, // Slower polling when WebSocket is connected
+    enabled: !queueConnected // Only poll when WebSocket is not connected
+  });
+  
+  // Use live data if available, otherwise fallback to API data
+  const queueTokens = liveQueueTokens || fallbackQueueTokens;
 
   // Appointments data - polling every 3 seconds for real-time patient bookings
   const { data: appointments, isLoading: appointmentsLoading } = useQuery<Appointment[]>({

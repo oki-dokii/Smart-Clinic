@@ -1,7 +1,6 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { WebSocketServer } from 'ws';
 import { 
   insertUserSchema, insertAppointmentSchema, insertQueueTokenSchema, 
   insertMedicineSchema, insertPrescriptionSchema, insertMedicineReminderSchema,
@@ -15,6 +14,7 @@ import { authService } from "./services/auth";
 import { emailService } from "./services/email";
 import { queueService } from "./services/queue";
 import { schedulerService } from "./services/scheduler";
+import { WebSocketServer, WebSocket } from 'ws';
 
 // Helper function to generate timings from frequency
 function generateTimingsFromFrequency(frequency: string): string[] {
@@ -35,6 +35,8 @@ function generateTimingsFromFrequency(frequency: string): string[] {
 }
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Create HTTP server first
+  const httpServer = createServer(app);
   
   // Manual approval endpoint for testing (no auth required)
   app.get('/api/test-approve/:appointmentId', async (req, res) => {
@@ -999,6 +1001,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Broadcast queue update via Server-Sent Events
       queueService.broadcastQueueUpdate(token.doctorId);
+      
+      // Broadcast to WebSocket clients
+      queueService.broadcastWebSocketUpdate(token.doctorId);
 
       console.log('🔥 First route update successful')
       res.json(token);
@@ -1024,6 +1029,60 @@ export async function registerRoutes(app: Express): Promise<Server> {
     req.on('close', () => {
       queueService.removeClient(doctorId, res);
     });
+  });
+
+  // WebSocket server for real-time updates (queue and general)
+  const wss = new WebSocketServer({ server: httpServer, path: '/ws' });
+  
+  wss.on('connection', (ws: WebSocket, req: any) => {
+    console.log('🔥 WebSocket client connected');
+    queueService.addWebSocketClient(ws);
+    
+    ws.on('message', async (message: string) => {
+      try {
+        const data = JSON.parse(message.toString());
+        
+        // Handle queue-specific subscriptions
+        if (data.type === 'subscribe_patient_queue' && data.patientId) {
+          // Subscribe patient to their queue updates
+          (ws as any).patientId = data.patientId;
+          console.log(`🔥 Patient ${data.patientId} subscribed to queue updates`);
+          
+          // Send current queue position
+          const position = await storage.getPatientQueuePosition(data.patientId);
+          ws.send(JSON.stringify({ type: 'queue_position', data: position || { tokenNumber: null, position: null, estimatedWaitTime: 0 } }));
+        }
+        
+        if (data.type === 'subscribe_admin_queue') {
+          // Subscribe admin to all queue updates
+          (ws as any).isAdmin = true;
+          console.log('🔥 Admin subscribed to queue updates');
+          
+          // Send current queue data
+          const queueTokens = await storage.getAllQueueTokens();
+          ws.send(JSON.stringify({ type: 'admin_queue_update', data: queueTokens }));
+        }
+        
+        // Handle general WebSocket messages
+        if (data.type === 'subscribe') {
+          ws.send(JSON.stringify({ type: 'subscribed', channel: data.channel }));
+        }
+        
+        if (data.type === 'ping') {
+          ws.send(JSON.stringify({ type: 'pong' }));
+        }
+      } catch (error) {
+        console.error('WebSocket message error:', error);
+      }
+    });
+    
+    ws.on('close', () => {
+      console.log('🔥 WebSocket client disconnected');
+      queueService.removeWebSocketClient(ws);
+    });
+    
+    // Send initial connection confirmation
+    ws.send(JSON.stringify({ type: 'connected', timestamp: new Date().toISOString() }));
   });
 
   // Medicine routes
@@ -2295,41 +2354,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Start background services
   schedulerService.start();
-
-  const httpServer = createServer(app);
-  
-  // WebSocket server for real-time updates
-  const wss = new WebSocketServer({ server: httpServer, path: '/ws' });
-  
-  wss.on('connection', (ws) => {
-    console.log('WebSocket client connected');
-    
-    ws.on('message', (message) => {
-      try {
-        const data = JSON.parse(message.toString());
-        
-        // Handle different message types
-        switch (data.type) {
-          case 'subscribe':
-            // Subscribe to real-time updates
-            ws.send(JSON.stringify({ type: 'subscribed', channel: data.channel }));
-            break;
-          case 'ping':
-            ws.send(JSON.stringify({ type: 'pong' }));
-            break;
-        }
-      } catch (error) {
-        console.error('WebSocket message error:', error);
-      }
-    });
-    
-    ws.on('close', () => {
-      console.log('WebSocket client disconnected');
-    });
-    
-    // Send initial connection confirmation
-    ws.send(JSON.stringify({ type: 'connected', timestamp: new Date().toISOString() }));
-  });
 
   return httpServer;
 }
