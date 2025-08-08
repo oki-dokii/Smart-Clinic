@@ -746,22 +746,32 @@ export default function SmartClinicDashboard() {
             </CardHeader>
             <CardContent>
               {delayNotifications && delayNotifications.length > 0 ? (
-                delayNotifications.map((delay: any) => {
-                  const doctor = doctors.find(d => d.id === delay.doctorId);
-                  return (
-                    <div key={delay.id} className="mb-4">
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="text-2xl font-bold text-orange-600">Delayed</span>
+                (() => {
+                  // Group delay notifications by doctor and keep only the latest one for each doctor
+                  const latestDelaysByDoctor = delayNotifications.reduce((acc: any, delay: any) => {
+                    if (!acc[delay.doctorId] || new Date(delay.createdAt) > new Date(acc[delay.doctorId].createdAt)) {
+                      acc[delay.doctorId] = delay;
+                    }
+                    return acc;
+                  }, {});
+                  
+                  return Object.values(latestDelaysByDoctor).map((delay: any) => {
+                    const doctor = doctors.find(d => d.id === delay.doctorId);
+                    return (
+                      <div key={delay.id} className="mb-4">
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="text-2xl font-bold text-orange-600">Delayed</span>
+                        </div>
+                        <div className="text-sm text-gray-600 mb-4">
+                          Dr. {doctor?.firstName || 'Unknown'} {doctor?.lastName || 'Doctor'} is running {delay.delayMinutes} minutes late
+                          {delay.reason && (
+                            <div className="text-xs text-gray-500 mt-1">Reason: {delay.reason}</div>
+                          )}
+                        </div>
                       </div>
-                      <div className="text-sm text-gray-600 mb-4">
-                        Dr. {doctor?.firstName || 'Unknown'} {doctor?.lastName || 'Doctor'} is running {delay.delayMinutes} minutes late
-                        {delay.reason && (
-                          <div className="text-xs text-gray-500 mt-1">Reason: {delay.reason}</div>
-                        )}
-                      </div>
-                    </div>
-                  );
-                })
+                    );
+                  });
+                })()
               ) : (
                 <div>
                   <div className="flex items-center gap-2 mb-1">
