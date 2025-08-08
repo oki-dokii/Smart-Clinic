@@ -231,9 +231,19 @@ export default function MedicinesPage() {
       });
     }
     
-    // Handle full datetime string (ISO format)
+    // Handle full datetime string - extract time parts directly to avoid timezone conversion
     const date = new Date(time);
     if (isNaN(date.getTime())) return time; // Return original if invalid
+    
+    // Get the time components directly from the date string to avoid timezone issues
+    const timeMatch = time.match(/T?(\d{1,2}):(\d{2}):(\d{2})/);
+    if (timeMatch) {
+      const hours = parseInt(timeMatch[1]);
+      const minutes = parseInt(timeMatch[2]);
+      return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+    }
+    
+    // Fallback to regular date formatting
     return date.toLocaleTimeString([], { 
       hour: '2-digit', 
       minute: '2-digit' 
