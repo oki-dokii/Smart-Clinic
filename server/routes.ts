@@ -565,13 +565,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       console.log('🔥 Appointment approved:', appointment.id);
 
-      // Send SMS notification to patient
+      // Send email and SMS notifications to patient
       try {
         const patient = appointment.patient || await storage.getUserById(appointment.patientId);
         const doctor = appointment.doctor || await storage.getUserById(appointment.doctorId);
         
         if (patient && doctor) {
           const appointmentDate = new Date(appointment.appointmentDate);
+          
+          // Send email notification
+          await emailService.sendAppointmentApproved(patient.email || '', {
+            doctorName: `Dr. ${doctor.firstName} ${doctor.lastName}`,
+            appointmentDate: appointmentDate.toLocaleDateString(),
+            appointmentTime: appointmentDate.toLocaleTimeString(),
+            clinic: 'SmartClinic'
+          });
+          console.log('🔥 Approval email sent to:', patient.email);
+          
+          // Send SMS notification (keeping existing SMS functionality)
           const message = `Good news! Your appointment with Dr. ${doctor.firstName} ${doctor.lastName} on ${appointmentDate.toLocaleDateString()} at ${appointmentDate.toLocaleTimeString()} has been approved. Please arrive 15 minutes early.`;
           
           await smsService.sendSMS(patient.phoneNumber, message);
