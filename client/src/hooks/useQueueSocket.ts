@@ -21,23 +21,31 @@ export function useQueueSocket(patientId?: string, isAdmin = false) {
   const { toast } = useToast();
   const reconnectTimeoutRef = useRef<NodeJS.Timeout>();
 
+  // Debug logging for hook parameters
+  console.log('🔥🔥🔥 useQueueSocket called with:', { patientId, isAdmin });
+
   const connect = () => {
     try {
       const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
       const wsUrl = `${protocol}//${window.location.host}/ws`;
       
-      console.log('🔥 Connecting to queue WebSocket:', wsUrl);
+      console.log('🔥 Connecting to queue WebSocket:', wsUrl, 'isAdmin:', isAdmin);
       wsRef.current = new WebSocket(wsUrl);
 
       wsRef.current.onopen = () => {
-        console.log('🔥 Queue WebSocket connected');
+        console.log('🔥 Queue WebSocket connected, isAdmin:', isAdmin, 'patientId:', patientId);
         setIsConnected(true);
         
         // Subscribe to updates based on user type
         if (isAdmin) {
+          console.log('🔥 Client: Sending admin queue subscription (isAdmin=true)');
           wsRef.current?.send(JSON.stringify({ type: 'subscribe_admin_queue' }));
+          console.log('🔥 Client: Admin subscription message sent successfully');
         } else if (patientId) {
+          console.log('🔥 Client: Sending patient queue subscription for:', patientId);
           wsRef.current?.send(JSON.stringify({ type: 'subscribe_patient_queue', patientId }));
+        } else {
+          console.log('🔥 Client: No subscription sent - not admin and no patientId');
         }
       };
 

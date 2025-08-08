@@ -806,15 +806,24 @@ export default function ClinicDashboard() {
   // Live queue data via WebSocket
   const { queueTokens: liveQueueTokens, isConnected: queueConnected } = useQueueSocket(undefined, true);
   
-  // Fallback to API polling if WebSocket not connected
+  // Add debug logging
+  useEffect(() => {
+    console.log('🔥 ADMIN QUEUE DEBUG:', {
+      liveQueueTokens: liveQueueTokens?.length || 'null/undefined',
+      queueConnected,
+      hasData: !!liveQueueTokens
+    });
+  }, [liveQueueTokens, queueConnected]);
+  
+  // Fallback to API polling - always enabled but slower when WebSocket connected
   const { data: fallbackQueueTokens, isLoading: queueLoading } = useQuery<QueueToken[]>({
     queryKey: ['/api/queue/admin'],
-    refetchInterval: queueConnected ? 30000 : 10000, // Slower polling when WebSocket is connected
-    enabled: !queueConnected // Only poll when WebSocket is not connected
+    refetchInterval: queueConnected ? 30000 : 5000, // Slower when WebSocket connected
+    enabled: true // Always enabled for reliable data
   });
   
   // Use live data if available, otherwise fallback to API data
-  const queueTokens = liveQueueTokens || fallbackQueueTokens;
+  const queueTokens = (liveQueueTokens && liveQueueTokens.length > 0) ? liveQueueTokens : fallbackQueueTokens;
 
   // Appointments data - polling every 3 seconds for real-time patient bookings
   const { data: appointments, isLoading: appointmentsLoading } = useQuery<Appointment[]>({

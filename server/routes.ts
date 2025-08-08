@@ -1060,7 +1060,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
           
           // Send current queue data
           const queueTokens = await storage.getAllQueueTokens();
-          ws.send(JSON.stringify({ type: 'admin_queue_update', data: queueTokens }));
+          console.log('🔥 Admin subscription - Queue tokens found:', queueTokens?.length || 0);
+          console.log('🔥 Admin subscription - Sample token:', queueTokens?.[0] || 'none');
+          
+          const response = { type: 'admin_queue_update', data: queueTokens };
+          console.log('🔥 Admin subscription - Sending WebSocket response:', JSON.stringify(response).substring(0, 200) + '...');
+          
+          ws.send(JSON.stringify(response));
+          console.log('🔥 Admin subscription - WebSocket message sent successfully');
         }
         
         // Handle general WebSocket messages
