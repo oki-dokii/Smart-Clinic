@@ -2607,10 +2607,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
         clinicId: clinic.id
       });
       
+      // Generate JWT token for immediate login
+      const token = authService.generateToken(adminUser.id, adminUser.role, clinic.id);
+      
+      // Create session for the admin user
+      await storage.createAuthSession({
+        userId: adminUser.id,
+        token,
+        expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000), // 24 hours
+        ipAddress: req.ip || '',
+        userAgent: req.get('User-Agent') || ''
+      });
+      
       res.json({ 
         clinic, 
         admin: adminUser,
-        message: 'Clinic registered successfully! Your admin account has been created.'
+        token,
+        message: 'Clinic registered successfully! You are now logged in as admin.',
+        isNewClinic: true
       });
     } catch (error: any) {
       res.status(400).json({ message: error.message });

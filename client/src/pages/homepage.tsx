@@ -85,10 +85,27 @@ export default function Homepage() {
       return response.json();
     },
     onSuccess: (result) => {
-      toast({
-        title: "Clinic Registered Successfully!",
-        description: `${result.clinic.name} has been registered. Your admin account has been created.`
-      });
+      // Store authentication token and user data
+      if (result.token && result.admin) {
+        localStorage.setItem("auth_token", result.token);
+        localStorage.setItem("user", JSON.stringify(result.admin));
+        
+        toast({
+          title: "Clinic Registered Successfully!",
+          description: `Welcome to ${result.clinic.name}! Redirecting to your admin dashboard...`
+        });
+        
+        // Redirect to admin dashboard after successful registration
+        setTimeout(() => {
+          navigate("/admin-dashboard");
+        }, 1500);
+      } else {
+        toast({
+          title: "Clinic Registered Successfully!",
+          description: `${result.clinic.name} has been registered. Please log in with your admin credentials.`
+        });
+      }
+      
       setIsRegistering(false);
       form.reset();
     },
