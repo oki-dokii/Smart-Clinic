@@ -1697,8 +1697,11 @@ function LiveQueueContent({
     }) : [];
 
   const queueArray = adminQueue;
-  const currentlyServing = queueArray.find((token: any) => token.status === 'called' || token.status === 'in_progress');
-  const waitingQueue = queueArray.filter((token: any) => token.status === 'waiting').slice(0, 4);
+  // Find the first patient in queue (lowest token number) as currently serving
+  const sortedQueue = queueArray.filter((token: any) => token.status === 'waiting' || token.status === 'called' || token.status === 'in_progress')
+    .sort((a: any, b: any) => a.tokenNumber - b.tokenNumber);
+  const currentlyServing = sortedQueue[0]; // First patient is being served
+  const waitingQueue = sortedQueue.slice(1, 5); // Next 4 patients in line
 
   return (
     <div className="space-y-4">
@@ -1706,9 +1709,11 @@ function LiveQueueContent({
       <div className="bg-blue-500 text-white rounded-lg p-4 text-center">
         <div className="text-sm mb-2">Now Serving</div>
         <div className="text-3xl font-bold mb-1">
-          #{currentlyServing?.tokenNumber || '12'}
+          #{currentlyServing?.tokenNumber || '--'}
         </div>
-        <div className="text-sm">Token Number</div>
+        <div className="text-sm">
+          {currentlyServing ? `${currentlyServing.patient?.firstName} ${currentlyServing.patient?.lastName}` : 'No patient currently'}
+        </div>
       </div>
 
       {/* Doctor Running Late */}
