@@ -98,6 +98,7 @@ export interface IStorage {
   getPrescriptionWithDetails(id: string): Promise<(Prescription & { medicine: Medicine; patient: User; doctor: User }) | undefined>;
   getPatientPrescriptions(patientId: string): Promise<(Prescription & { medicine: Medicine; doctor: User })[]>;
   deletePrescription(prescriptionId: string): Promise<boolean>;
+  deleteFutureReminders(prescriptionId: string): Promise<boolean>;
   
   // Admin-specific methods
   getAllQueueTokens(): Promise<(QueueToken & { patient: User; doctor: User })[]>;
@@ -750,6 +751,21 @@ export class DatabaseStorage implements IStorage {
       return true;
     } catch (error) {
       console.error('Error deleting prescription:', error);
+      return false;
+    }
+  }
+
+  async deleteFutureReminders(prescriptionId: string): Promise<boolean> {
+    try {
+      const now = new Date();
+      await db.delete(medicineReminders)
+        .where(and(
+          eq(medicineReminders.prescriptionId, prescriptionId),
+          gte(medicineReminders.scheduledAt, now)
+        ));
+      return true;
+    } catch (error) {
+      console.error('Error deleting future reminders:', error);
       return false;
     }
   }

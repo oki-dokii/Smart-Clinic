@@ -930,6 +930,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         timings: timings || null
       });
       
+      // Delete existing future reminders and regenerate with new timings
+      await storage.deleteFutureReminders(id);
+      
+      // Regenerate reminders with new timings
+      try {
+        await schedulerService.createMedicineReminders(id);
+        console.log('🔥 Medicine reminders regenerated with new timings');
+      } catch (error) {
+        console.error('Error regenerating reminders:', error);
+      }
+      
       res.json({ 
         success: true, 
         medicine: {
