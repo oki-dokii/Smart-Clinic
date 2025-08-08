@@ -26,6 +26,7 @@ export async function authMiddleware(req: Request, res: Response, next: NextFunc
       id: user.id,
       role: user.role,
       phoneNumber: user.phoneNumber,
+      clinicId: user.clinicId,
       isActive: user.isActive
     })
     

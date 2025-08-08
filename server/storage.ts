@@ -25,6 +25,8 @@ export interface IStorage {
   approveUser(id: string): Promise<User | undefined>;
   deactivateUser(id: string): Promise<User | undefined>;
   getUsersByRole(role: string): Promise<User[]>;
+  getUsersByClinic(clinicId: string): Promise<User[]>;
+  getUsersByRoleAndClinic(role: string, clinicId: string): Promise<User[]>;
   getAllUsers(): Promise<User[]>;
   getPatients(): Promise<User[]>;
   getActiveStaffCount(): Promise<number>;
@@ -95,6 +97,7 @@ export interface IStorage {
   getMedicine(id: string): Promise<Medicine | undefined>;
   getMedicineByName(name: string): Promise<Medicine | undefined>;
   getAllMedicines(): Promise<Medicine[]>;
+  getMedicinesByClinic(clinicId: string): Promise<Medicine[]>;
   searchMedicines(query: string): Promise<Medicine[]>;
   addMedicine(medicine: Omit<Medicine, 'id' | 'createdAt' | 'updatedAt'>): Promise<Medicine>;
   getMedicineById(medicineId: string): Promise<Medicine | null>;
@@ -233,6 +236,15 @@ export class DatabaseStorage implements IStorage {
 
   async getUsersByRole(role: string): Promise<User[]> {
     return await db.select().from(users).where(eq(users.role, role as any));
+  }
+
+  async getUsersByRoleAndClinic(role: string, clinicId: string): Promise<User[]> {
+    return await db.select().from(users).where(
+      and(
+        eq(users.role, role as any),
+        eq(users.clinicId, clinicId)
+      )
+    );
   }
 
   async getAllUsers(): Promise<User[]> {
@@ -853,6 +865,12 @@ export class DatabaseStorage implements IStorage {
 
   async getAllMedicines(): Promise<Medicine[]> {
     return await db.select().from(medicines).orderBy(asc(medicines.name));
+  }
+
+  async getMedicinesByClinic(clinicId: string): Promise<Medicine[]> {
+    return await db.select().from(medicines)
+      .where(eq(medicines.clinicId, clinicId))
+      .orderBy(asc(medicines.name));
   }
 
   async searchMedicines(query: string): Promise<Medicine[]> {

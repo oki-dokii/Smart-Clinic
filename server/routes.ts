@@ -310,17 +310,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         // If no role specified, get all non-patient users for staff management
         if (!role) {
-          const users = await storage.getAllUsers();
-          // Filter out patients to show only staff members
-          const staffUsers = users.filter(user => user.role !== 'patient');
-          console.log('Fetching staff users. Total users:', users.length, 'Staff users:', staffUsers.length);
+          let staffUsers;
+          if (req.user!.clinicId) {
+            // Admin with clinic ID - filter by clinic
+            const users = await storage.getUsersByClinic(req.user!.clinicId);
+            staffUsers = users.filter(user => user.role !== 'patient');
+            console.log('🔥 USERS - Admin fetching staff for clinic:', req.user!.clinicId, 'Staff users:', staffUsers.length);
+          } else {
+            // Admin without clinic ID - get all users
+            const users = await storage.getAllUsers();
+            staffUsers = users.filter(user => user.role !== 'patient');
+            console.log('Fetching staff users. Total users:', users.length, 'Staff users:', staffUsers.length);
+          }
           // Add cache-busting headers
           res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
           res.set('Pragma', 'no-cache');
           res.set('Expires', '0');
           res.json(staffUsers);
         } else {
-          const users = await storage.getUsersByRole(role as string);
+          let users;
+          if (req.user!.clinicId && req.user!.role === 'admin') {
+            // Admin with clinic ID - filter by role and clinic
+            users = await storage.getUsersByRoleAndClinic(role as string, req.user!.clinicId);
+            console.log('🔥 USERS - Admin fetching role', role, 'for clinic:', req.user!.clinicId, 'Count:', users.length);
+          } else {
+            users = await storage.getUsersByRole(role as string);
+          }
           res.json(users);
         }
       }
@@ -626,14 +641,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "Admin access required" });
       }
 
-      console.log('🔥 About to call storage.getAppointments()');
-      const appointments = await storage.getAppointments();
-      console.log('🔥 Found appointments:', appointments?.length || 0);
+      // Get admin's clinic ID from user data  
+      const adminClinicId = req.user!.clinicId;
+      console.log('🔥 Admin clinic ID:', adminClinicId);
+      
+      if (!adminClinicId) {
+        console.log('🔥 No clinic ID found for admin user');
+        return res.status(400).json({ message: "Admin user has no associated clinic" });
+      }
+
+      console.log('🔥 About to call storage.getAppointmentsByClinic() with clinic ID:', adminClinicId);
+      const appointments = await storage.getAppointmentsByClinic(adminClinicId);
+      console.log('🔥 Found appointments for clinic:', appointments?.length || 0);
       
       if (appointments && appointments.length > 0) {
         console.log('🔥 Sample appointment:', JSON.stringify(appointments[0], null, 2));
       } else {
-        console.log('🔥 No appointments returned from storage');
+        console.log('🔥 No appointments returned from storage for clinic', adminClinicId);
       }
       
       console.log('🔥 Sending response with', appointments?.length || 0, 'appointments');
@@ -1883,6 +1907,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "Admin access required" });
       }
 
+      // Get admin's clinic ID
+      const adminClinicId = req.user!.clinicId;
+      console.log('🔥 DASHBOARD STATS - Admin clinic ID:', adminClinicId);
+      
+      if (!adminClinicId) {
+        return res.status(400).json({ message: "Admin user has no associated clinic" });
+      }
+
       // Get today's date for filtering - use August 9th as "today"
       const today = new Date('2025-08-09');
       today.setHours(0, 0, 0, 0);
@@ -1896,9 +1928,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         tomorrowLocal: tomorrow.toLocaleDateString()
       });
 
-      // Fetch basic stats
-      const todayAppointments = await storage.getAppointmentsByDateRange(today, tomorrow);
-      console.log('🔥 DASHBOARD STATS - Found appointments:', todayAppointments.length);
+      // Fetch clinic-specific stats
+      const todayAppointments = await storage.getAppointmentsByDateRange(today, tomorrow, adminClinicId);
+      console.log('🔥 DASHBOARD STATS - Found appointments for clinic:', todayAppointments.length);
       console.log('🔥 DASHBOARD STATS - Sample appointment dates:', todayAppointments.slice(0, 3).map(apt => ({
         id: apt.id,
         appointmentDate: apt.appointmentDate,
@@ -1915,7 +1947,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         patientsToday: todayAppointments.length,
         completedAppointments: completedAppointments.length,
         revenue: revenue,
-        activeStaff: await storage.getActiveStaffCount(),
+        activeStaff: await storage.getActiveStaffCountByClinic(adminClinicId),
       };
 
       console.log('🔥 DASHBOARD STATS - Final stats:', stats);
@@ -2009,8 +2041,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Medicine management routes
   app.get("/api/medicines", authMiddleware, async (req, res) => {
     try {
-      const medicines = await storage.getAllMedicines();
-      res.json(medicines);
+      // For admin users, filter by clinic ID
+      if (req.user!.role === 'admin' && req.user!.clinicId) {
+        const medicines = await storage.getMedicinesByClinic(req.user!.clinicId);
+        console.log('🔥 MEDICINES - Admin fetching for clinic:', req.user!.clinicId, 'Count:', medicines.length);
+        res.json(medicines);
+      } else {
+        const medicines = await storage.getAllMedicines();
+        res.json(medicines);
+      }
     } catch (error: any) {
       res.status(500).json({ message: error.message });
     }
@@ -2107,7 +2146,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "Admin access required" });
       }
 
-      const tokens = await storage.getQueueTokens();
+      // Get admin's clinic ID
+      const adminClinicId = req.user!.clinicId;
+      console.log('🔥 QUEUE ADMIN - Admin clinic ID:', adminClinicId);
+      
+      if (!adminClinicId) {
+        return res.status(400).json({ message: "Admin user has no associated clinic" });
+      }
+
+      const tokens = await storage.getQueueTokensByClinic(adminClinicId);
+      console.log('🔥 QUEUE ADMIN - Found tokens for clinic:', tokens.length);
       res.json(tokens);
     } catch (error: any) {
       res.status(400).json({ message: error.message });
@@ -2368,12 +2416,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "Admin access required" });
       }
 
+      // Get admin's clinic ID
+      const adminClinicId = req.user!.clinicId;
+      console.log('🔥 DAILY REPORTS - Admin clinic ID:', adminClinicId);
+      
+      if (!adminClinicId) {
+        return res.status(400).json({ message: "Admin user has no associated clinic" });
+      }
+
       const today = new Date();
       today.setHours(0, 0, 0, 0);
       const tomorrow = new Date(today);
       tomorrow.setDate(tomorrow.getDate() + 1);
 
-      const appointments = await storage.getAppointmentsByDateRange(today, tomorrow);
+      const appointments = await storage.getAppointmentsByDateRange(today, tomorrow, adminClinicId);
+      console.log('🔥 DAILY REPORTS - Found appointments for clinic:', appointments.length);
       const completedAppointments = appointments.filter(apt => apt.status === 'completed');
       const cancelledAppointments = appointments.filter(apt => apt.status === 'cancelled');
       
@@ -2414,9 +2471,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "Admin or staff access required" });
       }
 
-      const patients = await storage.getAllPatients();
-      console.log('🔥 PATIENTS ENDPOINT - Found patients:', patients.length);
-      res.json(patients);
+      // For admin users, filter by clinic ID
+      if (req.user!.role === 'admin' && req.user!.clinicId) {
+        const patients = await storage.getPatientsByClinic(req.user!.clinicId);
+        console.log('🔥 PATIENTS ENDPOINT - Admin found patients for clinic:', patients.length);
+        res.json(patients);
+      } else {
+        const patients = await storage.getAllPatients();
+        console.log('🔥 PATIENTS ENDPOINT - Found patients:', patients.length);
+        res.json(patients);
+      }
     } catch (error: any) {
       console.error('🔥 PATIENTS ENDPOINT - Error:', error);
       res.status(400).json({ message: error.message });
