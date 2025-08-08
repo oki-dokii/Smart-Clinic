@@ -757,12 +757,19 @@ export class DatabaseStorage implements IStorage {
 
   async deleteFutureReminders(prescriptionId: string): Promise<boolean> {
     try {
-      const now = new Date();
+      // Delete all reminders from today onwards (including today's remaining reminders)
+      const today = new Date();
+      today.setHours(0, 0, 0, 0); // Start of today
+      
       await db.delete(medicineReminders)
         .where(and(
           eq(medicineReminders.prescriptionId, prescriptionId),
-          gte(medicineReminders.scheduledAt, now)
+          gte(medicineReminders.scheduledAt, today),
+          eq(medicineReminders.isTaken, false), // Only delete untaken reminders
+          eq(medicineReminders.isSkipped, false) // Only delete unskipped reminders
         ));
+      
+      console.log('🔥 Deleted future reminders from today onwards for prescription:', prescriptionId);
       return true;
     } catch (error) {
       console.error('Error deleting future reminders:', error);
