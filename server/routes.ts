@@ -950,7 +950,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         priority: z.number().default(1)
       }).parse(req.body);
 
-      const tokenNumber = await storage.getNextTokenNumber(doctorId);
+      const tokenNumber = await storage.getNextTokenNumber(doctorId, appointmentId);
       const queueToken = await storage.createQueueToken({
         tokenNumber,
         patientId: req.user!.id,
@@ -969,6 +969,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Test endpoint to add queue token for testing (admin only)
+  // Reorder queue by appointment time (admin only)
+  app.post("/api/queue/reorder", authMiddleware, requireRole(['admin']), async (req, res) => {
+    try {
+      const { doctorId } = z.object({
+        doctorId: z.string()
+      }).parse(req.body);
+
+      await storage.reorderQueueByAppointmentTime(doctorId);
+      
+      // Trigger WebSocket broadcast for live queue updates
+      await queueService.broadcastWebSocketUpdate(doctorId);
+
+      res.json({ success: true, message: "Queue reordered by appointment time" });
+    } catch (error: any) {
+      console.error('🔥 QUEUE REORDER ERROR:', error);
+      res.status(400).json({ message: error.message });
+    }
+  });
+
   app.post("/api/queue/test-add", authMiddleware, requireRole(['admin']), async (req, res) => {
     try {
       const { patientId, doctorId } = z.object({

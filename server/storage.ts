@@ -564,7 +564,13 @@ export class DatabaseStorage implements IStorage {
     return result || undefined;
   }
 
-  async getNextTokenNumber(doctorId: string): Promise<number> {
+  async getNextTokenNumber(doctorId: string, appointmentId?: string): Promise<number> {
+    // If there's an appointmentId, assign token number based on appointment time order
+    if (appointmentId) {
+      return this.getTokenNumberByAppointmentTime(doctorId, appointmentId);
+    }
+    
+    // Fallback to sequential numbering for walk-ins
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const tomorrow = new Date(today);
@@ -581,6 +587,94 @@ export class DatabaseStorage implements IStorage {
     ));
     
     return (result?.maxToken || 0) + 1;
+  }
+
+  async getTokenNumberByAppointmentTime(doctorId: string, appointmentId: string): Promise<number> {
+    // Get the appointment to find its time
+    const appointment = await db.select()
+      .from(appointments)
+      .where(eq(appointments.id, appointmentId))
+      .limit(1);
+    
+    if (!appointment.length) {
+      // Fallback to sequential if appointment not found
+      return this.getNextTokenNumber(doctorId);
+    }
+    
+    const appointmentTime = appointment[0].appointmentDate;
+    
+    // Get all appointments for today for this doctor, ordered by time
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    
+    const todaysAppointments = await db.select()
+      .from(appointments)
+      .where(and(
+        eq(appointments.doctorId, doctorId),
+        gte(appointments.appointmentDate, today),
+        lte(appointments.appointmentDate, tomorrow)
+      ))
+      .orderBy(asc(appointments.appointmentDate));
+    
+    // Find the position of this appointment in the time-ordered list
+    const appointmentIndex = todaysAppointments.findIndex(apt => apt.id === appointmentId);
+    
+    if (appointmentIndex === -1) {
+      // Fallback if appointment not found in today's list
+      return this.getNextTokenNumber(doctorId);
+    }
+    
+    // Token number should be based on appointment time order (1-indexed)
+    return appointmentIndex + 1;
+  }
+
+  async reorderQueueByAppointmentTime(doctorId: string): Promise<void> {
+    // Get all queue tokens for this doctor for today
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+
+    const queueTokens = await db.select()
+      .from(queueTokens)
+      .leftJoin(appointments, eq(queueTokens.appointmentId, appointments.id))
+      .where(and(
+        eq(queueTokens.doctorId, doctorId),
+        gte(queueTokens.createdAt, today),
+        lte(queueTokens.createdAt, tomorrow)
+      ));
+
+    // Sort tokens by appointment time (with walk-ins last)
+    const sortedTokens = queueTokens.sort((a, b) => {
+      const aTime = a.appointments?.appointmentDate;
+      const bTime = b.appointments?.appointmentDate;
+      
+      // If both have appointments, sort by appointment time
+      if (aTime && bTime) {
+        return new Date(aTime).getTime() - new Date(bTime).getTime();
+      }
+      
+      // If only one has an appointment, put that one first
+      if (aTime && !bTime) return -1;
+      if (!aTime && bTime) return 1;
+      
+      // If neither has an appointment, sort by creation time (walk-ins)
+      return new Date(a.queue_tokens.createdAt).getTime() - new Date(b.queue_tokens.createdAt).getTime();
+    });
+
+    // Update token numbers to match the new order
+    for (let i = 0; i < sortedTokens.length; i++) {
+      const token = sortedTokens[i];
+      const newTokenNumber = i + 1;
+      
+      if (token.queue_tokens.tokenNumber !== newTokenNumber) {
+        await db.update(queueTokens)
+          .set({ tokenNumber: newTokenNumber })
+          .where(eq(queueTokens.id, token.queue_tokens.id));
+      }
+    }
   }
 
   async updateQueueTokenStatus(id: string, status: string, timestamp?: Date): Promise<QueueToken | undefined> {
