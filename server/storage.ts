@@ -394,7 +394,7 @@ export class DatabaseStorage implements IStorage {
     console.log(`Storage: Getting appointments for user ${userId} with role ${role}`);
     console.log(`Storage: Looking for appointments where patientId = ${userId}`);
     
-    // For dashboard context, show only future scheduled/confirmed appointments where the user is the patient
+    // For dashboard context, show only the next appointment until it's completed
     const now = new Date();
     const appointmentRecords = await db.select().from(appointments)
       .where(
@@ -404,7 +404,8 @@ export class DatabaseStorage implements IStorage {
           sql`${appointments.status} IN ('scheduled', 'confirmed', 'pending_approval')`
         )
       )
-      .orderBy(asc(appointments.appointmentDate));
+      .orderBy(asc(appointments.appointmentDate))
+      .limit(1); // Only show the next appointment
     
     console.log(`Storage: Raw Drizzle query returned ${appointmentRecords.length} future appointments`);
     if (appointmentRecords.length > 0) {
@@ -478,10 +479,13 @@ export class DatabaseStorage implements IStorage {
   async getAppointments(userId?: string): Promise<(Appointment & { patient: User; doctor: User })[]> {
     console.log('Storage: Getting appointments for admin...');
     
-    // For admin dashboard, exclude completed, cancelled, and no_show appointments
+    // For admin dashboard, prioritize pending approvals and show all active appointments
     const appointmentRecords = await db.select().from(appointments)
       .where(sql`${appointments.status} NOT IN ('completed', 'cancelled', 'no_show')`)
-      .orderBy(desc(appointments.appointmentDate));
+      .orderBy(
+        sql`CASE WHEN ${appointments.status} = 'pending_approval' THEN 0 ELSE 1 END`,
+        desc(appointments.appointmentDate)
+      );
     console.log('Storage: Direct query found active appointments:', appointmentRecords?.length || 0);
     
     // Manually join with users
