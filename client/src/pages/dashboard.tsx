@@ -173,6 +173,16 @@ export default function SmartClinicDashboard() {
     refetchInterval: 30000, // Check every 30 seconds for real-time updates
   });
 
+  // Get admin queue data for full queue view - use admin endpoint for modal
+  const { data: adminQueue = [] } = useQuery({
+    queryKey: ["/api/queue/admin"], 
+    refetchInterval: 3000,
+    retry: false, // Don't retry if unauthorized
+    onError: (error) => {
+      console.log("Admin queue access denied, using empty data");
+    }
+  });
+
   // Process delay notifications
   const delayNotificationsArray = Array.isArray(delayNotifications) ? delayNotifications : [];
   const relevantDelays = delayNotificationsArray.filter((d: any) => 
