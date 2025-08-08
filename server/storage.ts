@@ -600,6 +600,15 @@ export class DatabaseStorage implements IStorage {
     return updatedToken || undefined;
   }
 
+  async updateQueueTokenWaitTime(id: string, estimatedWaitTime: number): Promise<QueueToken | undefined> {
+    const [updatedToken] = await db.update(queueTokens)
+      .set({ estimatedWaitTime })
+      .where(eq(queueTokens.id, id))
+      .returning();
+    
+    return updatedToken || undefined;
+  }
+
   async getPatientQueuePosition(patientId: string, doctorId?: string): Promise<QueueToken | undefined> {
     let whereClause = and(
       eq(queueTokens.patientId, patientId),

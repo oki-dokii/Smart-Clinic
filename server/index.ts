@@ -2,6 +2,7 @@ import 'dotenv/config';
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
+import { queueService } from "./services/queue";
 
 const app = express();
 app.use(express.json());
@@ -68,5 +69,15 @@ app.use((req, res, next) => {
     reusePort: true,
   }, () => {
     log(`serving on port ${port}`);
+    
+    // Start automatic queue wait time updates every 60 seconds
+    setInterval(async () => {
+      try {
+        console.log('🔥 Running automatic queue wait time update...');
+        await queueService.broadcastWebSocketUpdate();
+      } catch (error) {
+        console.error('Error updating queue wait times:', error);
+      }
+    }, 60000); // 60 seconds
   });
 })();

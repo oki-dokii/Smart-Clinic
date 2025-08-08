@@ -22,6 +22,7 @@ export default function LiveQueueTracker() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [user, setUser] = useState<any>(null);
+  const [currentTime, setCurrentTime] = useState(new Date());
 
   useEffect(() => {
     const token = localStorage.getItem("auth_token");
@@ -34,6 +35,34 @@ export default function LiveQueueTracker() {
     
     setUser(JSON.parse(userData));
   }, [setLocation]);
+
+  // Update current time every second for real-time calculations
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, []);
+
+  // Calculate dynamic wait time based on creation time and position
+  const calculateDynamicWaitTime = (queueToken: any, position: number): number => {
+    if (!queueToken?.createdAt) return 0;
+    
+    const createdAt = new Date(queueToken.createdAt);
+    const elapsedMinutes = Math.floor((currentTime.getTime() - createdAt.getTime()) / (1000 * 60));
+    
+    // Average consultation time per patient (15 minutes)
+    const averageConsultationTime = 15;
+    
+    // Calculate initial wait time based on queue position
+    const baseWaitTime = (position - 1) * averageConsultationTime;
+    
+    // Subtract elapsed time to get remaining wait time
+    const remainingWaitTime = Math.max(0, baseWaitTime - elapsedMinutes);
+    
+    return remainingWaitTime;
+  };
 
   // Get patient's queue position
   const { data: currentQueuePosition } = useQuery({
@@ -61,6 +90,15 @@ export default function LiveQueueTracker() {
   const queueArray = Array.isArray(adminQueue) ? adminQueue : [];
   const currentlyServing = queueArray.find((token: any) => token.status === 'called' || token.status === 'in_progress');
   const waitingQueue = queueArray.filter((token: any) => token.status === 'waiting');
+
+  // Calculate the current user's queue position for dynamic wait time
+  const currentUserPosition = queuePosition?.tokenNumber ? 
+    waitingQueue.findIndex((token: any) => token.tokenNumber === queuePosition.tokenNumber) + 1 : 0;
+  
+  // Calculate dynamic wait time for the current user
+  const dynamicWaitTime = queuePosition?.createdAt && currentUserPosition > 0 ? 
+    calculateDynamicWaitTime(queuePosition, currentUserPosition) : 
+    queuePosition?.estimatedWaitTime || 0;
 
   const refreshQueue = () => {
     queryClient.invalidateQueries({ queryKey: ["/api/queue/position"] });
@@ -135,7 +173,12 @@ export default function LiveQueueTracker() {
                   #{queuePosition?.tokenNumber || 'N/A'}
                 </div>
                 <div className="text-lg mb-4 opacity-90">
-                  Estimated wait: {queuePosition?.estimatedWaitTime ? `${queuePosition.estimatedWaitTime} minutes` : 'Check with reception'}
+                  Estimated wait: {dynamicWaitTime > 0 ? `${dynamicWaitTime} minutes` : 'Check with reception'}
+                  {dynamicWaitTime > 0 && (
+                    <div className="text-sm opacity-75 mt-1">
+                      Updates in real-time
+                    </div>
+                  )}
                 </div>
                 {queuePosition?.status === 'called' && (
                   <Badge className="bg-green-600 text-white text-lg px-4 py-2">
@@ -224,6 +267,10 @@ export default function LiveQueueTracker() {
                     const borderColor = isCurrentUser ? 'border-l-4 border-l-blue-500' : 
                                        isNext ? 'border-l-4 border-l-green-500' : '';
                     
+                    // Calculate dynamic wait time for this token
+                    const tokenPosition = index + 1;
+                    const tokenDynamicWaitTime = calculateDynamicWaitTime(token, tokenPosition);
+                    
                     return (
                       <div key={token.id} className={`flex items-center justify-between p-4 rounded-lg ${bgColor} ${borderColor}`}>
                         <div className="flex items-center gap-3">
@@ -237,17 +284,19 @@ export default function LiveQueueTracker() {
                               {isCurrentUser && <span className="ml-2 text-blue-600 font-semibold">- Your Turn</span>}
                             </div>
                             <div className="text-sm text-gray-500">
-                              Est. time: {new Date(Date.now() + index * 15 * 60000).toLocaleTimeString('en-IN', {
-                                hour: '2-digit', 
-                                minute: '2-digit',
-                                timeZone: 'Asia/Kolkata'
-                              })}
+                              Est. time: {tokenDynamicWaitTime > 0 ? 
+                                new Date(Date.now() + tokenDynamicWaitTime * 60000).toLocaleTimeString('en-IN', {
+                                  hour: '2-digit', 
+                                  minute: '2-digit',
+                                  timeZone: 'Asia/Kolkata'
+                                }) : 'Soon'
+                              }
                             </div>
                           </div>
                         </div>
                         <div className="text-right">
                           <div className="font-medium">
-                            {index === 0 ? 'Now' : `~${(index) * 15}min`}
+                            {tokenDynamicWaitTime === 0 ? 'Now' : `~${tokenDynamicWaitTime}min`}
                           </div>
                           <div className="text-sm text-gray-500">wait time</div>
                         </div>
