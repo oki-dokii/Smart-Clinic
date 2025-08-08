@@ -66,6 +66,21 @@ export default function SmartClinicDashboard() {
   const { theme, toggleTheme } = useTheme();
   const queryClient = useQueryClient();
   const [user, setUser] = useState<any>(null);
+
+  // Helper function to check if patient has appointment today
+  const hasAppointmentToday = (appointments: any[], doctorId?: string) => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+
+    return appointments?.some((appointment: any) => {
+      const appointmentDate = new Date(appointment.appointmentDate);
+      appointmentDate.setHours(0, 0, 0, 0);
+      const isToday = appointmentDate >= today && appointmentDate < tomorrow;
+      return isToday && (!doctorId || appointment.doctorId === doctorId);
+    });
+  };
   const [showBookingModal, setShowBookingModal] = useState(false);
   const [showEmergencyModal, setShowEmergencyModal] = useState(false);
   const [showCancelModal, setShowCancelModal] = useState(false);
@@ -745,17 +760,34 @@ export default function SmartClinicDashboard() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              {delayNotifications && delayNotifications.length > 0 ? (
-                (() => {
-                  // Group delay notifications by doctor and keep only the latest one for each doctor
-                  const latestDelaysByDoctor = delayNotifications.reduce((acc: any, delay: any) => {
+              {(() => {
+                // Only show delay notifications if patient has appointment today
+                if (!hasAppointmentToday(appointments)) {
+                  return (
+                    <div>
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="text-lg text-gray-500">No appointments today</span>
+                      </div>
+                      <div className="text-sm text-gray-500 mb-4">Doctor status will be shown on your appointment day</div>
+                    </div>
+                  );
+                }
+
+                // Group delay notifications by doctor and keep only the latest one for each doctor
+                // Filter to only show delays for doctors with whom patient has appointment today
+                const latestDelaysByDoctor = delayNotifications.reduce((acc: any, delay: any) => {
+                  if (hasAppointmentToday(appointments, delay.doctorId)) {
                     if (!acc[delay.doctorId] || new Date(delay.createdAt) > new Date(acc[delay.doctorId].createdAt)) {
                       acc[delay.doctorId] = delay;
                     }
-                    return acc;
-                  }, {});
-                  
-                  return Object.values(latestDelaysByDoctor).map((delay: any) => {
+                  }
+                  return acc;
+                }, {});
+                
+                const relevantDelays = Object.values(latestDelaysByDoctor);
+                
+                if (relevantDelays.length > 0) {
+                  return relevantDelays.map((delay: any) => {
                     const doctor = doctors.find(d => d.id === delay.doctorId);
                     return (
                       <div key={delay.id} className="mb-4">
@@ -771,15 +803,17 @@ export default function SmartClinicDashboard() {
                       </div>
                     );
                   });
-                })()
-              ) : (
-                <div>
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="text-2xl font-bold text-green-600">On Time</span>
-                  </div>
-                  <div className="text-sm text-gray-600 mb-4">All doctors are on schedule</div>
-                </div>
-              )}
+                } else {
+                  return (
+                    <div>
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="text-2xl font-bold text-green-600">On Time</span>
+                      </div>
+                      <div className="text-sm text-gray-600 mb-4">Your doctor is on schedule today</div>
+                    </div>
+                  );
+                }
+              })()
               <Button 
                 className="w-full bg-blue-500 hover:bg-blue-600"
                 onClick={() => {
@@ -800,14 +834,15 @@ export default function SmartClinicDashboard() {
 
         {/* Main Content Grid */}
         <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 sm:gap-8">
-          {/* Live Queue Tracker */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Activity className="w-5 h-5 text-blue-500" />
-                Live Queue Tracker
-              </CardTitle>
-            </CardHeader>
+          {/* Live Queue Tracker - Only show if patient has appointment today */}
+          {hasAppointmentToday(appointments) ? (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Activity className="w-5 h-5 text-blue-500" />
+                  Live Queue Tracker
+                </CardTitle>
+              </CardHeader>
             <CardContent>
               <div className="bg-blue-500 text-white rounded-lg p-6 text-center mb-6">
                 <div className="text-sm mb-2">
