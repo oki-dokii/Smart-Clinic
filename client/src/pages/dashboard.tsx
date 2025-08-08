@@ -50,9 +50,7 @@ const feedbackSchema = z.object({
   rating: z.string().refine((val) => parseInt(val) >= 1 && parseInt(val) <= 5, {
     message: "Please provide a rating between 1 and 5",
   }),
-  comment: z.string().min(10, {
-    message: "Comment must be at least 10 characters long",
-  }),
+  comment: z.string().optional(),
   categories: z.array(z.string()).min(1, {
     message: "Please select at least one feedback category",
   }),
@@ -1353,16 +1351,16 @@ export default function SmartClinicDashboard() {
                 name="comment"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Your Comments</FormLabel>
+                    <FormLabel>Your Comments (Optional)</FormLabel>
                     <FormControl>
                       <Textarea
-                        placeholder="Please share your detailed feedback, suggestions, or concerns..."
+                        placeholder="Optional: Share any additional thoughts, suggestions, or concerns..."
                         className="min-h-[100px]"
                         {...field}
                       />
                     </FormControl>
                     <FormDescription>
-                      Minimum 10 characters required
+                      Optional field - leave blank if you prefer
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
