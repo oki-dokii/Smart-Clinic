@@ -1889,9 +1889,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const tomorrow = new Date(today);
       tomorrow.setDate(tomorrow.getDate() + 1);
 
+      console.log('🔥 DASHBOARD STATS - Date range:', { 
+        today: today.toISOString(), 
+        tomorrow: tomorrow.toISOString(),
+        todayLocal: today.toLocaleDateString(),
+        tomorrowLocal: tomorrow.toLocaleDateString()
+      });
+
       // Fetch basic stats
       const todayAppointments = await storage.getAppointmentsByDateRange(today, tomorrow);
+      console.log('🔥 DASHBOARD STATS - Found appointments:', todayAppointments.length);
+      console.log('🔥 DASHBOARD STATS - Sample appointment dates:', todayAppointments.slice(0, 3).map(apt => ({
+        id: apt.id,
+        appointmentDate: apt.appointmentDate,
+        status: apt.status
+      })));
+      
       const completedAppointments = todayAppointments.filter((apt: any) => apt.status === 'completed');
+      console.log('🔥 DASHBOARD STATS - Completed appointments:', completedAppointments.length);
+      console.log('🔥 DASHBOARD STATS - Completed IDs:', completedAppointments.map(apt => ({ id: apt.id, status: apt.status })));
+      
       const revenue = completedAppointments.length * 150; // Assuming $150 per consultation
 
       const stats = {
@@ -1901,8 +1918,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         activeStaff: await storage.getActiveStaffCount(),
       };
 
+      console.log('🔥 DASHBOARD STATS - Final stats:', stats);
       res.json(stats);
     } catch (error: any) {
+      console.error('🔥 DASHBOARD STATS - Error:', error);
       res.status(400).json({ message: error.message });
     }
   });
