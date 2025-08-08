@@ -2256,23 +2256,23 @@ export default function ClinicDashboard() {
                     <CardContent>
                       <div className="flex items-center gap-2 mb-2">
                         <span className="text-3xl font-bold">
-                          {staffMembers ? staffMembers.filter((s: any) => s.isActive).length : 0}/{staffMembers ? staffMembers.length : 0}
+                          {presentStaff}/{totalStaff}
                         </span>
                         <Badge className={`text-xs ${
-                          staffMembers && staffMembers.filter((s: any) => s.isActive).length > staffMembers.length * 0.7 
+                          totalStaff > 0 && presentStaff > totalStaff * 0.7 
                             ? 'bg-green-100 text-green-800' 
                             : 'bg-orange-100 text-orange-800'
                         }`}>
-                          {staffMembers ? 
-                            `${Math.round((staffMembers.filter((s: any) => s.isActive).length / staffMembers.length) * 100)}%` 
+                          {totalStaff > 0 ? 
+                            `${Math.round((presentStaff / totalStaff) * 100)}%` 
                             : '0%'
                           }
                         </Badge>
                       </div>
                       <p className="text-sm text-gray-600">
-                        {staffMembers ? staffMembers.filter((s: any) => s.role === 'doctor' && s.isActive).length : 0} doctors, {' '}
-                        {staffMembers ? staffMembers.filter((s: any) => ['staff', 'nurse'].includes(s.role) && s.isActive).length : 0} staff, {' '}
-                        {staffMembers ? staffMembers.filter((s: any) => s.role === 'admin' && s.isActive).length : 0} admin
+                        {staffPresence.filter(p => p.isPresent && p.staff.role === 'doctor').length} doctors, {' '}
+                        {staffPresence.filter(p => p.isPresent && ['staff', 'nurse'].includes(p.staff.role)).length} staff, {' '}
+                        {staffPresence.filter(p => p.isPresent && p.staff.role === 'admin').length} admin
                       </p>
                     </CardContent>
                   </Card>
