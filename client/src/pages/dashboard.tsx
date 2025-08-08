@@ -1646,9 +1646,9 @@ export default function SmartClinicDashboard() {
                 description: "Queue information has been updated.",
               });
             }}
-            onJoinQueue={handleJoinQueue}
-            joinQueuePending={joinQueueMutation.isPending}
-            isInQueue={(queuePosition as any)?.status === 'waiting'}
+            onJoinQueue={() => {}} // Disabled as requested
+            joinQueuePending={false}
+            isInQueue={false} // No join queue functionality
           />
         </DialogContent>
       </Dialog>
