@@ -197,24 +197,32 @@
 
 /* Flash animations for urgent notifications */
 @keyframes flash-red {
-  0%, 50%, 100% { 
-    background: linear-gradient(to right, hsl(0, 84%, 98%), white);
-    border-left-color: hsl(var(--healthcare-red));
+  0%, 100% { 
+    background-color: hsl(0, 84%, 60%);
+    color: white;
+    transform: scale(1);
+    box-shadow: 0 0 0 0 hsl(0, 84%, 60%, 0.7);
   }
-  25% { 
-    background: linear-gradient(to right, hsl(0, 84%, 95%), hsl(0, 84%, 98%));
-    border-left-color: hsl(0, 84%, 60%);
+  50% { 
+    background-color: hsl(0, 100%, 50%);
+    color: white;
+    transform: scale(1.02);
+    box-shadow: 0 0 0 10px hsl(0, 84%, 60%, 0);
   }
 }
 
 @keyframes flash-orange {
-  0%, 50%, 100% { 
-    background-color: transparent;
-    color: #ea580c;
+  0%, 100% { 
+    background-color: hsl(24, 95%, 53%);
+    color: white;
+    transform: scale(1);
+    box-shadow: 0 0 0 0 hsl(24, 95%, 53%, 0.7);
   }
-  25% { 
-    background-color: hsl(24, 95%, 95%);
-    color: #c2410c;
+  50% { 
+    background-color: hsl(24, 100%, 45%);
+    color: white;
+    transform: scale(1.02);
+    box-shadow: 0 0 0 10px hsl(24, 95%, 53%, 0);
   }
 }
 
@@ -222,52 +230,86 @@
   0%, 100% {
     transform: scale(1);
     background-color: hsl(0, 84%, 60%);
+    box-shadow: 0 0 0 0 hsl(0, 84%, 60%, 0.5);
   }
   50% {
     transform: scale(1.05);
-    background-color: hsl(0, 84%, 50%);
+    background-color: hsl(0, 100%, 50%);
+    box-shadow: 0 0 0 15px hsl(0, 84%, 60%, 0);
   }
 }
 
 @keyframes pulse-orange {
   0%, 100% {
     transform: scale(1);
-    background-color: hsl(24, 95%, 90%);
-    color: hsl(24, 95%, 30%);
+    background-color: hsl(24, 95%, 53%);
+    color: white;
+    box-shadow: 0 0 0 0 hsl(24, 95%, 53%, 0.5);
   }
   50% {
     transform: scale(1.05);
-    background-color: hsl(24, 95%, 85%);
-    color: hsl(24, 95%, 25%);
+    background-color: hsl(24, 100%, 45%);
+    color: white;
+    box-shadow: 0 0 0 15px hsl(24, 95%, 53%, 0);
   }
 }
 
 /* Flash animation classes */
 .flash-urgent {
-  animation: flash-red 2s infinite;
+  animation: flash-red 1.5s infinite;
+  border-radius: 6px;
+  padding: 4px 8px;
+  font-weight: 600;
 }
 
 .flash-delay {
-  animation: flash-orange 2s infinite;
+  animation: flash-orange 1.5s infinite;
+  border-radius: 6px;
+  padding: 4px 8px;
+  font-weight: 600;
 }
 
 .pulse-urgent {
-  animation: pulse-red 2s infinite;
+  animation: pulse-red 1.5s infinite;
+  color: white !important;
+  font-weight: 600;
 }
 
 .pulse-delay {
-  animation: pulse-orange 2s infinite;
+  animation: pulse-orange 1.5s infinite;
+  color: white !important;
+  font-weight: 600;
 }
 
 /* Glow effect for urgent items */
 .glow-urgent {
-  box-shadow: 0 0 10px hsl(0, 84%, 80%), 0 0 20px hsl(0, 84%, 70%), 0 0 30px hsl(0, 84%, 60%);
-  animation: pulse-red 2s infinite;
+  box-shadow: 0 0 20px hsl(0, 84%, 60%, 0.6), 0 0 40px hsl(0, 84%, 60%, 0.4), 0 0 60px hsl(0, 84%, 60%, 0.2);
+  border: 2px solid hsl(0, 84%, 60%);
+  animation: pulse-glow-red 2s infinite;
 }
 
 .glow-delay {
-  box-shadow: 0 0 10px hsl(24, 95%, 80%), 0 0 20px hsl(24, 95%, 70%), 0 0 30px hsl(24, 95%, 60%);
-  animation: pulse-orange 2s infinite;
+  box-shadow: 0 0 20px hsl(24, 95%, 53%, 0.6), 0 0 40px hsl(24, 95%, 53%, 0.4), 0 0 60px hsl(24, 95%, 53%, 0.2);
+  border: 2px solid hsl(24, 95%, 53%);
+  animation: pulse-glow-orange 2s infinite;
+}
+
+@keyframes pulse-glow-red {
+  0%, 100% {
+    box-shadow: 0 0 20px hsl(0, 84%, 60%, 0.6), 0 0 40px hsl(0, 84%, 60%, 0.4), 0 0 60px hsl(0, 84%, 60%, 0.2);
+  }
+  50% {
+    box-shadow: 0 0 30px hsl(0, 84%, 60%, 0.8), 0 0 60px hsl(0, 84%, 60%, 0.6), 0 0 90px hsl(0, 84%, 60%, 0.4);
+  }
+}
+
+@keyframes pulse-glow-orange {
+  0%, 100% {
+    box-shadow: 0 0 20px hsl(24, 95%, 53%, 0.6), 0 0 40px hsl(24, 95%, 53%, 0.4), 0 0 60px hsl(24, 95%, 53%, 0.2);
+  }
+  50% {
+    box-shadow: 0 0 30px hsl(24, 95%, 53%, 0.8), 0 0 60px hsl(24, 95%, 53%, 0.6), 0 0 90px hsl(24, 95%, 53%, 0.4);
+  }
 }
 
 /* Appointment card */

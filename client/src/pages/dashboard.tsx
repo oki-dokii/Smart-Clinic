@@ -743,17 +743,17 @@ export default function SmartClinicDashboard() {
             </CardHeader>
             <CardContent>
               <div className="flex items-center gap-2 mb-1">
-                <span className={`text-2xl font-bold ${hasOverdue ? 'flash-urgent text-red-600' : ''}`}>
+                <span className={`text-2xl font-bold ${hasOverdue ? 'text-white' : ''}`}>
                   {Array.isArray(reminders) ? reminders.filter((r: any) => !r.isTaken).length : 0}
                 </span>
                 {hasOverdue && (
-                  <Badge className="bg-red-500 text-white text-xs pulse-urgent">Urgent</Badge>
+                  <Badge className="bg-red-600 text-white text-sm font-bold flash-urgent ml-2">URGENT</Badge>
                 )}
               </div>
-              <div className={`text-sm mb-4 ${
-                hasOverdue ? 'flash-urgent text-red-600 font-medium' : 'text-gray-600'
+              <div className={`text-sm mb-4 font-medium ${
+                hasOverdue ? 'flash-urgent text-white' : 'text-gray-600'
               }`}>
-                {totalOverdue} dose(s) overdue
+                {hasOverdue ? `🚨 ${totalOverdue} DOSE(S) OVERDUE` : `${totalOverdue} dose(s) overdue`}
               </div>
               <Button 
                 className={`w-full ${hasOverdue ? 'bg-red-500 hover:bg-red-600 pulse-urgent' : 'bg-orange-500 hover:bg-orange-600'}`}
@@ -804,12 +804,13 @@ export default function SmartClinicDashboard() {
                         return (
                           <div key={delay.id} className="mb-4 glow-delay p-3 rounded-lg">
                             <div className="flex items-center gap-2 mb-1">
-                              <span className="text-2xl font-bold text-orange-600 flash-delay">Delayed</span>
+                              <span className="text-2xl font-bold flash-delay text-white">Delayed</span>
+                              <Badge className="bg-orange-600 text-white text-sm font-bold flash-delay">URGENT</Badge>
                             </div>
-                            <div className="text-sm text-gray-600 mb-4 flash-delay">
-                              Dr. {doctor?.firstName || 'Unknown'} {doctor?.lastName || 'Doctor'} is running {delay.delayMinutes} minutes late
+                            <div className="text-sm mb-4 flash-delay text-white font-medium">
+                              🕒 Dr. {doctor?.firstName || 'Unknown'} {doctor?.lastName || 'Doctor'} is running {delay.delayMinutes} minutes late
                               {delay.reason && (
-                                <div className="text-xs text-gray-500 mt-1">Reason: {delay.reason}</div>
+                                <div className="text-xs mt-1 text-orange-100">Reason: {delay.reason}</div>
                               )}
                             </div>
                           </div>
