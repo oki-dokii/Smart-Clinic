@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import { Stethoscope, Phone, Shield } from "lucide-react";
+import { Stethoscope, Mail, Shield } from "lucide-react";
 
 interface AuthResponse {
   token: string;
@@ -19,32 +19,32 @@ interface AuthResponse {
 export default function LoginPage() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
-  const [step, setStep] = useState<"phone" | "otp">("phone");
-  const [phoneNumber, setPhoneNumber] = useState("");
+  const [step, setStep] = useState<"email" | "otp">("email");
+  const [email, setEmail] = useState("");
   const [otp, setOtp] = useState("");
   const [developmentOtp, setDevelopmentOtp] = useState<string | null>(null);
 
   const sendOtpMutation = useMutation({
-    mutationFn: async (phoneNumber: string) => {
-      const response = await apiRequest("POST", "/api/auth/send-otp", { phoneNumber });
+    mutationFn: async (email: string) => {
+      const response = await apiRequest("POST", "/api/auth/send-email-otp", { email });
       return response.json();
     },
     onSuccess: (data) => {
       setStep("otp");
       
-      // Check if development OTP is provided (when SMS fails)
+      // Check if development OTP is provided (when email fails)
       if (data.developmentOtp) {
         setDevelopmentOtp(data.developmentOtp);
         toast({
-          title: "SMS Failed - Development Mode",
-          description: `SMS delivery failed. Your OTP is: ${data.developmentOtp}`,
+          title: "Email Service Fallback - Development Mode",
+          description: `Email delivery fallback. Your OTP is: ${data.developmentOtp}`,
           variant: "destructive",
         });
       } else {
         setDevelopmentOtp(null);
         toast({
           title: "OTP Sent",
-          description: "Please check your phone for the verification code.",
+          description: "Please check your email for the verification code.",
         });
       }
     },
@@ -58,8 +58,8 @@ export default function LoginPage() {
   });
 
   const verifyOtpMutation = useMutation({
-    mutationFn: async ({ phoneNumber, otp }: { phoneNumber: string; otp: string }) => {
-      const response = await apiRequest("POST", "/api/auth/verify-otp", { phoneNumber, otp });
+    mutationFn: async ({ email, otp }: { email: string; otp: string }) => {
+      const response = await apiRequest("POST", "/api/auth/verify-email-otp", { email, otp });
       return response.json() as Promise<AuthResponse>;
     },
     onSuccess: (data) => {
@@ -73,7 +73,14 @@ export default function LoginPage() {
           : "Logged in successfully.",
       });
       
-      setLocation("/dashboard");
+      // Redirect based on role
+      if (data.user.role === 'admin') {
+        setLocation("/admin-dashboard");
+      } else if (data.user.role === 'staff' || data.user.role === 'doctor') {
+        setLocation("/dashboard");
+      } else {
+        setLocation("/dashboard");
+      }
     },
     onError: (error: any) => {
       toast({
@@ -86,15 +93,15 @@ export default function LoginPage() {
 
   const handleSendOtp = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!phoneNumber.trim()) {
+    if (!email.trim()) {
       toast({
         title: "Error",
-        description: "Please enter your phone number",
+        description: "Please enter your email address",
         variant: "destructive",
       });
       return;
     }
-    sendOtpMutation.mutate(phoneNumber);
+    sendOtpMutation.mutate(email);
   };
 
   const handleVerifyOtp = (e: React.FormEvent) => {
@@ -107,11 +114,11 @@ export default function LoginPage() {
       });
       return;
     }
-    verifyOtpMutation.mutate({ phoneNumber, otp });
+    verifyOtpMutation.mutate({ email, otp });
   };
 
   const handleResendOtp = () => {
-    sendOtpMutation.mutate(phoneNumber);
+    sendOtpMutation.mutate(email);
   };
 
   return (
@@ -131,31 +138,32 @@ export default function LoginPage() {
         <Card className="shadow-lg border-0">
           <CardHeader className="text-center pb-4">
             <CardTitle className="text-xl text-gray-900">
-              {step === "phone" ? "Sign In" : "Verify Phone"}
+              {step === "email" ? "Sign In" : "Verify Email"}
             </CardTitle>
             <p className="text-sm text-gray-600 mt-2">
-              {step === "phone" 
-                ? "Enter your phone number to receive a verification code"
-                : `We've sent a 6-digit code to ${phoneNumber}`
+              {step === "email" 
+                ? "Enter your email address to receive a verification code"
+                : `We've sent a 6-digit code to ${email}`
               }
             </p>
           </CardHeader>
           
           <CardContent className="space-y-6">
-            {step === "phone" ? (
+            {step === "email" ? (
               <form onSubmit={handleSendOtp} className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="phone">Phone Number</Label>
+                  <Label htmlFor="email">Email Address</Label>
                   <div className="relative">
-                    <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                    <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                     <Input
-                      id="phone"
-                      type="tel"
-                      placeholder="+1 (555) 123-4567"
-                      value={phoneNumber}
-                      onChange={(e) => setPhoneNumber(e.target.value)}
+                      id="email"
+                      type="email"
+                      placeholder="admin@smartclinic.com"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
                       className="pl-10"
                       disabled={sendOtpMutation.isPending}
+                      data-testid="input-email"
                     />
                   </div>
                 </div>
@@ -164,6 +172,7 @@ export default function LoginPage() {
                   type="submit" 
                   className="w-full bg-blue-500 hover:bg-blue-600"
                   disabled={sendOtpMutation.isPending}
+                  data-testid="button-send-otp"
                 >
                   {sendOtpMutation.isPending ? "Sending..." : "Send Verification Code"}
                 </Button>
@@ -173,7 +182,7 @@ export default function LoginPage() {
                 <div className="space-y-2">
                   <Label htmlFor="otp">Verification Code</Label>
                   
-                  {/* Development Helper - Show OTP hint when SMS fails */}
+                  {/* Development Helper - Show OTP hint when email fails */}
                   {developmentOtp && (
                     <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mb-4">
                       <div className="flex items-center space-x-2">
@@ -181,7 +190,7 @@ export default function LoginPage() {
                         <span className="text-xs text-yellow-700 font-medium">Development Mode</span>
                       </div>
                       <p className="text-xs text-yellow-600 mt-1">
-                        SMS delivery failed. Current OTP code: <strong>{developmentOtp}</strong>
+                        Email delivery failed. Current OTP code: <strong>{developmentOtp}</strong>
                       </p>
                     </div>
                   )}
@@ -209,6 +218,7 @@ export default function LoginPage() {
                   type="submit" 
                   className="w-full bg-blue-500 hover:bg-blue-600"
                   disabled={verifyOtpMutation.isPending}
+                  data-testid="button-verify-otp"
                 >
                   {verifyOtpMutation.isPending ? "Verifying..." : "Verify & Sign In"}
                 </Button>
@@ -220,6 +230,7 @@ export default function LoginPage() {
                     onClick={handleResendOtp}
                     disabled={sendOtpMutation.isPending}
                     className="text-sm"
+                    data-testid="button-resend-otp"
                   >
                     Didn't receive the code? Resend
                   </Button>
@@ -229,10 +240,11 @@ export default function LoginPage() {
                   <Button
                     type="button"
                     variant="ghost"
-                    onClick={() => setStep("phone")}
+                    onClick={() => setStep("email")}
                     className="text-sm"
+                    data-testid="button-change-email"
                   >
-                    Change phone number
+                    Change email address
                   </Button>
                 </div>
               </form>
@@ -245,7 +257,7 @@ export default function LoginPage() {
                 <span className="text-xs text-green-700 font-medium">Secure OTP Authentication</span>
               </div>
               <p className="text-xs text-green-600 mt-1">
-                Your phone number is verified using a secure one-time password
+                Your email address is verified using a secure one-time password
               </p>
             </div>
           </CardContent>
