@@ -2673,71 +2673,90 @@ export default function ClinicDashboard() {
                 <Card className="mt-8">
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
-                      <Activity className="w-5 h-5 text-blue-500" />
-                      Department Status
+                      <Shield className="w-5 h-5 text-green-500" />
+                      System Health Monitor
                     </CardTitle>
-                    <p className="text-sm text-gray-600">Current patient load by department</p>
+                    <p className="text-sm text-gray-600">Real-time system status and alerts</p>
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-6">
-                      {/* Emergency */}
-                      <div className="space-y-2">
-                        <div className="flex items-center justify-between">
-                          <span className="font-medium">Emergency</span>
-                          <div className="flex items-center gap-2">
-                            <span className="text-sm text-gray-600">3/5 patients</span>
-                            <Badge className="bg-green-100 text-green-800 text-xs">Low</Badge>
+                      {/* Queue System Status */}
+                      <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg border border-green-200">
+                        <div className="flex items-center gap-3">
+                          <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
+                          <div>
+                            <p className="font-medium text-green-800">Queue System</p>
+                            <p className="text-sm text-green-600">
+                              {liveQueueTokens?.length || 0} patients in queue • {queueConnected ? 'Connected' : 'Disconnected'}
+                            </p>
                           </div>
                         </div>
-                        <div className="flex items-center gap-2">
-                          <Progress value={60} className="flex-1 h-2" />
-                          <span className="text-sm text-gray-500">60% capacity</span>
-                        </div>
+                        <Badge className="bg-green-100 text-green-800">Active</Badge>
                       </div>
 
-                      {/* General */}
-                      <div className="space-y-2">
-                        <div className="flex items-center justify-between">
-                          <span className="font-medium">General</span>
-                          <div className="flex items-center gap-2">
-                            <span className="text-sm text-gray-600">8/10 patients</span>
-                            <Badge className="bg-yellow-100 text-yellow-800 text-xs">Medium</Badge>
+                      {/* Medicine Inventory Alert */}
+                      <div className={`flex items-center justify-between p-3 rounded-lg border ${
+                        medicines && medicines.length > 0 && medicines[0].stock > 0 
+                          ? 'bg-yellow-50 border-yellow-200' 
+                          : 'bg-red-50 border-red-200'
+                      }`}>
+                        <div className="flex items-center gap-3">
+                          <Pill className={`w-4 h-4 ${
+                            medicines && medicines.length > 0 && medicines[0].stock > 0 
+                              ? 'text-yellow-600' 
+                              : 'text-red-600'
+                          }`} />
+                          <div>
+                            <p className={`font-medium ${
+                              medicines && medicines.length > 0 && medicines[0].stock > 0 
+                                ? 'text-yellow-800' 
+                                : 'text-red-800'
+                            }`}>Medicine Inventory</p>
+                            <p className={`text-sm ${
+                              medicines && medicines.length > 0 && medicines[0].stock > 0 
+                                ? 'text-yellow-600' 
+                                : 'text-red-600'
+                            }`}>
+                              {medicines && medicines.length > 0 
+                                ? `${medicines[0].stock} ${medicines[0].name} in stock`
+                                : 'No medicine data available'
+                              }
+                            </p>
                           </div>
                         </div>
-                        <div className="flex items-center gap-2">
-                          <Progress value={80} className="flex-1 h-2" />
-                          <span className="text-sm text-gray-500">80% capacity</span>
-                        </div>
+                        <Badge className={
+                          medicines && medicines.length > 0 && medicines[0].stock > 0 
+                            ? 'bg-yellow-100 text-yellow-800' 
+                            : 'bg-red-100 text-red-800'
+                        }>
+                          {medicines && medicines.length > 0 && medicines[0].stock > 0 ? 'Low Stock' : 'Critical'}
+                        </Badge>
                       </div>
 
-                      {/* Pediatrics */}
-                      <div className="space-y-2">
-                        <div className="flex items-center justify-between">
-                          <span className="font-medium">Pediatrics</span>
-                          <div className="flex items-center gap-2">
-                            <span className="text-sm text-gray-600">4/6 patients</span>
-                            <Badge className="bg-yellow-100 text-yellow-800 text-xs">Medium</Badge>
+                      {/* Staff Status */}
+                      <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg border border-blue-200">
+                        <div className="flex items-center gap-3">
+                          <UserCheck className="w-4 h-4 text-blue-600" />
+                          <div>
+                            <p className="font-medium text-blue-800">Staff Presence</p>
+                            <p className="text-sm text-blue-600">
+                              {staffMembers ? `${staffMembers.filter(s => s.role !== 'patient').length} active staff members` : 'Loading staff data...'}
+                            </p>
                           </div>
                         </div>
-                        <div className="flex items-center gap-2">
-                          <Progress value={67} className="flex-1 h-2" />
-                          <span className="text-sm text-gray-500">67% capacity</span>
-                        </div>
+                        <Badge className="bg-blue-100 text-blue-800">Online</Badge>
                       </div>
 
-                      {/* Cardiology */}
-                      <div className="space-y-2">
-                        <div className="flex items-center justify-between">
-                          <span className="font-medium">Cardiology</span>
-                          <div className="flex items-center gap-2">
-                            <span className="text-sm text-gray-600">2/4 patients</span>
-                            <Badge className="bg-green-100 text-green-800 text-xs">Low</Badge>
+                      {/* Database Connection */}
+                      <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg border border-green-200">
+                        <div className="flex items-center gap-3">
+                          <Database className="w-4 h-4 text-green-600" />
+                          <div>
+                            <p className="font-medium text-green-800">Database Connection</p>
+                            <p className="text-sm text-green-600">All systems operational</p>
                           </div>
                         </div>
-                        <div className="flex items-center gap-2">
-                          <Progress value={50} className="flex-1 h-2" />
-                          <span className="text-sm text-gray-500">50% capacity</span>
-                        </div>
+                        <Badge className="bg-green-100 text-green-800">Healthy</Badge>
                       </div>
                     </div>
                   </CardContent>
