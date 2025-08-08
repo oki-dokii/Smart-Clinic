@@ -122,12 +122,12 @@ export default function SmartClinicDashboard() {
   });
 
   // Calculate overdue medicines from reminders (same logic as medicines page)
-  const overdueReminders = reminders?.filter((r: any) => {
+  const overdueReminders = Array.isArray(reminders) ? reminders.filter((r: any) => {
     if (r.isTaken || r.isSkipped) return false;
     const reminderTime = new Date(r.scheduledAt);
     const now = new Date();
     return reminderTime < now;
-  }) || [];
+  }) : [];
   
   const totalOverdue = overdueReminders.length;
   const hasOverdue = totalOverdue > 0;
@@ -734,7 +734,7 @@ export default function SmartClinicDashboard() {
           </Card>
 
           {/* Pending Medicines */}
-          <Card className={`border-orange-200 ${hasOverdue ? 'glow-urgent' : ''}`}>
+          <Card className={`border-orange-200 ${hasOverdue ? 'flash-border-urgent' : ''}`}>
             <CardHeader className="pb-3">
               <CardTitle className="text-sm font-medium text-gray-600 flex items-center gap-2">
                 <Pill className="w-4 h-4 text-orange-500" />
@@ -756,10 +756,11 @@ export default function SmartClinicDashboard() {
                 {hasOverdue ? `🚨 ${totalOverdue} DOSE(S) OVERDUE` : `${totalOverdue} dose(s) overdue`}
               </div>
               <Button 
-                className={`w-full ${hasOverdue ? 'bg-red-500 hover:bg-red-600 pulse-urgent' : 'bg-orange-500 hover:bg-orange-600'}`}
+                className={`w-full ${hasOverdue ? 'flash-urgent' : 'bg-orange-500 hover:bg-orange-600'}`}
                 onClick={() => setLocation("/medicines")}
+                data-testid="button-manage-medicines"
               >
-                Manage Medicines
+                {hasOverdue ? '🚨 Manage Medicines' : 'Manage Medicines'}
               </Button>
             </CardContent>
           </Card>
@@ -973,35 +974,35 @@ export default function SmartClinicDashboard() {
               <div className="flex justify-center gap-4 mb-6">
                 <div className="text-center">
                   <div className="text-2xl font-bold text-blue-600">
-                    {reminders?.filter((r: any) => !r.isTaken && !r.isSkipped).length || 0}
+                    {Array.isArray(reminders) ? reminders.filter((r: any) => !r.isTaken && !r.isSkipped).length : 0}
                   </div>
                   <div className="text-xs text-gray-500">Due Today</div>
                 </div>
                 <div className="text-center">
                   <div className="text-2xl font-bold text-green-600">
-                    {reminders?.filter((r: any) => r.isTaken).length || 0}
+                    {Array.isArray(reminders) ? reminders.filter((r: any) => r.isTaken).length : 0}
                   </div>
                   <div className="text-xs text-gray-500">Completed</div>
                 </div>
                 <div className="text-center">
                   <div className="text-2xl font-bold text-red-600">
-                    {reminders?.filter((r: any) => r.isSkipped).length || 0}
+                    {Array.isArray(reminders) ? reminders.filter((r: any) => r.isSkipped).length : 0}
                   </div>
                   <div className="text-xs text-gray-500">Missed</div>
                 </div>
                 <div className="text-center">
                   <div className="text-2xl font-bold text-orange-600">
-                    {reminders?.filter((r: any) => {
+                    {Array.isArray(reminders) ? reminders.filter((r: any) => {
                       const scheduledTime = new Date(r.scheduledAt);
                       const now = new Date();
                       return !r.isTaken && !r.isSkipped && scheduledTime < now;
-                    }).length || 0}
+                    }).length : 0}
                   </div>
                   <div className="text-xs text-gray-500">Overdue</div>
                 </div>
               </div>
 
-              {reminders?.length > 0 ? (
+              {Array.isArray(reminders) && reminders.length > 0 ? (
                 <div className="space-y-4">
                   {reminders.slice(0, 2).map((reminder: any) => (
                     <div key={reminder.id} className="border rounded-lg p-4">
