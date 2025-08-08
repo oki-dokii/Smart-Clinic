@@ -1072,12 +1072,20 @@ export default function ClinicDashboard() {
       console.log('🚨 FRONTEND RESCHEDULE - Making API call to backend...')
       alert('🚨 About to make API call to: PUT /api/appointments/' + appointmentId);
       
+      console.log('🚨 DEBUG - About to call apiRequest with:', {
+        method: 'PUT',
+        url: `/api/appointments/${appointmentId}`,
+        data: { appointmentDate: newDateTime.toISOString() }
+      });
+      
       const response = await apiRequest('PUT', `/api/appointments/${appointmentId}`, {
         appointmentDate: newDateTime.toISOString()
       })
       
       console.log('🚨 FRONTEND RESCHEDULE - API call completed successfully!', response)
-      alert('🚨 API call completed! Check console and server logs.');
+      console.log('🚨 FRONTEND RESCHEDULE - Response status:', response.status)
+      console.log('🚨 FRONTEND RESCHEDULE - Response ok:', response.ok)
+      alert('🚨 API call completed! Status: ' + response.status);
       
       // Reset form
       setRescheduleForm({
