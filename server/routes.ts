@@ -825,6 +825,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   app.put("/api/appointments/:id", authMiddleware, async (req, res) => {
+    console.log('🚨🚨🚨 CORRECT RESCHEDULE ROUTE HIT!!! 🚨🚨🚨');
+    console.log('🚨 Method:', req.method, 'Path:', req.path);
+    console.log('🚨 Appointment ID:', req.params.id);
+    console.log('🚨 Request body:', JSON.stringify(req.body, null, 2));
+    
     try {
       const { id } = req.params;
       // Handle date conversion if appointmentDate is provided as string
@@ -836,6 +841,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const validatedData = insertAppointmentSchema.partial().parse(appointmentData);
       
+      // Get the original appointment first to compare dates
       const existingAppointment = await storage.getAppointment(id);
       if (!existingAppointment) {
         return res.status(404).json({ message: "Appointment not found" });
@@ -850,8 +856,70 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const appointment = await storage.updateAppointment(id, validatedData);
+      
+      // Check if appointment date was changed (rescheduled)
+      const wasRescheduled = appointmentData.appointmentDate && 
+        new Date(appointmentData.appointmentDate).getTime() !== new Date(existingAppointment.appointmentDate).getTime();
+      
+      console.log('🔥 RESCHEDULE DEBUG - Was rescheduled?', wasRescheduled);
+      console.log('🔥 RESCHEDULE DEBUG - Original date:', existingAppointment.appointmentDate);
+      console.log('🔥 RESCHEDULE DEBUG - New date:', appointmentData.appointmentDate);
+      
+      if (wasRescheduled) {
+        console.log('🔥 RESCHEDULE DEBUG - Sending email notification...');
+        
+        try {
+          // Get patient and doctor details for email
+          const patient = await storage.getUserById(appointment.patientId);
+          const doctor = await storage.getUserById(appointment.doctorId);
+          
+          console.log('🔥 RESCHEDULE DEBUG - Patient email:', patient?.email);
+          console.log('🔥 RESCHEDULE DEBUG - Doctor name:', doctor?.firstName, doctor?.lastName);
+          
+          if (patient?.email) {
+            // Format dates for email using Indian Standard Time
+            const originalDate = new Date(existingAppointment.appointmentDate);
+            const newDate = new Date(appointmentData.appointmentDate);
+            
+            console.log('🔥 RESCHEDULE DEBUG - Calling emailService.sendAppointmentRescheduled...');
+            
+            const emailResult = await emailService.sendAppointmentRescheduled(patient.email, {
+              doctorName: `Dr. ${doctor?.firstName} ${doctor?.lastName}`,
+              originalDate: originalDate.toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata' }),
+              originalTime: originalDate.toLocaleTimeString('en-IN', { 
+                timeZone: 'Asia/Kolkata',
+                hour: '2-digit',
+                minute: '2-digit'
+              }),
+              newDate: newDate.toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata' }),
+              newTime: newDate.toLocaleTimeString('en-IN', { 
+                timeZone: 'Asia/Kolkata',
+                hour: '2-digit',
+                minute: '2-digit'
+              }),
+              clinic: 'SmartClinic'
+            });
+            
+            console.log('🔥 RESCHEDULE DEBUG - Email result:', emailResult);
+            
+            if (emailResult.success) {
+              console.log('✅ Reschedule email sent successfully to:', patient.email);
+            } else {
+              console.error('❌ Failed to send reschedule email:', emailResult.error);
+            }
+          } else {
+            console.log('🔥 RESCHEDULE DEBUG - No patient email found, skipping email notification');
+          }
+        } catch (emailError) {
+          console.error('🔥 RESCHEDULE DEBUG - Error sending email:', emailError);
+        }
+      } else {
+        console.log('🔥 RESCHEDULE DEBUG - No email sent because appointment was not rescheduled');
+      }
+      
       res.json(appointment);
     } catch (error: any) {
+      console.error('🔥 RESCHEDULE DEBUG - Route error:', error);
       res.status(400).json({ message: error.message });
     }
   });
