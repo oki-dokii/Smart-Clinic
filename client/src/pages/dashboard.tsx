@@ -124,7 +124,7 @@ export default function SmartClinicDashboard() {
   // Fetch missed doses data for accurate overdue count
   const { data: missedDoses = [] } = useQuery({
     queryKey: ["/api/reminders/missed"],
-    enabled: !!user && user.role === "patient",
+    enabled: !!user,
   });
 
   const { data: doctors = [] } = useQuery({
