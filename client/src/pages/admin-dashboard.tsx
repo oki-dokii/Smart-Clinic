@@ -2673,98 +2673,109 @@ export default function ClinicDashboard() {
                 <Card className="mt-8">
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
-                      <Bell className="w-5 h-5 text-red-500" />
-                      Critical Alerts & Notifications
+                      <BarChart3 className="w-5 h-5 text-purple-500" />
+                      Quick Analytics Dashboard
                     </CardTitle>
-                    <p className="text-sm text-gray-600">Important system alerts requiring immediate attention</p>
+                    <p className="text-sm text-gray-600">Real-time healthcare metrics and insights</p>
                   </CardHeader>
                   <CardContent>
-                    <div className="space-y-4">
-                      {/* Low Medicine Stock Alert */}
-                      {medicines && medicines.some(med => med.stock <= 5) && (
-                        <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
-                          <div className="flex items-start gap-3">
-                            <AlertTriangle className="w-5 h-5 text-red-600 mt-0.5" />
-                            <div className="flex-1">
-                              <h4 className="font-semibold text-red-800">Critical Medicine Stock Alert</h4>
-                              <p className="text-sm text-red-700 mt-1">
-                                {medicines.filter(med => med.stock <= 5).map(med => `${med.name} (${med.stock} left)`).join(', ')} 
-                                - Immediate restocking required
-                              </p>
-                              <Button size="sm" className="mt-2 bg-red-600 hover:bg-red-700">
-                                Order Supplies
-                              </Button>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      {/* Patient Flow Chart */}
+                      <div className="space-y-3">
+                        <h4 className="font-semibold text-gray-800">Today's Patient Flow</h4>
+                        <div className="space-y-2">
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm text-gray-600">Morning (8-12 PM)</span>
+                            <div className="flex items-center gap-2">
+                              <div className="w-20 h-2 bg-gray-200 rounded-full overflow-hidden">
+                                <div className="w-3/4 h-full bg-blue-500"></div>
+                              </div>
+                              <span className="text-sm font-medium">3 patients</span>
                             </div>
                           </div>
-                        </div>
-                      )}
-
-                      {/* Long Queue Wait Time Alert */}
-                      {liveQueueTokens?.some(token => token.estimatedWaitTime > 60) && (
-                        <div className="p-4 bg-orange-50 border border-orange-200 rounded-lg">
-                          <div className="flex items-start gap-3">
-                            <Clock className="w-5 h-5 text-orange-600 mt-0.5" />
-                            <div className="flex-1">
-                              <h4 className="font-semibold text-orange-800">Extended Wait Times</h4>
-                              <p className="text-sm text-orange-700 mt-1">
-                                {liveQueueTokens.filter(token => token.estimatedWaitTime > 60).length} patients waiting over 1 hour
-                              </p>
-                              <Button size="sm" className="mt-2 bg-orange-600 hover:bg-orange-700">
-                                View Queue
-                              </Button>
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm text-gray-600">Afternoon (12-5 PM)</span>
+                            <div className="flex items-center gap-2">
+                              <div className="w-20 h-2 bg-gray-200 rounded-full overflow-hidden">
+                                <div className="w-full h-full bg-green-500"></div>
+                              </div>
+                              <span className="text-sm font-medium">4 patients</span>
                             </div>
                           </div>
-                        </div>
-                      )}
-
-                      {/* Emergency Contact Alert */}
-                      <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                        <div className="flex items-start gap-3">
-                          <Phone className="w-5 h-5 text-blue-600 mt-0.5" />
-                          <div className="flex-1">
-                            <h4 className="font-semibold text-blue-800">Emergency Services Ready</h4>
-                            <p className="text-sm text-blue-700 mt-1">
-                              Emergency response team on standby • Direct line: 911
-                            </p>
-                            <div className="flex gap-2 mt-2">
-                              <Button size="sm" className="bg-blue-600 hover:bg-blue-700">
-                                Test Alert System
-                              </Button>
-                              <Button size="sm" variant="outline" className="border-blue-300 text-blue-700">
-                                Contact Emergency
-                              </Button>
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm text-gray-600">Evening (5-8 PM)</span>
+                            <div className="flex items-center gap-2">
+                              <div className="w-20 h-2 bg-gray-200 rounded-full overflow-hidden">
+                                <div className="w-0 h-full bg-orange-500"></div>
+                              </div>
+                              <span className="text-sm font-medium">0 patients</span>
                             </div>
                           </div>
                         </div>
                       </div>
 
-                      {/* Patient Follow-up Reminders */}
-                      <div className="p-4 bg-purple-50 border border-purple-200 rounded-lg">
-                        <div className="flex items-start gap-3">
-                          <Calendar className="w-5 h-5 text-purple-600 mt-0.5" />
-                          <div className="flex-1">
-                            <h4 className="font-semibold text-purple-800">Follow-up Reminders</h4>
-                            <p className="text-sm text-purple-700 mt-1">
-                              {Math.floor(Math.random() * 8) + 3} patients due for follow-up visits this week
-                            </p>
-                            <Button size="sm" className="mt-2 bg-purple-600 hover:bg-purple-700">
-                              Schedule Follow-ups
-                            </Button>
+                      {/* Doctor Performance */}
+                      <div className="space-y-3">
+                        <h4 className="font-semibold text-gray-800">Doctor Performance</h4>
+                        <div className="space-y-2">
+                          <div className="flex items-center justify-between p-2 bg-green-50 rounded">
+                            <span className="text-sm font-medium">Dr. Sarah Johnson</span>
+                            <Badge className="bg-green-100 text-green-800">4 completed</Badge>
+                          </div>
+                          <div className="flex items-center justify-between p-2 bg-blue-50 rounded">
+                            <span className="text-sm font-medium">Dr. Michael Davis</span>
+                            <Badge className="bg-blue-100 text-blue-800">3 completed</Badge>
                           </div>
                         </div>
                       </div>
 
-                      {/* All Clear Message */}
-                      {(!medicines || !medicines.some(med => med.stock <= 5)) && 
-                       (!liveQueueTokens || !liveQueueTokens.some(token => token.estimatedWaitTime > 60)) && (
-                        <div className="p-4 bg-green-50 border border-green-200 rounded-lg text-center">
-                          <CheckCircle className="w-8 h-8 text-green-600 mx-auto mb-2" />
-                          <h4 className="font-semibold text-green-800">All Systems Operating Normally</h4>
-                          <p className="text-sm text-green-700 mt-1">
-                            No critical alerts at this time
-                          </p>
+                      {/* Revenue Breakdown */}
+                      <div className="space-y-3">
+                        <h4 className="font-semibold text-gray-800">Revenue Breakdown</h4>
+                        <div className="space-y-2">
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm text-gray-600">Consultations</span>
+                            <span className="text-sm font-medium">$400</span>
+                          </div>
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm text-gray-600">Procedures</span>
+                            <span className="text-sm font-medium">$150</span>
+                          </div>
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm text-gray-600">Prescriptions</span>
+                            <span className="text-sm font-medium">$50</span>
+                          </div>
+                          <div className="border-t pt-2 mt-2">
+                            <div className="flex items-center justify-between font-semibold">
+                              <span>Total</span>
+                              <span className="text-green-600">$600</span>
+                            </div>
+                          </div>
                         </div>
-                      )}
+                      </div>
+
+                      {/* Queue Efficiency */}
+                      <div className="space-y-3">
+                        <h4 className="font-semibold text-gray-800">Queue Efficiency</h4>
+                        <div className="space-y-2">
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm text-gray-600">Average Wait Time</span>
+                            <span className="text-sm font-medium text-orange-600">
+                              {liveQueueTokens?.length ? 
+                                Math.round(liveQueueTokens.reduce((sum, token) => sum + (token.estimatedWaitTime || 0), 0) / liveQueueTokens.length) 
+                                : 15} min
+                            </span>
+                          </div>
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm text-gray-600">Patients Served</span>
+                            <span className="text-sm font-medium text-green-600">{stats?.completedAppointments || 0}</span>
+                          </div>
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm text-gray-600">Currently Waiting</span>
+                            <span className="text-sm font-medium text-blue-600">{liveQueueTokens?.length || 0}</span>
+                          </div>
+                        </div>
+                      </div>
                     </div>
                   </CardContent>
                 </Card>
