@@ -1062,10 +1062,17 @@ export default function ClinicDashboard() {
   // Reschedule appointment handler
   const handleReschedule = async (appointmentId: string, newDate: string, newTime: string) => {
     try {
+      console.log('🔥 FRONTEND RESCHEDULE - Starting reschedule for appointment:', appointmentId)
+      console.log('🔥 FRONTEND RESCHEDULE - New date:', newDate, 'New time:', newTime)
+      
       const newDateTime = new Date(`${newDate}T${newTime}:00`)
+      console.log('🔥 FRONTEND RESCHEDULE - Calculated new datetime:', newDateTime.toISOString())
+      
+      console.log('🔥 FRONTEND RESCHEDULE - Making API call to backend...')
       await apiRequest('PUT', `/api/appointments/${appointmentId}`, {
         appointmentDate: newDateTime.toISOString()
       })
+      console.log('🔥 FRONTEND RESCHEDULE - API call completed successfully!')
       
       // Reset form
       setRescheduleForm({
