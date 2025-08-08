@@ -121,23 +121,16 @@ export default function SmartClinicDashboard() {
     enabled: !!user && user.role === "patient",
   });
 
-  // Fetch missed doses data for accurate overdue count
-  const { data: missedDoses = [] } = useQuery({
-    queryKey: ["/api/reminders/missed"],
-    enabled: !!user,
-  });
-
-  // Debug logging for missed doses
-  console.log('🔥 DASHBOARD DEBUG - missedDoses:', missedDoses);
-  const totalOverdue = missedDoses?.reduce((total: number, md: any) => {
-    const missed = (md.missedDoses || 0);
-    const overdue = (md.overdueToday || 0);
-    console.log(`🔥 Medicine ${md.medicineName}: missed=${missed}, overdue=${overdue}`);
-    return total + missed + overdue;
-  }, 0) || 0;
-  console.log('🔥 DASHBOARD DEBUG - Total overdue count:', totalOverdue);
-  const hasOverdue = missedDoses?.some((md: any) => (md.missedDoses || 0) > 0 || (md.overdueToday || 0) > 0);
-  console.log('🔥 DASHBOARD DEBUG - Has overdue medicines:', hasOverdue);
+  // Calculate overdue medicines from reminders (same logic as medicines page)
+  const overdueReminders = reminders?.filter((r: any) => {
+    if (r.isTaken || r.isSkipped) return false;
+    const reminderTime = new Date(r.scheduledAt);
+    const now = new Date();
+    return reminderTime < now;
+  }) || [];
+  
+  const totalOverdue = overdueReminders.length;
+  const hasOverdue = totalOverdue > 0;
 
   const { data: doctors = [] } = useQuery({
     queryKey: ["/api/users", "doctor"],
