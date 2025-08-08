@@ -1,6 +1,6 @@
 import cron from 'node-cron';
 import { storage } from '../storage';
-import { smsService } from './sms';
+import { emailService } from './email';
 
 export class SchedulerService {
   private reminderCronJob: cron.ScheduledTask | null = null;
@@ -47,16 +47,16 @@ export class SchedulerService {
     
     for (const reminder of dueReminders) {
       try {
-        // Send SMS reminder
-        await smsService.sendMedicineReminder(
-          reminder.prescription.patient.phoneNumber,
+        // Send email reminder
+        await emailService.sendMedicineReminder(
+          reminder.prescription.patient.email,
           reminder.prescription.medicine.name,
           reminder.prescription.dosage,
           reminder.scheduledAt.toLocaleTimeString()
         );
         
-        // Mark SMS as sent (would need to add this field update to storage)
-        // await storage.markReminderSmsSent(reminder.id);
+        // Mark email as sent (would need to add this field update to storage)
+        // await storage.markReminderEmailSent(reminder.id);
         
       } catch (error) {
         console.error(`Failed to send reminder for ${reminder.id}:`, error);
@@ -84,9 +84,9 @@ export class SchedulerService {
         if (appointmentTime >= startTime && appointmentTime <= endTime && 
             (appointment.status === 'scheduled' || appointment.status === 'confirmed')) {
           
-          await smsService.sendAppointmentReminder(
-            appointment.patient.phoneNumber,
-            `${appointment.doctor.firstName} ${appointment.doctor.lastName}`,
+          await emailService.sendAppointmentReminder(
+            appointment.patient.email,
+            `Dr. ${appointment.doctor.firstName} ${appointment.doctor.lastName}`,
             appointmentTime.toLocaleString(),
             appointment.location || 'Clinic'
           );

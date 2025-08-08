@@ -12,7 +12,7 @@ import { z } from "zod";
 import { authMiddleware, requireRole } from "./middleware/auth";
 import { gpsVerificationMiddleware } from "./middleware/gps";
 import { authService } from "./services/auth";
-import { smsService } from "./services/sms";
+import { emailService } from "./services/email";
 import { queueService } from "./services/queue";
 import { schedulerService } from "./services/scheduler";
 
@@ -440,14 +440,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const doctor = await storage.getUserById(appointment.doctorId);
         
         if (status === 'approved') {
-          await smsService.sendAppointmentApproved(patient?.phoneNumber || '', {
+          await emailService.sendAppointmentApproved(patient?.email || '', {
             doctorName: `Dr. ${doctor?.firstName} ${doctor?.lastName}`,
             appointmentDate: new Date(updateData.appointmentDate || appointment.appointmentDate).toLocaleDateString(),
             appointmentTime: new Date(updateData.appointmentDate || appointment.appointmentDate).toLocaleTimeString(),
-            appointmentId: id
+            clinic: 'SmartClinic'
           });
         } else {
-          await smsService.sendAppointmentRejected(patient?.phoneNumber || '', {
+          await emailService.sendAppointmentRejected(patient?.email || '', {
             doctorName: `Dr. ${doctor?.firstName} ${doctor?.lastName}`,
             reason: rejectionReason || 'No reason provided',
             appointmentId: id
