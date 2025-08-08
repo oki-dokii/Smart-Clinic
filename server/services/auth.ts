@@ -10,6 +10,19 @@ const OTP_EXPIRY_MINUTES = 5;
 const MAX_OTP_ATTEMPTS = 3;
 
 export class AuthService {
+  generateToken(userId: string, role: string, clinicId?: string): string {
+    const payload: any = { 
+      userId, 
+      role 
+    };
+    
+    if (clinicId) {
+      payload.clinicId = clinicId;
+    }
+    
+    return jwt.sign(payload, JWT_SECRET, { expiresIn: '7d' });
+  }
+
   async sendOtp(phoneNumber: string): Promise<{ success: boolean; otp?: string; error?: string }> {
     // Generate 6-digit OTP
     const otp = randomInt(100000, 999999).toString();
