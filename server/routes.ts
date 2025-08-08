@@ -1049,7 +1049,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/queue/position", authMiddleware, requireRole(['patient']), async (req, res) => {
+  app.get("/api/queue/position", authMiddleware, requireRole(['patient', 'admin']), async (req, res) => {
     try {
       const { doctorId } = req.query;
       // If no doctorId provided, get the latest queue position for the patient
