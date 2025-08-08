@@ -439,7 +439,7 @@ export default function SmartClinicDashboard() {
     setBookingData({
       doctorId: appointment.doctorId,
       appointmentDate: appointment.appointmentDate.split('T')[0],
-      appointmentTime: new Date(appointment.appointmentDate).toLocaleTimeString('en-US', {hour12: false, hour: '2-digit', minute: '2-digit'}),
+      appointmentTime: new Date(appointment.appointmentDate).toLocaleTimeString('en-IN', {hour12: false, hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Kolkata'}),
       type: appointment.type,
       notes: appointment.notes || ""
     });
@@ -621,7 +621,7 @@ export default function SmartClinicDashboard() {
             <CardContent>
               <div className="text-2xl font-bold mb-1">
                 {appointments?.length > 0 
-                  ? new Date(appointments[0].appointmentDate).toLocaleTimeString('en-US', {hour: 'numeric', minute: '2-digit', hour12: true})
+                  ? new Date(appointments[0].appointmentDate).toLocaleTimeString('en-IN', {hour: 'numeric', minute: '2-digit', hour12: true, timeZone: 'Asia/Kolkata'})
                   : "None"
                 }
               </div>
@@ -650,8 +650,8 @@ export default function SmartClinicDashboard() {
               )}
               {appointments?.length > 0 && (
                 <div className="text-xs text-gray-500 mb-4">
-                  {new Date(appointments[0].appointmentDate).toLocaleDateString('en-US', { 
-                    weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' 
+                  {new Date(appointments[0].appointmentDate).toLocaleDateString('en-IN', { 
+                    weekday: 'short', month: 'short', day: 'numeric', year: 'numeric', timeZone: 'Asia/Kolkata' 
                   })}
                 </div>
               )}
@@ -866,7 +866,7 @@ export default function SmartClinicDashboard() {
                     <Badge className="bg-green-500 text-white">#1</Badge>
                     <div>
                       <div className="text-sm font-medium">Sarah Johnson - In Progress</div>
-                      <div className="text-xs text-gray-500">Started at {new Date(Date.now() - 12 * 60000).toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'})}</div>
+                      <div className="text-xs text-gray-500">Started at {new Date(Date.now() - 12 * 60000).toLocaleTimeString('en-IN', {hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Kolkata'})}</div>
                     </div>
                   </div>
                   <div className="text-right">
@@ -881,7 +881,7 @@ export default function SmartClinicDashboard() {
                     <Badge className="bg-blue-500 text-white">#2</Badge>
                     <div>
                       <div className="text-sm font-medium">Michael Chen - Next</div>
-                      <div className="text-xs text-gray-500">Waiting since {new Date(Date.now() - 35 * 60000).toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'})}</div>
+                      <div className="text-xs text-gray-500">Waiting since {new Date(Date.now() - 35 * 60000).toLocaleTimeString('en-IN', {hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Kolkata'})}</div>
                     </div>
                   </div>
                   <div className="text-right">
@@ -895,7 +895,7 @@ export default function SmartClinicDashboard() {
                     <Badge className="bg-orange-500 text-white">#3</Badge>
                     <div>
                       <div className="text-sm font-medium">Emma Rodriguez</div>
-                      <div className="text-xs text-gray-500">Waiting since {new Date(Date.now() - 45 * 60000).toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'})}</div>
+                      <div className="text-xs text-gray-500">Waiting since {new Date(Date.now() - 45 * 60000).toLocaleTimeString('en-IN', {hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Kolkata'})}</div>
                     </div>
                   </div>
                   <div className="text-right">
@@ -998,7 +998,7 @@ export default function SmartClinicDashboard() {
                         </div>
                         <div className="text-right">
                           <div className="text-sm font-medium">
-                            {new Date(reminder.scheduledAt).toLocaleTimeString()}
+                            {new Date(reminder.scheduledAt).toLocaleTimeString('en-IN', {hour: 'numeric', minute: '2-digit', hour12: true, timeZone: 'Asia/Kolkata'})}
                           </div>
                           {!reminder.isTaken && new Date(reminder.scheduledAt) < new Date() && (
                             <Badge className="bg-red-100 text-red-800 text-xs">Overdue</Badge>
@@ -1128,11 +1128,11 @@ export default function SmartClinicDashboard() {
                       <div className="flex items-center gap-2 mb-3">
                         <Calendar className="w-4 h-4 text-gray-400" />
                         <span className="text-sm">
-                          {new Date(appointment.appointmentDate).toLocaleDateString()}
+                          {new Date(appointment.appointmentDate).toLocaleDateString('en-IN', {timeZone: 'Asia/Kolkata'})}
                         </span>
                         <Clock className="w-4 h-4 text-gray-400 ml-2" />
                         <span className="text-sm">
-                          {new Date(appointment.appointmentDate).toLocaleTimeString()}
+                          {new Date(appointment.appointmentDate).toLocaleTimeString('en-IN', {hour: 'numeric', minute: '2-digit', hour12: true, timeZone: 'Asia/Kolkata'})}
                         </span>
                       </div>
                       <div className="flex gap-2">
@@ -1246,7 +1246,7 @@ export default function SmartClinicDashboard() {
           appointmentId: selectedAppointment.id,
           doctorId: selectedAppointment.doctorId,
           appointmentDate: selectedAppointment.appointmentDate.split('T')[0],
-          appointmentTime: new Date(selectedAppointment.appointmentDate).toLocaleTimeString('en-US', {hour12: false, hour: '2-digit', minute: '2-digit'}),
+          appointmentTime: new Date(selectedAppointment.appointmentDate).toLocaleTimeString('en-IN', {hour12: false, hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Kolkata'}),
           type: selectedAppointment.type,
           notes: selectedAppointment.notes || ""
         } : null}
@@ -1383,7 +1383,7 @@ export default function SmartClinicDashboard() {
                           <SelectItem value="">No specific appointment</SelectItem>
                           {appointments.map((appointment: any) => (
                             <SelectItem key={appointment.id} value={appointment.id}>
-                              {new Date(appointment.appointmentDate).toLocaleDateString()} - Dr. {appointment.doctor?.firstName}
+                              {new Date(appointment.appointmentDate).toLocaleDateString('en-IN', {timeZone: 'Asia/Kolkata'})} - Dr. {appointment.doctor?.firstName}
                             </SelectItem>
                           ))}
                         </SelectContent>
