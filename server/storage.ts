@@ -58,6 +58,7 @@ export interface IStorage {
   
   // Staff Presence
   createOrUpdateStaffPresence(staffId: string, date: Date): Promise<StaffPresence>;
+  createStaffPresence(data: InsertStaffPresence): Promise<StaffPresence>;
   getStaffPresence(staffId: string, date: Date): Promise<StaffPresence | undefined>;
   getStaffPresenceForDate(date: Date): Promise<(StaffPresence & { staff: User })[]>;
   updateStaffPresence(id: string, updates: Partial<InsertStaffPresence>): Promise<StaffPresence | undefined>;
@@ -1674,6 +1675,21 @@ export class DatabaseStorage implements IStorage {
   async getTodayStaffPresence(): Promise<(StaffPresence & { staff: User })[]> {
     const today = new Date();
     return this.getStaffPresenceForDate(today);
+  }
+
+  async createStaffPresence(data: InsertStaffPresence): Promise<StaffPresence> {
+    const startOfDay = new Date(data.date);
+    startOfDay.setHours(0, 0, 0, 0);
+    
+    const [newPresence] = await db.insert(staffPresence)
+      .values({
+        ...data,
+        date: startOfDay,
+        checkInTime: data.isPresent ? (data.checkInTime || new Date()) : undefined,
+        checkOutTime: data.checkOutTime || undefined
+      })
+      .returning();
+    return newPresence;
   }
 
 }

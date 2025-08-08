@@ -2487,6 +2487,55 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Update staff presence by userId - creates record if it doesn't exist
+  app.put("/api/staff-presence/update/:userId", authMiddleware, requireRole(['admin']), async (req, res) => {
+    try {
+      const { userId } = req.params;
+      const { isPresent, markedByAdmin } = req.body;
+      
+      console.log('🔥 STAFF PRESENCE UPDATE - UserId:', userId, 'IsPresent:', isPresent);
+      
+      // Try to get existing presence record for today
+      const existingPresence = await storage.getTodayStaffPresence();
+      const userPresence = existingPresence.find(p => p.staffId === userId);
+      
+      let presence;
+      if (userPresence) {
+        // Update existing record
+        console.log('🔥 STAFF PRESENCE UPDATE - Updating existing record:', userPresence.id);
+        presence = await storage.updateStaffPresence(userPresence.id, {
+          isPresent,
+          markedByAdmin: markedByAdmin !== undefined ? markedByAdmin : true,
+          lastUpdated: new Date()
+        });
+      } else {
+        // Create new record using createOrUpdateStaffPresence
+        console.log('🔥 STAFF PRESENCE UPDATE - Creating new record for userId:', userId);
+        if (isPresent) {
+          presence = await storage.createOrUpdateStaffPresence(userId, new Date());
+          // Update the markedByAdmin flag if needed
+          if (markedByAdmin !== undefined) {
+            presence = await storage.updateStaffPresence(presence.id, { markedByAdmin });
+          }
+        } else {
+          // Create absent record manually
+          presence = await storage.createStaffPresence({
+            staffId: userId,
+            date: new Date(),
+            isPresent: false,
+            markedByAdmin: markedByAdmin !== undefined ? markedByAdmin : true
+          });
+        }
+      }
+      
+      console.log('🔥 STAFF PRESENCE UPDATE - Result:', presence);
+      res.json(presence);
+    } catch (error: any) {
+      console.error('🔥 STAFF PRESENCE UPDATE - Error:', error);
+      res.status(400).json({ message: error.message });
+    }
+  });
+
   app.get("/api/staff-presence/:date", authMiddleware, requireRole(['admin']), async (req, res) => {
     try {
       const { date } = req.params;
