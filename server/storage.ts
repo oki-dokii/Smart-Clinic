@@ -381,12 +381,18 @@ export class DatabaseStorage implements IStorage {
 
   async getUserAppointments(userId: string, role: string): Promise<(Appointment & { patient: User; doctor: User })[]> {
     console.log(`Storage: Getting appointments for user ${userId} with role ${role}`);
+    console.log(`Storage: Looking for appointments where patientId = ${userId}`);
     
-    // Use manual join approach like getAppointments for consistency
-    const userField = role === 'patient' ? appointments.patientId : appointments.doctorId;
+    // For dashboard context, always show appointments where the user is the patient
+    // regardless of their current role. Doctors/staff/admin can still book appointments as patients
     const appointmentRecords = await db.select().from(appointments)
-      .where(eq(userField, userId))
+      .where(eq(appointments.patientId, userId))
       .orderBy(asc(appointments.appointmentDate));
+    
+    console.log(`Storage: Raw Drizzle query returned ${appointmentRecords.length} appointments`);
+    if (appointmentRecords.length > 0) {
+      console.log(`Storage: First appointment:`, appointmentRecords[0]);
+    }
     
     console.log(`Storage: Found ${appointmentRecords.length} appointments for user ${userId}`);
     
