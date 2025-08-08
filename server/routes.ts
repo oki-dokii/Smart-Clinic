@@ -35,6 +35,101 @@ function generateTimingsFromFrequency(frequency: string): string[] {
 }
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  
+  // Manual approval endpoint for testing (no auth required)
+  app.get('/api/test-approve/:appointmentId', async (req, res) => {
+    try {
+      const { appointmentId } = req.params;
+      console.log('🔥 TEST APPROVE - Processing appointment:', appointmentId);
+      
+      // Update appointment status to scheduled
+      const appointment = await storage.updateAppointment(appointmentId, { 
+        status: 'scheduled' 
+      });
+      
+      if (!appointment) {
+        return res.status(404).json({ error: 'Appointment not found' });
+      }
+
+      console.log('🔥 TEST APPROVE - Appointment updated');
+
+      // Send email notification
+      const patient = await storage.getUserById(appointment.patientId);
+      const doctor = await storage.getUserById(appointment.doctorId);
+      
+      console.log('🔥 TEST APPROVE - Patient:', { id: patient?.id, email: patient?.email });
+      console.log('🔥 TEST APPROVE - Doctor:', { id: doctor?.id, name: `${doctor?.firstName} ${doctor?.lastName}` });
+      
+      if (patient && doctor && patient.email) {
+        const appointmentDate = new Date(appointment.appointmentDate);
+        
+        console.log('🔥 TEST APPROVE - Sending email to:', patient.email);
+        
+        const emailResult = await emailService.sendAppointmentApproved(patient.email, {
+          doctorName: `Dr. ${doctor.firstName} ${doctor.lastName}`,
+          appointmentDate: appointmentDate.toLocaleDateString(),
+          appointmentTime: appointmentDate.toLocaleTimeString(),
+          clinic: 'SmartClinic'
+        });
+        
+        console.log('🔥 TEST APPROVE - Email result:', emailResult);
+        
+        res.json({ 
+          success: true, 
+          message: 'Appointment approved and email sent',
+          emailResult
+        });
+      } else {
+        res.json({ 
+          success: false, 
+          message: 'Missing patient or doctor data'
+        });
+      }
+    } catch (error: any) {
+      console.error('🔥 TEST APPROVE - Error:', error);
+      res.status(500).json({ error: 'Failed to approve: ' + error.message });
+    }
+  });
+  
+  // Simple email test endpoint (no auth required for debugging)
+  app.get('/api/email-debug', async (req, res) => {
+    try {
+      console.log('🔥 EMAIL DEBUG - Starting test...');
+      console.log('🔥 EMAIL DEBUG - Environment check:', {
+        GMAIL_USER: !!process.env.GMAIL_USER,
+        GMAIL_APP_PASSWORD: !!process.env.GMAIL_APP_PASSWORD
+      });
+      
+      // Import and test email service
+      const { emailService } = await import('./services/email');
+      
+      const result = await emailService.sendAppointmentApproved('soham.banerjee@iiitb.ac.in', {
+        doctorName: 'Dr. SmartClinic Doctor',
+        appointmentDate: new Date('2025-08-09T14:00:00').toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata' }),
+        appointmentTime: new Date('2025-08-09T14:00:00').toLocaleTimeString('en-IN', { hour: 'numeric', minute: '2-digit', hour12: true, timeZone: 'Asia/Kolkata' }),
+        clinic: 'SmartClinic'
+      });
+      
+      console.log('🔥 EMAIL DEBUG - Result:', result);
+      
+      res.json({
+        success: true,
+        message: 'Email debug test completed',
+        emailResult: result,
+        env: {
+          hasGmailUser: !!process.env.GMAIL_USER,
+          hasGmailPassword: !!process.env.GMAIL_APP_PASSWORD
+        }
+      });
+    } catch (error) {
+      console.error('🔥 EMAIL DEBUG - Error:', error);
+      res.status(500).json({
+        success: false,
+        error: error.message,
+        stack: error.stack
+      });
+    }
+  });
   // Authentication routes
   app.post("/api/auth/send-otp", async (req, res) => {
     try {
@@ -570,27 +665,47 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const patient = appointment.patient || await storage.getUserById(appointment.patientId);
         const doctor = appointment.doctor || await storage.getUserById(appointment.doctorId);
         
-        if (patient && doctor) {
+        console.log('🔥 APPROVAL - Patient data:', { id: patient?.id, email: patient?.email });
+        console.log('🔥 APPROVAL - Doctor data:', { id: doctor?.id, name: `${doctor?.firstName} ${doctor?.lastName}` });
+        
+        if (patient && doctor && patient.email) {
           const appointmentDate = new Date(appointment.appointmentDate);
           
+          console.log('🔥 APPROVAL - Sending email to:', patient.email);
+          
           // Send email notification
-          await emailService.sendAppointmentApproved(patient.email || '', {
+          const emailResult = await emailService.sendAppointmentApproved(patient.email, {
             doctorName: `Dr. ${doctor.firstName} ${doctor.lastName}`,
             appointmentDate: appointmentDate.toLocaleDateString(),
             appointmentTime: appointmentDate.toLocaleTimeString(),
             clinic: 'SmartClinic'
           });
-          console.log('🔥 Approval email sent to:', patient.email);
+          
+          console.log('🔥 APPROVAL - Email result:', emailResult);
+          
+          if (emailResult.success) {
+            console.log('🔥 APPROVAL - Email sent successfully to:', patient.email);
+          } else {
+            console.error('🔥 APPROVAL - Email failed:', emailResult.error);
+          }
           
           // Send SMS notification (keeping existing SMS functionality)
-          const message = `Good news! Your appointment with Dr. ${doctor.firstName} ${doctor.lastName} on ${appointmentDate.toLocaleDateString()} at ${appointmentDate.toLocaleTimeString()} has been approved. Please arrive 15 minutes early.`;
-          
-          await smsService.sendSMS(patient.phoneNumber, message);
-          console.log('🔥 Approval SMS sent to:', patient.phoneNumber);
+          try {
+            const message = `Good news! Your appointment with Dr. ${doctor.firstName} ${doctor.lastName} on ${appointmentDate.toLocaleDateString()} at ${appointmentDate.toLocaleTimeString()} has been approved. Please arrive 15 minutes early.`;
+            await smsService.sendSMS(patient.phoneNumber, message);
+            console.log('🔥 APPROVAL - SMS sent to:', patient.phoneNumber);
+          } catch (smsError) {
+            console.error('🔥 APPROVAL - SMS failed:', smsError);
+          }
+        } else {
+          console.error('🔥 APPROVAL - Missing data:', { 
+            patient: !!patient, 
+            doctor: !!doctor, 
+            email: patient?.email || 'NO EMAIL' 
+          });
         }
-      } catch (smsError) {
-        console.error('Failed to send approval SMS:', smsError);
-        // Don't fail the request if SMS fails
+      } catch (notificationError) {
+        console.error('🔥 APPROVAL - Notification error:', notificationError);
       }
 
       res.json({ 
