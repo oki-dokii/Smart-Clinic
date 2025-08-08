@@ -890,7 +890,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/prescriptions/active", authMiddleware, requireRole(['patient']), async (req, res) => {
+  app.get("/api/prescriptions/active", authMiddleware, requireRole(['patient', 'admin']), async (req, res) => {
     try {
       const prescriptions = await storage.getActivePrescriptions(req.user!.id);
       res.json(prescriptions);
@@ -900,7 +900,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Custom medicine routes - properly implemented
-  app.post("/api/custom-medicines", authMiddleware, requireRole(['patient']), async (req, res) => {
+  app.post("/api/custom-medicines", authMiddleware, requireRole(['patient', 'admin']), async (req, res) => {
     try {
       const { name, dosage, frequency, instructions, startDate, endDate, timings } = req.body;
       
@@ -942,7 +942,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/custom-medicines", authMiddleware, requireRole(['patient']), async (req, res) => {
+  app.get("/api/custom-medicines", authMiddleware, requireRole(['patient', 'admin']), async (req, res) => {
     try {
       // Return patient's custom medicines (medicines they added themselves)
       const prescriptions = await storage.getPatientPrescriptions(req.user!.id);
@@ -972,7 +972,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/medicines/upload", authMiddleware, requireRole(['patient']), async (req, res) => {
+  app.post("/api/medicines/upload", authMiddleware, requireRole(['patient', 'admin']), async (req, res) => {
     try {
       const { medicineList } = req.body;
       
@@ -1037,7 +1037,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put("/api/reminders/:id", authMiddleware, requireRole(['patient']), async (req, res) => {
+  app.put("/api/reminders/:id", authMiddleware, requireRole(['patient', 'admin']), async (req, res) => {
     try {
       const { id } = req.params;
       const { status } = z.object({ status: z.enum(['taken', 'skipped', 'not_taken']) }).parse(req.body);
@@ -1062,7 +1062,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get missed doses count for each medicine
-  app.get("/api/reminders/missed", authMiddleware, requireRole(['patient']), async (req, res) => {
+  app.get("/api/reminders/missed", authMiddleware, requireRole(['patient', 'admin']), async (req, res) => {
     try {
       const reminders = await storage.getPatientReminders(req.user!.id);
       const now = new Date();
@@ -1212,7 +1212,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Medicine reminder routes
-  app.get("/api/reminders", authMiddleware, requireRole(['patient']), async (req, res) => {
+  app.get("/api/reminders", authMiddleware, requireRole(['patient', 'admin']), async (req, res) => {
     try {
       const { date } = req.query;
       const reminderDate = date ? new Date(date as string) : new Date();
@@ -1223,7 +1223,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put("/api/reminders/:id/taken", authMiddleware, requireRole(['patient']), async (req, res) => {
+  app.put("/api/reminders/:id/taken", authMiddleware, requireRole(['patient', 'admin']), async (req, res) => {
     try {
       const { id } = req.params;
       const reminder = await storage.markReminderTaken(id);
@@ -1238,7 +1238,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put("/api/reminders/:id/skipped", authMiddleware, requireRole(['patient']), async (req, res) => {
+  app.put("/api/reminders/:id/skipped", authMiddleware, requireRole(['patient', 'admin']), async (req, res) => {
     try {
       const { id } = req.params;
       const reminder = await storage.markReminderSkipped(id);
