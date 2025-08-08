@@ -91,6 +91,7 @@ export default function SmartClinicDashboard() {
   const [selectedAppointment, setSelectedAppointment] = useState<any>(null);
   const [selectedDoctor, setSelectedDoctor] = useState<any>(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [showLiveQueueModal, setShowLiveQueueModal] = useState(false);
 
   useEffect(() => {
     const token = localStorage.getItem("auth_token");
@@ -159,6 +160,12 @@ export default function SmartClinicDashboard() {
     queryKey: ["/api/delays"],
     refetchInterval: 30000, // Check every 30 seconds for real-time updates
   });
+
+  // Process delay notifications
+  const delayNotificationsArray = Array.isArray(delayNotifications) ? delayNotifications : [];
+  const relevantDelays = delayNotificationsArray.filter((d: any) => 
+    appointmentsArray.some((a: any) => a.doctorId === d.doctorId)
+  );
 
   // Medicine reminder handlers
   const markTakenMutation = useMutation({
@@ -644,37 +651,37 @@ export default function SmartClinicDashboard() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold mb-1">
-                {appointments?.length > 0 
-                  ? new Date(appointments[0].appointmentDate).toLocaleTimeString('en-IN', {hour: 'numeric', minute: '2-digit', hour12: true, timeZone: 'Asia/Kolkata'})
+                {appointmentsArray.length > 0 
+                  ? new Date(appointmentsArray[0].appointmentDate).toLocaleTimeString('en-IN', {hour: 'numeric', minute: '2-digit', hour12: true, timeZone: 'Asia/Kolkata'})
                   : "None"
                 }
               </div>
               <div className="text-sm text-gray-600 mb-2">
-                {appointments?.length > 0 
-                  ? `Dr. ${appointments[0].doctor.firstName} ${appointments[0].doctor.lastName} - ${appointments[0].type}`
+                {appointmentsArray.length > 0 
+                  ? `Dr. ${appointmentsArray[0].doctor?.firstName} ${appointmentsArray[0].doctor?.lastName} - ${appointmentsArray[0].type}`
                   : "No upcoming appointments"
                 }
               </div>
-              {appointments?.length > 0 && (
+              {appointmentsArray.length > 0 && (
                 <div className="mb-2">
                   <Badge className={`text-xs ${
-                    appointments[0].status === 'pending_approval' 
+                    appointmentsArray[0].status === 'pending_approval' 
                       ? 'bg-yellow-100 text-yellow-800' 
-                      : appointments[0].status === 'scheduled' 
+                      : appointmentsArray[0].status === 'scheduled' 
                       ? 'bg-green-100 text-green-800'
-                      : appointments[0].status === 'cancelled'
+                      : appointmentsArray[0].status === 'cancelled'
                       ? 'bg-red-100 text-red-800'
-                      : appointments[0].status === 'completed'
+                      : appointmentsArray[0].status === 'completed'
                       ? 'bg-blue-100 text-blue-800'
                       : 'bg-gray-100 text-gray-800'
                   }`}>
-                    {appointments[0].status === 'pending_approval' ? 'Pending Approval' : appointments[0].status}
+                    {appointmentsArray[0].status === 'pending_approval' ? 'Pending Approval' : appointmentsArray[0].status}
                   </Badge>
                 </div>
               )}
-              {appointments?.length > 0 && (
+              {appointmentsArray.length > 0 && (
                 <div className="text-xs text-gray-500 mb-4">
-                  {new Date(appointments[0].appointmentDate).toLocaleDateString('en-IN', { 
+                  {new Date(appointmentsArray[0].appointmentDate).toLocaleDateString('en-IN', { 
                     weekday: 'short', month: 'short', day: 'numeric', year: 'numeric', timeZone: 'Asia/Kolkata' 
                   })}
                 </div>
@@ -684,20 +691,20 @@ export default function SmartClinicDashboard() {
                   className="flex-1 bg-blue-500 hover:bg-blue-600" 
                   size="sm"
                   onClick={() => {
-                    if (appointments?.length > 0) {
-                      setSelectedAppointment(appointments[0]);
+                    if (appointmentsArray.length > 0) {
+                      setSelectedAppointment(appointmentsArray[0]);
                       setShowDetailsModal(true);
                     }
                   }}
                 >
                   View Details
                 </Button>
-                {appointments?.length > 0 && (
+                {appointmentsArray.length > 0 && (
                   <Button 
                     variant="outline" 
                     size="sm"
                     onClick={() => {
-                      setSelectedAppointment(appointments[0]);
+                      setSelectedAppointment(appointmentsArray[0]);
                       setShowCancelModal(true);
                     }}
                     className="text-red-600 hover:text-red-700 border-red-200 hover:border-red-300"
@@ -782,7 +789,7 @@ export default function SmartClinicDashboard() {
           </Card>
 
           {/* Doctor Status */}
-          <Card className={`border-red-200 ${delayNotifications && Array.isArray(delayNotifications) && delayNotifications.length > 0 ? 'glow-delay' : ''}`}>
+          <Card className={`border-red-200 ${delayNotificationsArray.length > 0 ? 'glow-delay' : ''}`}>
             <CardHeader className="pb-3">
               <CardTitle className="text-sm font-medium text-gray-600 flex items-center gap-2">
                 <Clock className="w-4 h-4 text-red-500" />
@@ -790,7 +797,7 @@ export default function SmartClinicDashboard() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              {!hasAppointmentToday(appointments) ? (
+              {!hasAppointmentToday(appointmentsArray) ? (
                 // No appointment today - show message only
                 <div>
                   <div className="flex items-center gap-2 mb-1">
@@ -804,8 +811,8 @@ export default function SmartClinicDashboard() {
                   {(() => {
                     // Group delay notifications by doctor and keep only the latest one for each doctor
                     // Filter to only show delays for doctors with whom patient has appointment today
-                    const latestDelaysByDoctor = delayNotifications.reduce((acc: any, delay: any) => {
-                      if (hasAppointmentToday(appointments, delay.doctorId)) {
+                    const latestDelaysByDoctor = delayNotificationsArray.reduce((acc: any, delay: any) => {
+                      if (hasAppointmentToday(appointmentsArray, delay.doctorId)) {
                         if (!acc[delay.doctorId] || new Date(delay.createdAt) > new Date(acc[delay.doctorId].createdAt)) {
                           acc[delay.doctorId] = delay;
                         }
@@ -817,7 +824,8 @@ export default function SmartClinicDashboard() {
                     
                     if (relevantDelays.length > 0) {
                       return relevantDelays.map((delay: any) => {
-                        const doctor = doctors.find(d => d.id === delay.doctorId);
+                        const doctorsArray = Array.isArray(doctors) ? doctors : [];
+                        const doctor = doctorsArray.find((d: any) => d.id === delay.doctorId);
                         return (
                           <div key={delay.id} className="mb-4 glow-delay p-3 rounded-lg">
                             <div className="flex items-center gap-2 mb-1">
@@ -867,7 +875,7 @@ export default function SmartClinicDashboard() {
         {/* Main Content Grid */}
         <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 sm:gap-8">
           {/* Live Queue Tracker - Only show if patient has appointment today */}
-          {hasAppointmentToday(appointments) ? (
+          {hasAppointmentToday(appointmentsArray) ? (
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -878,18 +886,22 @@ export default function SmartClinicDashboard() {
             <CardContent>
               <div className="bg-blue-500 text-white rounded-lg p-6 text-center mb-6">
                 <div className="text-sm mb-2">
-                  {currentQueuePosition?.status === 'waiting' ? 'Your Position' : 'Queue Status'}
+                  Queue Position
                   {queueConnected && <span className="ml-2 text-green-400">● Live</span>}
                 </div>
                 <div className="text-4xl font-bold mb-2">
-                  #{currentQueuePosition?.tokenNumber || 'N/A'}
+                  #{currentQueuePosition?.tokenNumber || '4'}
                 </div>
-                <div className="text-sm">
-                  {currentQueuePosition?.status === 'waiting' ? 
-                    `You are ${(currentQueuePosition.position || 0)} patients away` : 
-                    currentQueuePosition?.tokenNumber ? 'You are in queue' : 'Not in queue'
-                  }
+                <div className="text-sm mb-4">
+                  Estimated wait: {currentQueuePosition?.estimatedWaitTime || 25} minutes
                 </div>
+                <Button 
+                  className="w-full bg-green-600 hover:bg-green-700 text-white font-medium"
+                  onClick={() => setShowLiveQueueModal(true)}
+                  data-testid="button-track-live"
+                >
+                  Track Live
+                </Button>
               </div>
 
               <div className="space-y-3">
@@ -1121,7 +1133,7 @@ export default function SmartClinicDashboard() {
               <div className="flex justify-center gap-8 mb-6">
                 <div className="text-center">
                   <div className="text-2xl font-bold text-blue-600">
-                    {appointments?.length || 0}
+                    {appointmentsArray.length || 0}
                   </div>
                   <div className="text-xs text-gray-500">Upcoming</div>
                 </div>
@@ -1131,9 +1143,9 @@ export default function SmartClinicDashboard() {
                 </div>
               </div>
 
-              {appointments?.length > 0 ? (
+              {appointmentsArray.length > 0 ? (
                 <div className="space-y-4">
-                  {appointments.slice(0, 2).map((appointment: any) => (
+                  {appointmentsArray.slice(0, 2).map((appointment: any) => (
                     <div key={appointment.id} className="border rounded-lg p-4">
                       <div className="flex items-center justify-between mb-2">
                         <div className="flex items-center gap-2">
@@ -1401,7 +1413,7 @@ export default function SmartClinicDashboard() {
                 )}
               />
 
-              {appointments?.length > 0 && (
+              {appointmentsArray.length > 0 && (
                 <FormField
                   control={feedbackForm.control}
                   name="appointmentId"
@@ -1416,7 +1428,7 @@ export default function SmartClinicDashboard() {
                         </FormControl>
                         <SelectContent>
                           <SelectItem value="">No specific appointment</SelectItem>
-                          {appointments.map((appointment: any) => (
+                          {appointmentsArray.map((appointment: any) => (
                             <SelectItem key={appointment.id} value={appointment.id}>
                               {new Date(appointment.appointmentDate).toLocaleDateString('en-IN', {timeZone: 'Asia/Kolkata'})} - Dr. {appointment.doctor?.firstName}
                             </SelectItem>
@@ -1600,6 +1612,143 @@ export default function SmartClinicDashboard() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Live Queue Tracker Modal */}
+      <Dialog open={showLiveQueueModal} onOpenChange={setShowLiveQueueModal}>
+        <DialogContent className="max-w-md mx-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Activity className="w-5 h-5 text-blue-500" />
+              Live Queue Tracker
+              <Badge className="bg-orange-100 text-orange-800 text-xs">Delayed 20min</Badge>
+            </DialogTitle>
+          </DialogHeader>
+          
+          <LiveQueueContent 
+            currentPosition={currentQueuePosition}
+            queueConnected={queueConnected}
+            onRefresh={() => {
+              queryClient.invalidateQueries({ queryKey: ["/api/queue/position"] });
+              queryClient.invalidateQueries({ queryKey: ["/api/queue/admin"] });
+              toast({
+                title: "Queue Refreshed",
+                description: "Queue information has been updated.",
+              });
+            }}
+            onJoinQueue={handleJoinQueue}
+            joinQueuePending={joinQueueMutation.isPending}
+            isInQueue={queuePosition && queuePosition.status === 'waiting'}
+          />
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
+
+// Live Queue Content Component
+function LiveQueueContent({ 
+  currentPosition, 
+  queueConnected, 
+  onRefresh, 
+  onJoinQueue, 
+  joinQueuePending, 
+  isInQueue 
+}: {
+  currentPosition: any;
+  queueConnected: boolean;
+  onRefresh: () => void;
+  onJoinQueue: () => void;
+  joinQueuePending: boolean;
+  isInQueue: boolean;
+}) {
+  // Get admin queue data for full queue view
+  const { data: adminQueue = [] } = useQuery({
+    queryKey: ["/api/queue/admin"],
+    refetchInterval: 3000, // Real-time updates
+  });
+
+  const queueArray = Array.isArray(adminQueue) ? adminQueue : [];
+  const currentlyServing = queueArray.find((token: any) => token.status === 'called' || token.status === 'in_progress');
+  const waitingQueue = queueArray.filter((token: any) => token.status === 'waiting').slice(0, 4);
+
+  return (
+    <div className="space-y-4">
+      {/* Now Serving */}
+      <div className="bg-blue-500 text-white rounded-lg p-4 text-center">
+        <div className="text-sm mb-2">Now Serving</div>
+        <div className="text-3xl font-bold mb-1">
+          #{currentlyServing?.tokenNumber || '12'}
+        </div>
+        <div className="text-sm">Token Number</div>
+      </div>
+
+      {/* Doctor Running Late */}
+      <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+        <div className="flex items-center gap-2 text-yellow-800">
+          <Clock className="w-4 h-4" />
+          <span className="font-medium">Doctor Running Late</span>
+        </div>
+        <div className="text-sm text-yellow-700 mt-1">
+          Expected delay: 20 minutes
+        </div>
+      </div>
+
+      {/* Upcoming Appointments */}
+      <div>
+        <div className="flex items-center gap-2 mb-3">
+          <Clock className="w-4 h-4 text-gray-600" />
+          <span className="font-medium text-gray-900">Upcoming Appointments</span>
+        </div>
+        
+        <div className="space-y-2">
+          {waitingQueue.map((token: any, index: number) => (
+            <div key={token.id} className="flex items-center justify-between py-2 px-3 bg-gray-50 rounded-lg">
+              <div className="flex items-center gap-3">
+                <Badge className="bg-gray-600 text-white">
+                  #{token.tokenNumber}
+                </Badge>
+                <div>
+                  <div className="text-sm font-medium">
+                    {token.patient?.firstName} {token.patient?.lastName}
+                  </div>
+                  <div className="text-xs text-gray-500">
+                    {new Date(Date.now() + index * 15 * 60000).toLocaleTimeString('en-IN', {
+                      hour: '2-digit', 
+                      minute: '2-digit',
+                      timeZone: 'Asia/Kolkata'
+                    })} AM
+                  </div>
+                </div>
+              </div>
+              <div className="text-right">
+                <div className="text-sm font-medium">
+                  {index === 0 ? '0min' : `${(index + 1) * 15}min`}
+                </div>
+                <div className="text-xs text-gray-500">est. wait</div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Action Buttons */}
+      <div className="flex gap-3 pt-2">
+        <Button 
+          variant="outline" 
+          className="flex-1"
+          onClick={onRefresh}
+        >
+          Refresh Queue
+        </Button>
+        <Button 
+          className="flex-1 bg-blue-500 hover:bg-blue-600"
+          onClick={onJoinQueue}
+          disabled={joinQueuePending || isInQueue}
+        >
+          {joinQueuePending ? "Joining..." : 
+           isInQueue ? "In Queue" : "Join Queue"}
+        </Button>
+      </div>
     </div>
   );
 }
