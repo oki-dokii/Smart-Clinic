@@ -508,7 +508,7 @@ class EmailService {
       text: `Appointment Rescheduled - SmartClinic\n\nYour appointment has been moved to a new time:\n\nPrevious Appointment (Cancelled):\nDoctor: ${details.doctorName}\nDate: ${details.originalDate}\nTime: ${details.originalTime}\nLocation: ${details.clinic || 'SmartClinic'}\n\nNew Appointment Details:\nDoctor: ${details.doctorName}\nNew Date: ${details.newDate}\nNew Time: ${details.newTime}\nLocation: ${details.clinic || 'SmartClinic'}\n\nImportant Notes:\n- Please arrive 15 minutes before your new appointment time\n- Bring your ID and any relevant medical documents\n- If you need to reschedule again, please contact us at least 24 hours in advance\n- Contact reception if you have any questions about this change\n\nThank you for your understanding!\n— SmartClinic Team`
     };
 
-    return await this.sendEmail(email, emailContent);
+    return await this.sendNotificationEmail(email, emailContent);
   }
 }
 
