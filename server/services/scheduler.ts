@@ -117,8 +117,17 @@ export class SchedulerService {
       
       while (currentDate <= maxDate) {
         for (const time of reminderTimes) {
-          const reminderDateTime = new Date(currentDate);
-          reminderDateTime.setHours(time.hour, time.minute, 0, 0);
+          // Create reminder in local timezone (assuming user's timezone)
+          // Use the date in local timezone, not UTC conversion
+          const reminderDateTime = new Date(
+            currentDate.getFullYear(),
+            currentDate.getMonth(),
+            currentDate.getDate(),
+            time.hour,
+            time.minute,
+            0,
+            0
+          );
           
           // Create reminders for today and future dates
           // For custom medicines, create today's reminder even if the time has passed

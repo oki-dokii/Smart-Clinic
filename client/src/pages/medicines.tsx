@@ -217,7 +217,15 @@ export default function MedicinesPage() {
   };
 
   const formatTime = (time: string) => {
-    return new Date(`2000-01-01T${time}`).toLocaleTimeString([], { 
+    // Handle time string (HH:MM format) properly
+    if (time.includes(':')) {
+      return new Date(`2000-01-01T${time}:00`).toLocaleTimeString([], { 
+        hour: '2-digit', 
+        minute: '2-digit' 
+      });
+    }
+    // Handle full datetime string
+    return new Date(time).toLocaleTimeString([], { 
       hour: '2-digit', 
       minute: '2-digit' 
     });
@@ -671,7 +679,7 @@ Lisinopril 10mg - Once daily at 9:00 PM - For blood pressure"
                           <div>
                             <h4 className="font-medium">{reminder.prescription?.medicine?.name}</h4>
                             <p className="text-sm text-gray-600">
-                              {reminder.prescription?.dosage} - {formatTime(new Date(reminder.scheduledAt).toTimeString().split(' ')[0])}
+                              {reminder.prescription?.dosage} - {formatTime(reminder.scheduledAt)}
                               {!reminder.isTaken && !reminder.isSkipped && new Date(reminder.scheduledAt) < new Date() && (
                                 <Badge className="bg-orange-100 text-orange-800 text-xs ml-2">Overdue</Badge>
                               )}
