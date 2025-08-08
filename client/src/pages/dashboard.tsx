@@ -75,12 +75,24 @@ export default function SmartClinicDashboard() {
     const tomorrow = new Date(today);
     tomorrow.setDate(tomorrow.getDate() + 1);
 
-    return appointments?.some((appointment: any) => {
+    const hasToday = appointments?.some((appointment: any) => {
       const appointmentDate = new Date(appointment.appointmentDate);
       appointmentDate.setHours(0, 0, 0, 0);
       const isToday = appointmentDate >= today && appointmentDate < tomorrow;
       return isToday && (!doctorId || appointment.doctorId === doctorId);
     });
+
+    console.log("🔥 hasAppointmentToday check:", { 
+      appointmentsCount: appointments?.length, 
+      today: today.toDateString(),
+      hasToday,
+      appointments: appointments?.map(apt => ({
+        date: apt.appointmentDate,
+        dateOnly: new Date(apt.appointmentDate).toDateString()
+      }))
+    });
+
+    return hasToday;
   };
   const [showBookingModal, setShowBookingModal] = useState(false);
   const [showEmergencyModal, setShowEmergencyModal] = useState(false);
@@ -128,7 +140,7 @@ export default function SmartClinicDashboard() {
   });
   
   // Use live queue position if available, otherwise fallback to API data
-  const currentQueuePosition = liveQueuePosition || queuePosition;
+  const currentQueuePosition = liveQueuePosition || queuePosition || {};
 
   const { data: reminders = [] } = useQuery({
     queryKey: ["/api/reminders"],
@@ -890,10 +902,10 @@ export default function SmartClinicDashboard() {
                   {queueConnected && <span className="ml-2 text-green-400">● Live</span>}
                 </div>
                 <div className="text-4xl font-bold mb-2">
-                  #{currentQueuePosition?.tokenNumber || '4'}
+                  #{(currentQueuePosition as any)?.tokenNumber || '4'}
                 </div>
                 <div className="text-sm mb-4">
-                  Estimated wait: {currentQueuePosition?.estimatedWaitTime || 25} minutes
+                  Estimated wait: {(currentQueuePosition as any)?.estimatedWaitTime || 25} minutes
                 </div>
                 <Button 
                   className="w-full bg-green-600 hover:bg-green-700 text-white font-medium"
@@ -984,10 +996,10 @@ export default function SmartClinicDashboard() {
                 <Button 
                   className="flex-1 bg-blue-500 hover:bg-blue-600"
                   onClick={handleJoinQueue}
-                  disabled={joinQueueMutation.isPending || (queuePosition && queuePosition.status === 'waiting')}
+                  disabled={joinQueueMutation.isPending || ((queuePosition as any)?.status === 'waiting')}
                 >
                   {joinQueueMutation.isPending ? "Joining..." : 
-                   (queuePosition && queuePosition.status === 'waiting') ? "Already in Queue" : "Join Queue"}
+                   ((queuePosition as any)?.status === 'waiting') ? "Already in Queue" : "Join Queue"}
                 </Button>
               </div>
             </CardContent>
@@ -1637,7 +1649,7 @@ export default function SmartClinicDashboard() {
             }}
             onJoinQueue={handleJoinQueue}
             joinQueuePending={joinQueueMutation.isPending}
-            isInQueue={queuePosition && queuePosition.status === 'waiting'}
+            isInQueue={(queuePosition as any)?.status === 'waiting'}
           />
         </DialogContent>
       </Dialog>
@@ -1661,10 +1673,14 @@ function LiveQueueContent({
   joinQueuePending: boolean;
   isInQueue: boolean;
 }) {
-  // Get admin queue data for full queue view
+  // Get admin queue data for full queue view - use admin endpoint for modal
   const { data: adminQueue = [] } = useQuery({
-    queryKey: ["/api/queue/admin"],
-    refetchInterval: 3000, // Real-time updates
+    queryKey: ["/api/queue/admin"], 
+    refetchInterval: 3000,
+    retry: false, // Don't retry if unauthorized
+    onError: (error) => {
+      console.log("Admin queue access denied, using sample data for modal");
+    }
   });
 
   const queueArray = Array.isArray(adminQueue) ? adminQueue : [];

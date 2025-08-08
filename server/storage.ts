@@ -394,25 +394,31 @@ export class DatabaseStorage implements IStorage {
     console.log(`Storage: Getting appointments for user ${userId} with role ${role}`);
     console.log(`Storage: Looking for appointments where patientId = ${userId}`);
     
-    // For dashboard context, show only the next appointment until it's completed
-    const now = new Date();
+    // For dashboard context, show appointments from today onwards (include today)
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // Start of today
+    
     const appointmentRecords = await db.select().from(appointments)
       .where(
         and(
           eq(appointments.patientId, userId),
-          gte(appointments.appointmentDate, now),
+          gte(appointments.appointmentDate, today), // Include today's appointments
           sql`${appointments.status} IN ('scheduled', 'confirmed', 'pending_approval')`
         )
       )
       .orderBy(asc(appointments.appointmentDate))
-      .limit(1); // Only show the next appointment
+      .limit(5); // Show multiple appointments for context
     
-    console.log(`Storage: Raw Drizzle query returned ${appointmentRecords.length} future appointments`);
+    console.log(`Storage: Raw Drizzle query returned ${appointmentRecords.length} appointments from today onwards`);
+    console.log(`Storage: Today's date filter start:`, today.toISOString());
     if (appointmentRecords.length > 0) {
-      console.log(`Storage: Next appointment:`, appointmentRecords[0]);
+      console.log(`Storage: First appointment:`, appointmentRecords[0]);
+      appointmentRecords.forEach((apt, index) => {
+        console.log(`Storage: Appointment ${index + 1}: ${apt.id} at ${apt.appointmentDate}`);
+      });
     }
     
-    console.log(`Storage: Found ${appointmentRecords.length} future appointments for user ${userId}`);
+    console.log(`Storage: Found ${appointmentRecords.length} appointments from today onwards for user ${userId}`);
     
     // Manually join with users
     const appointmentsWithUsers = [];
