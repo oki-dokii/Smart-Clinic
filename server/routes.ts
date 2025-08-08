@@ -1988,11 +1988,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { appointmentId } = req.params;
       const updates = { ...req.body, updatedAt: new Date() };
       
+      console.log('🔥 RESCHEDULE DEBUG - Appointment ID:', appointmentId);
+      console.log('🔥 RESCHEDULE DEBUG - Updates received:', updates);
+      
       // Get the original appointment first to compare dates
       const originalAppointment = await storage.getAppointmentById(appointmentId);
       if (!originalAppointment) {
         return res.status(404).json({ message: "Appointment not found" });
       }
+      
+      console.log('🔥 RESCHEDULE DEBUG - Original appointment date:', originalAppointment.appointmentDate);
       
       const appointment = await storage.updateAppointment(appointmentId, updates);
       
@@ -2000,15 +2005,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Appointment not found" });
       }
 
+      console.log('🔥 RESCHEDULE DEBUG - Updated appointment date:', appointment.appointmentDate);
+
       // Check if appointment date was changed (rescheduled)
       const wasRescheduled = updates.appointmentDate && 
         new Date(updates.appointmentDate).getTime() !== new Date(originalAppointment.appointmentDate).getTime();
 
+      console.log('🔥 RESCHEDULE DEBUG - Was rescheduled?', wasRescheduled);
+      console.log('🔥 RESCHEDULE DEBUG - Original date time:', new Date(originalAppointment.appointmentDate).getTime());
+      console.log('🔥 RESCHEDULE DEBUG - New date time:', updates.appointmentDate ? new Date(updates.appointmentDate).getTime() : 'undefined');
+
       if (wasRescheduled) {
         try {
+          console.log('🔥 RESCHEDULE DEBUG - Starting email notification process');
+          
           // Get patient and doctor details for email notification
           const patient = await storage.getUserById(appointment.patientId);
           const doctor = await storage.getUserById(appointment.doctorId);
+          
+          console.log('🔥 RESCHEDULE DEBUG - Patient email:', patient?.email);
+          console.log('🔥 RESCHEDULE DEBUG - Doctor details:', doctor ? `${doctor.firstName} ${doctor.lastName}` : 'Not found');
           
           if (patient && doctor && patient.email) {
             console.log('🔥 RESCHEDULE NOTIFICATION - Sending email to:', patient.email);
@@ -2036,15 +2052,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
             });
             
             console.log('🔥 RESCHEDULE NOTIFICATION - Email sent successfully');
+          } else {
+            console.log('🔥 RESCHEDULE DEBUG - Email not sent. Patient:', !!patient, 'Doctor:', !!doctor, 'Patient email:', patient?.email);
           }
         } catch (emailError) {
           console.error('🔥 RESCHEDULE EMAIL ERROR:', emailError);
           // Don't fail the request if email fails
         }
+      } else {
+        console.log('🔥 RESCHEDULE DEBUG - No email sent because appointment was not rescheduled');
       }
 
       res.json(appointment);
     } catch (error: any) {
+      console.error('🔥 RESCHEDULE ROUTE ERROR:', error);
       res.status(400).json({ message: error.message });
     }
   });
