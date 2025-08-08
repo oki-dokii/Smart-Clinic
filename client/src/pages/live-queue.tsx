@@ -91,14 +91,39 @@ export default function LiveQueueTracker() {
   const currentlyServing = queueArray.find((token: any) => token.status === 'called' || token.status === 'in_progress');
   const waitingQueue = queueArray.filter((token: any) => token.status === 'waiting');
 
+  // Real-time countdown state
+  const [countdown, setCountdown] = useState(0);
+
   // Calculate the current user's queue position for dynamic wait time
   const currentUserPosition = queuePosition?.tokenNumber ? 
     waitingQueue.findIndex((token: any) => token.tokenNumber === queuePosition.tokenNumber) + 1 : 0;
   
-  // Calculate dynamic wait time for the current user
-  const dynamicWaitTime = queuePosition?.createdAt && currentUserPosition > 0 ? 
-    calculateDynamicWaitTime(queuePosition, currentUserPosition) : 
-    queuePosition?.estimatedWaitTime || 0;
+  // Use server's calculated wait time as primary source
+  const serverWaitTime = queuePosition?.estimatedWaitTime || 0;
+  
+  // If we have valid queue position data, use server time, otherwise try to calculate
+  const baseWaitTime = serverWaitTime > 0 ? 
+    serverWaitTime : 
+    (queuePosition?.createdAt && currentUserPosition > 0 ? 
+      calculateDynamicWaitTime(queuePosition, currentUserPosition) : 0);
+
+  // Real-time countdown effect
+  useEffect(() => {
+    if (baseWaitTime > 0) {
+      setCountdown(baseWaitTime);
+      
+      const interval = setInterval(() => {
+        setCountdown(prev => {
+          const newValue = Math.max(0, prev - (1/60)); // Decrease by 1 second (1/60 minute)
+          return Math.round(newValue * 10) / 10; // Round to 1 decimal place
+        });
+      }, 1000);
+
+      return () => clearInterval(interval);
+    }
+  }, [baseWaitTime]);
+
+  const dynamicWaitTime = Math.ceil(countdown); // Round up for display
 
   const refreshQueue = () => {
     queryClient.invalidateQueries({ queryKey: ["/api/queue/position"] });
@@ -176,7 +201,10 @@ export default function LiveQueueTracker() {
                   Estimated wait: {dynamicWaitTime > 0 ? `${dynamicWaitTime} minutes` : 'Check with reception'}
                   {dynamicWaitTime > 0 && (
                     <div className="text-sm opacity-75 mt-1">
-                      Updates in real-time
+                      <div className="flex items-center gap-2">
+                        <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                        Counting down live • {countdown.toFixed(1)}min
+                      </div>
                     </div>
                   )}
                 </div>
