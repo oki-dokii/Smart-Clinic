@@ -98,7 +98,7 @@ class EmailService {
         console.log(`🔥 EMAIL OTP SERVICE - Gmail SMTP response:`, info);
         console.log(`🔥 EMAIL OTP SERVICE - Real email sent to ${email} via Gmail SMTP`);
         console.log(`🔥 EMAIL OTP CODE for ${email}: ${otp}`);
-        return { success: true, otp };
+        return { success: true };
       }
 
       // Try Resend (limited to verified email only)
@@ -117,7 +117,7 @@ class EmailService {
         }
 
         console.log(`🔥 EMAIL OTP SERVICE - Real email sent to ${email} via Resend`);
-        return { success: true, otp };
+        return { success: true };
       }
 
       // Fallback to Ethereal Email (testing only)
