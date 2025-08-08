@@ -240,7 +240,14 @@ export default function MedicinesPage() {
     if (timeMatch) {
       const hours = parseInt(timeMatch[1]);
       const minutes = parseInt(timeMatch[2]);
-      return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+      // Convert UTC time to IST (UTC+5:30) for display
+      const utcDate = new Date();
+      utcDate.setUTCHours(hours, minutes, 0, 0);
+      const istDate = new Date(utcDate.getTime() + (5.5 * 60 * 60 * 1000)); // Add 5.5 hours for IST
+      return istDate.toLocaleTimeString([], { 
+        hour: '2-digit', 
+        minute: '2-digit' 
+      });
     }
     
     // Fallback to regular date formatting
