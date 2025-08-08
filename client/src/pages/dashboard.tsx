@@ -121,6 +121,12 @@ export default function SmartClinicDashboard() {
     enabled: !!user && user.role === "patient",
   });
 
+  // Fetch missed doses data for accurate overdue count
+  const { data: missedDoses = [] } = useQuery({
+    queryKey: ["/api/reminders/missed"],
+    enabled: !!user && user.role === "patient",
+  });
+
   const { data: doctors = [] } = useQuery({
     queryKey: ["/api/users", "doctor"],
     queryFn: async () => {
@@ -735,16 +741,16 @@ export default function SmartClinicDashboard() {
                 <span className="text-2xl font-bold">
                   {reminders?.filter((r: any) => !r.isTaken).length || 0}
                 </span>
-                {reminders?.some((r: any) => !r.isTaken && new Date(r.scheduledAt) < new Date()) && (
+                {missedDoses?.some((md: any) => md.missedDoses > 0 || md.overdueToday > 0) && (
                   <Badge className="bg-red-500 text-white text-xs pulse-urgent">Urgent</Badge>
                 )}
               </div>
               <div className={`text-sm text-gray-600 mb-4 ${
-                reminders?.filter((r: any) => !r.isTaken && new Date(r.scheduledAt) < new Date()).length > 0 
+                missedDoses?.some((md: any) => md.missedDoses > 0 || md.overdueToday > 0)
                   ? 'flash-urgent text-red-600' 
                   : ''
               }`}>
-                {reminders?.filter((r: any) => !r.isTaken && new Date(r.scheduledAt) < new Date()).length || 0} dose(s) overdue
+                {missedDoses?.reduce((total: number, md: any) => total + (md.missedDoses || 0) + (md.overdueToday || 0), 0) || 0} dose(s) overdue
               </div>
               <Button 
                 className="w-full bg-orange-500 hover:bg-orange-600"
@@ -952,7 +958,7 @@ export default function SmartClinicDashboard() {
           ) : null}
 
           {/* Medicine Reminders */}
-          <Card className={reminders?.filter((r: any) => !r.isTaken && new Date(r.scheduledAt) < new Date()).length > 0 ? 'glow-urgent' : ''}>
+          <Card className={missedDoses?.some((md: any) => md.missedDoses > 0 || md.overdueToday > 0) ? 'glow-urgent' : ''}>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Pill className="w-5 h-5 text-orange-500" />
