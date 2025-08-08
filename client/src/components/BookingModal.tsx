@@ -297,7 +297,12 @@ export default function BookingModal({ isOpen, onClose, selectedAppointment, sel
                     mode="single"
                     selected={selectedDate}
                     onSelect={handleDateSelect}
-                    disabled={(date) => date < new Date() || date > new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)}
+                    disabled={(date) => {
+                      const today = new Date();
+                      today.setHours(0, 0, 0, 0);
+                      const maxDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+                      return date < today || date > maxDate;
+                    }}
                     initialFocus
                   />
                 </PopoverContent>
