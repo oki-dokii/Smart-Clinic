@@ -1389,7 +1389,8 @@ export class DatabaseStorage implements IStorage {
     .from(queueTokens)
     .innerJoin(sql`${users} AS patient`, sql`${queueTokens.patientId} = patient.id`)
     .innerJoin(sql`${users} AS doctor`, sql`${queueTokens.doctorId} = doctor.id`)
-    .orderBy(desc(queueTokens.createdAt));
+    .where(sql`${queueTokens.status} IN ('waiting', 'called', 'in_progress')`) // Filter out completed/cancelled tokens
+    .orderBy(asc(queueTokens.tokenNumber)); // Order by token number for proper queue display
   }
 
   async getAllAppointments(): Promise<any[]> {
