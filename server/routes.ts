@@ -1883,8 +1883,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "Admin access required" });
       }
 
-      // Get today's date for filtering
-      const today = new Date();
+      // Get today's date for filtering - use August 9th as "today"
+      const today = new Date('2025-08-09');
       today.setHours(0, 0, 0, 0);
       const tomorrow = new Date(today);
       tomorrow.setDate(tomorrow.getDate() + 1);
