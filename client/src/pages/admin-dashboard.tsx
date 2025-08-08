@@ -3675,9 +3675,9 @@ export default function ClinicDashboard() {
                         <CardContent className="space-y-4">
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                             <div>
-                              <span className="font-medium text-gray-700">Category:</span>
+                              <span className="font-medium text-gray-700">Categories:</span>
                               <span className="ml-2 capitalize">
-                                {item.category.replace('_', ' ')}
+                                {item.categories ? item.categories.map((cat: string) => cat.replace('_', ' ')).join(', ') : 'N/A'}
                               </span>
                             </div>
                             <div>
