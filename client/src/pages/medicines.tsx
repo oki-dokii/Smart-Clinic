@@ -217,15 +217,24 @@ export default function MedicinesPage() {
   };
 
   const formatTime = (time: string) => {
-    // Handle time string (HH:MM format) properly
-    if (time.includes(':')) {
-      return new Date(`2000-01-01T${time}:00`).toLocaleTimeString([], { 
+    if (!time) return 'N/A';
+    
+    // Handle time string (HH:MM format)
+    if (time.includes(':') && !time.includes('T') && !time.includes('Z')) {
+      // Ensure proper time format
+      const timeFormatted = time.length === 5 ? `${time}:00` : time;
+      const date = new Date(`2000-01-01T${timeFormatted}`);
+      if (isNaN(date.getTime())) return time; // Return original if invalid
+      return date.toLocaleTimeString([], { 
         hour: '2-digit', 
         minute: '2-digit' 
       });
     }
-    // Handle full datetime string
-    return new Date(time).toLocaleTimeString([], { 
+    
+    // Handle full datetime string (ISO format)
+    const date = new Date(time);
+    if (isNaN(date.getTime())) return time; // Return original if invalid
+    return date.toLocaleTimeString([], { 
       hour: '2-digit', 
       minute: '2-digit' 
     });
