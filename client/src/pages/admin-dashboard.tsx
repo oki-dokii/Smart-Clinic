@@ -59,6 +59,17 @@ interface User {
   createdAt: string;
 }
 
+interface StaffPresence {
+  id: string;
+  staffId: string;
+  date: string;
+  isPresent: boolean;
+  checkInTime: string | null;
+  checkOutTime: string | null;
+  markedByAdmin: boolean;
+  lastUpdated: string;
+}
+
 interface DashboardStats {
   patientsToday: number;
   completedAppointments: number;
@@ -110,6 +121,18 @@ interface StaffMember extends User {
   department?: string;
   lastCheckIn?: string;
   isPresent: boolean;
+}
+
+interface StaffPresence {
+  id: string;
+  staffId: string;
+  date: string;
+  isPresent: boolean;
+  checkInTime: string | null;
+  markedByAdmin: boolean;
+  createdAt: string;
+  updatedAt: string;
+  staff: User;
 }
 
 // Emergency Alert Interface
@@ -888,8 +911,36 @@ export default function ClinicDashboard() {
     refetchOnMount: true
   })
 
+  // Fetch today's staff presence data
+  const { data: staffPresence = [], isLoading: presenceLoading, refetch: refetchPresence } = useQuery<StaffPresence[]>({
+    queryKey: ['/api/staff-presence/today'],
+    queryFn: () => fetch('/api/staff-presence/today', {
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('auth_token')}`,
+        'Content-Type': 'application/json'
+      }
+    }).then(res => {
+      if (!res.ok) throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+      return res.json();
+    }),
+    staleTime: 0,
+    gcTime: 0,
+    refetchOnWindowFocus: true,
+    refetchInterval: 30000
+  })
+
   // Filter staff members (non-patients)
   const staffMembers = users?.filter(user => user.role !== 'patient') || []
+
+  // Calculate real staff metrics
+  const doctorCount = staffMembers.filter(staff => staff.role === 'doctor').length
+  const nurseCount = staffMembers.filter(staff => staff.role === 'nurse').length  
+  const staffCount = staffMembers.filter(staff => staff.role === 'staff').length
+  const totalStaff = staffMembers.length
+  
+  // Calculate present staff from presence data
+  const presentStaff = staffPresence.filter(presence => presence.isPresent).length
+  const onDutyStaff = presentStaff
 
   // Medicines/Inventory data
   const { data: medicines = [], isLoading: medicinesLoading, refetch: refetchMedicines } = useQuery<Medicine[]>({
@@ -971,6 +1022,31 @@ export default function ClinicDashboard() {
     },
     onError: (error) => {
       toast({ title: 'Error', description: error.message, variant: 'destructive' })
+    }
+  })
+
+  // Staff presence toggle mutation
+  const toggleStaffPresenceMutation = useMutation({
+    mutationFn: async ({ userId, isPresent }: { userId: string; isPresent: boolean }) => {
+      return apiRequest('PUT', `/api/staff-presence/update/${userId}`, { 
+        isPresent, 
+        markedByAdmin: true 
+      })
+    },
+    onSuccess: () => {
+      toast({
+        title: 'Staff presence updated',
+        description: 'Staff presence status has been updated successfully.'
+      })
+      queryClient.invalidateQueries({ queryKey: ['/api/staff-presence/today'] })
+      refetchPresence()
+    },
+    onError: () => {
+      toast({
+        title: 'Error',
+        description: 'Failed to update staff presence',
+        variant: 'destructive'
+      })
     }
   })
 
@@ -2097,13 +2173,22 @@ export default function ClinicDashboard() {
                     </CardHeader>
                     <CardContent>
                       <div className="flex items-center gap-2 mb-2">
-                        <span className="text-3xl font-bold">{statsLoading ? '...' : (stats?.patientsToday || 24)}</span>
-                        <Badge className="bg-blue-100 text-blue-800 text-xs flex items-center gap-1">
+                        <span className="text-3xl font-bold">{statsLoading ? '...' : (stats?.patientsToday || 0)}</span>
+                        <Badge className={`text-xs flex items-center gap-1 ${
+                          stats?.completedAppointments && stats?.patientsToday 
+                            ? (stats.completedAppointments / stats.patientsToday > 0.7 ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800')
+                            : 'bg-gray-100 text-gray-800'
+                        }`}>
                           <TrendingUp className="w-3 h-3" />
-                          +12.94%
+                          {stats?.completedAppointments && stats?.patientsToday 
+                            ? `${Math.round((stats.completedAppointments / stats.patientsToday) * 100)}%`
+                            : 'N/A'
+                          }
                         </Badge>
                       </div>
-                      <p className="text-sm text-gray-600">8 completed, 16 pending</p>
+                      <p className="text-sm text-gray-600">
+                        {stats?.completedAppointments || 0} completed, {(stats?.patientsToday || 0) - (stats?.completedAppointments || 0)} pending
+                      </p>
                     </CardContent>
                   </Card>
 
@@ -2117,8 +2202,16 @@ export default function ClinicDashboard() {
                     </CardHeader>
                     <CardContent>
                       <div className="flex items-center gap-2 mb-2">
-                        <span className="text-3xl font-bold">6</span>
-                        <Badge className="bg-red-500 text-white text-xs">Urgent</Badge>
+                        <span className="text-3xl font-bold">{queueTokens ? queueTokens.length : 0}</span>
+                        {queueTokens && queueTokens.length > 5 && (
+                          <Badge className="bg-red-500 text-white text-xs">Urgent</Badge>
+                        )}
+                        {queueTokens && queueTokens.length <= 5 && queueTokens.length > 2 && (
+                          <Badge className="bg-orange-500 text-white text-xs">Moderate</Badge>
+                        )}
+                        {queueTokens && queueTokens.length <= 2 && (
+                          <Badge className="bg-green-500 text-white text-xs">Light</Badge>
+                        )}
                       </div>
                       <p className="text-sm text-gray-600">Current waiting patients</p>
                     </CardContent>
@@ -2162,9 +2255,25 @@ export default function ClinicDashboard() {
                     </CardHeader>
                     <CardContent>
                       <div className="flex items-center gap-2 mb-2">
-                        <span className="text-3xl font-bold">{statsLoading ? '...' : (stats?.activeStaff || 12)}/15</span>
+                        <span className="text-3xl font-bold">
+                          {staffMembers ? staffMembers.filter((s: any) => s.isActive).length : 0}/{staffMembers ? staffMembers.length : 0}
+                        </span>
+                        <Badge className={`text-xs ${
+                          staffMembers && staffMembers.filter((s: any) => s.isActive).length > staffMembers.length * 0.7 
+                            ? 'bg-green-100 text-green-800' 
+                            : 'bg-orange-100 text-orange-800'
+                        }`}>
+                          {staffMembers ? 
+                            `${Math.round((staffMembers.filter((s: any) => s.isActive).length / staffMembers.length) * 100)}%` 
+                            : '0%'
+                          }
+                        </Badge>
                       </div>
-                      <p className="text-sm text-gray-600">3 doctors, 8 nurses, 3 admin</p>
+                      <p className="text-sm text-gray-600">
+                        {staffMembers ? staffMembers.filter((s: any) => s.role === 'doctor' && s.isActive).length : 0} doctors, {' '}
+                        {staffMembers ? staffMembers.filter((s: any) => ['staff', 'nurse'].includes(s.role) && s.isActive).length : 0} staff, {' '}
+                        {staffMembers ? staffMembers.filter((s: any) => s.role === 'admin' && s.isActive).length : 0} admin
+                      </p>
                     </CardContent>
                   </Card>
                 </div>
@@ -3519,7 +3628,7 @@ export default function ClinicDashboard() {
                       <div className="flex items-center justify-between">
                         <div>
                           <p className="text-sm text-gray-600">Total Staff</p>
-                          <p className="text-2xl font-bold text-blue-600">12</p>
+                          <p className="text-2xl font-bold text-blue-600">{totalStaff}</p>
                         </div>
                         <Users className="w-8 h-8 text-blue-600" />
                       </div>
@@ -3530,7 +3639,7 @@ export default function ClinicDashboard() {
                       <div className="flex items-center justify-between">
                         <div>
                           <p className="text-sm text-gray-600">Doctors</p>
-                          <p className="text-2xl font-bold text-green-600">5</p>
+                          <p className="text-2xl font-bold text-green-600">{doctorCount}</p>
                         </div>
                         <Stethoscope className="w-8 h-8 text-green-600" />
                       </div>
@@ -3540,8 +3649,8 @@ export default function ClinicDashboard() {
                     <CardContent className="p-4">
                       <div className="flex items-center justify-between">
                         <div>
-                          <p className="text-sm text-gray-600">Nurses</p>
-                          <p className="text-2xl font-bold text-purple-600">4</p>
+                          <p className="text-sm text-gray-600">Staff Members</p>
+                          <p className="text-2xl font-bold text-purple-600">{staffCount}</p>
                         </div>
                         <User className="w-8 h-8 text-purple-600" />
                       </div>
@@ -3551,8 +3660,8 @@ export default function ClinicDashboard() {
                     <CardContent className="p-4">
                       <div className="flex items-center justify-between">
                         <div>
-                          <p className="text-sm text-gray-600">On Duty</p>
-                          <p className="text-2xl font-bold text-orange-600">8</p>
+                          <p className="text-sm text-gray-600">Present Today</p>
+                          <p className="text-2xl font-bold text-orange-600">{presentStaff}</p>
                         </div>
                         <Activity className="w-8 h-8 text-orange-600" />
                       </div>
@@ -3604,6 +3713,17 @@ export default function ClinicDashboard() {
                                     }>
                                       {staff.role.charAt(0).toUpperCase() + staff.role.slice(1)}
                                     </Badge>
+                                    {(() => {
+                                      const presence = staffPresence.find(p => p.staffId === staff.id);
+                                      return (
+                                        <Badge className={presence?.isPresent 
+                                          ? 'bg-green-100 text-green-800' 
+                                          : 'bg-red-100 text-red-800'
+                                        }>
+                                          {presence?.isPresent ? 'Present' : 'Absent'}
+                                        </Badge>
+                                      );
+                                    })()}
                                     <span className="text-xs text-gray-500">
                                       ID: {staff.id.slice(0, 8)}...
                                     </span>
@@ -3627,6 +3747,26 @@ export default function ClinicDashboard() {
                                   </p>
                                 </div>
                                 <div className="flex gap-2">
+                                  {(() => {
+                                    const presence = staffPresence.find(p => p.staffId === staff.id);
+                                    return (
+                                      <Button
+                                        size="sm"
+                                        variant={presence?.isPresent ? "destructive" : "default"}
+                                        onClick={() => {
+                                          const currentStatus = presence?.isPresent || false;
+                                          toggleStaffPresenceMutation.mutate({ 
+                                            userId: staff.id, 
+                                            isPresent: !currentStatus 
+                                          });
+                                        }}
+                                        disabled={toggleStaffPresenceMutation.isPending}
+                                        data-testid={`button-toggle-presence-${staff.id}`}
+                                      >
+                                        {presence?.isPresent ? 'Mark Absent' : 'Mark Present'}
+                                      </Button>
+                                    );
+                                  })()}
                                   <Dialog>
                                     <DialogTrigger asChild>
                                       <Button 

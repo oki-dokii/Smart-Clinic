@@ -1,10 +1,11 @@
 import { 
-  users, otpSessions, emailOtpSessions, authSessions, staffVerifications, appointments, 
+  users, otpSessions, emailOtpSessions, authSessions, staffVerifications, staffPresence, appointments, 
   queueTokens, medicines, prescriptions, medicineReminders, delayNotifications,
   homeVisits, medicalHistory, patientFeedback,
   type User, type InsertUser, type OtpSession, type InsertOtpSession,
   type EmailOtpSession, type InsertEmailOtpSession,
   type AuthSession, type InsertAuthSession, type StaffVerification, type InsertStaffVerification,
+  type StaffPresence, type InsertStaffPresence,
   type Appointment, type InsertAppointment, type QueueToken, type InsertQueueToken,
   type Medicine, type InsertMedicine, type Prescription, type InsertPrescription,
   type MedicineReminder, type InsertMedicineReminder, type DelayNotification, type InsertDelayNotification,
@@ -54,6 +55,13 @@ export interface IStorage {
   getActiveStaffVerification(staffId: string): Promise<StaffVerification | undefined>;
   checkOutStaff(staffId: string): Promise<void>;
   getStaffVerifications(staffId: string, date?: Date): Promise<StaffVerification[]>;
+  
+  // Staff Presence
+  createOrUpdateStaffPresence(staffId: string, date: Date): Promise<StaffPresence>;
+  getStaffPresence(staffId: string, date: Date): Promise<StaffPresence | undefined>;
+  getStaffPresenceForDate(date: Date): Promise<(StaffPresence & { staff: User })[]>;
+  updateStaffPresence(id: string, updates: Partial<InsertStaffPresence>): Promise<StaffPresence | undefined>;
+  getTodayStaffPresence(): Promise<(StaffPresence & { staff: User })[]>;
   
   // Appointments
   createAppointment(appointment: InsertAppointment): Promise<Appointment>;
@@ -1575,6 +1583,97 @@ export class DatabaseStorage implements IStorage {
     await db.update(users)
       .set({ isApproved: status.isApproved, updatedAt: new Date() })
       .where(eq(users.id, userId));
+  }
+
+  // Staff Presence Implementation
+  async createOrUpdateStaffPresence(staffId: string, date: Date): Promise<StaffPresence> {
+    const startOfDay = new Date(date);
+    startOfDay.setHours(0, 0, 0, 0);
+    const endOfDay = new Date(date);
+    endOfDay.setHours(23, 59, 59, 999);
+
+    // Check if presence record exists for this date
+    const existing = await db.select()
+      .from(staffPresence)
+      .where(and(
+        eq(staffPresence.staffId, staffId),
+        gte(staffPresence.date, startOfDay),
+        lte(staffPresence.date, endOfDay)
+      ))
+      .limit(1);
+
+    if (existing.length > 0) {
+      // Update existing record to mark present
+      const [updated] = await db.update(staffPresence)
+        .set({ 
+          isPresent: true, 
+          checkInTime: new Date(),
+          updatedAt: new Date() 
+        })
+        .where(eq(staffPresence.id, existing[0].id))
+        .returning();
+      return updated;
+    } else {
+      // Create new presence record
+      const [newPresence] = await db.insert(staffPresence)
+        .values({
+          staffId,
+          date: startOfDay,
+          isPresent: true,
+          checkInTime: new Date(),
+          markedByAdmin: false
+        })
+        .returning();
+      return newPresence;
+    }
+  }
+
+  async getStaffPresence(staffId: string, date: Date): Promise<StaffPresence | undefined> {
+    const startOfDay = new Date(date);
+    startOfDay.setHours(0, 0, 0, 0);
+    const endOfDay = new Date(date);
+    endOfDay.setHours(23, 59, 59, 999);
+
+    const [presence] = await db.select()
+      .from(staffPresence)
+      .where(and(
+        eq(staffPresence.staffId, staffId),
+        gte(staffPresence.date, startOfDay),
+        lte(staffPresence.date, endOfDay)
+      ))
+      .limit(1);
+
+    return presence || undefined;
+  }
+
+  async getStaffPresenceForDate(date: Date): Promise<(StaffPresence & { staff: User })[]> {
+    const startOfDay = new Date(date);
+    startOfDay.setHours(0, 0, 0, 0);
+    const endOfDay = new Date(date);
+    endOfDay.setHours(23, 59, 59, 999);
+
+    return await db.query.staffPresence.findMany({
+      where: and(
+        gte(staffPresence.date, startOfDay),
+        lte(staffPresence.date, endOfDay)
+      ),
+      with: {
+        staff: true
+      }
+    });
+  }
+
+  async updateStaffPresence(id: string, updates: Partial<InsertStaffPresence>): Promise<StaffPresence | undefined> {
+    const [updated] = await db.update(staffPresence)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(staffPresence.id, id))
+      .returning();
+    return updated || undefined;
+  }
+
+  async getTodayStaffPresence(): Promise<(StaffPresence & { staff: User })[]> {
+    const today = new Date();
+    return this.getStaffPresenceForDate(today);
   }
 
 }

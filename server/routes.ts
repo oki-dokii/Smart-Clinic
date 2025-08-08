@@ -2444,6 +2444,65 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Staff presence routes
+  app.post("/api/staff-presence/checkin", authMiddleware, requireRole(['staff', 'doctor', 'admin']), async (req, res) => {
+    try {
+      const staffId = req.user!.id;
+      const today = new Date();
+      
+      const presence = await storage.createOrUpdateStaffPresence(staffId, today);
+      res.json(presence);
+    } catch (error: any) {
+      res.status(400).json({ message: error.message });
+    }
+  });
+
+  app.get("/api/staff-presence/today", authMiddleware, requireRole(['admin', 'staff']), async (req, res) => {
+    try {
+      const staffPresence = await storage.getTodayStaffPresence();
+      res.json(staffPresence);
+    } catch (error: any) {
+      res.status(400).json({ message: error.message });
+    }
+  });
+
+  app.put("/api/staff-presence/:id", authMiddleware, requireRole(['admin']), async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { isPresent, markedByAdmin } = req.body;
+      
+      const presence = await storage.updateStaffPresence(id, {
+        isPresent,
+        markedByAdmin: markedByAdmin !== undefined ? markedByAdmin : true,
+        updatedAt: new Date()
+      });
+      
+      if (!presence) {
+        return res.status(404).json({ message: "Staff presence record not found" });
+      }
+      
+      res.json(presence);
+    } catch (error: any) {
+      res.status(400).json({ message: error.message });
+    }
+  });
+
+  app.get("/api/staff-presence/:date", authMiddleware, requireRole(['admin']), async (req, res) => {
+    try {
+      const { date } = req.params;
+      const targetDate = new Date(date);
+      
+      if (isNaN(targetDate.getTime())) {
+        return res.status(400).json({ message: "Invalid date format" });
+      }
+      
+      const staffPresence = await storage.getStaffPresenceForDate(targetDate);
+      res.json(staffPresence);
+    } catch (error: any) {
+      res.status(400).json({ message: error.message });
+    }
+  });
+
   // Start background services
   schedulerService.start();
 

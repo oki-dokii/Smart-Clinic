@@ -73,6 +73,23 @@ export const staffVerifications = pgTable("staff_verifications", {
   checkedOutAt: timestamp("checked_out_at"),
   workLocation: text("work_location").notNull(),
   isValid: boolean("is_valid").notNull().default(true),
+  notes: text("notes"),
+  createdAt: timestamp("created_at").notNull().default(sql`NOW()`),
+});
+
+// Staff daily presence tracking table
+export const staffPresence = pgTable("staff_presence", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  staffId: varchar("staff_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  date: timestamp("date").notNull(),
+  isPresent: boolean("is_present").notNull().default(false),
+  checkInTime: timestamp("check_in_time"),
+  checkOutTime: timestamp("check_out_time"),
+  markedByAdmin: boolean("marked_by_admin").notNull().default(false),
+  adminId: varchar("admin_id").references(() => users.id),
+  notes: text("notes"),
+  createdAt: timestamp("created_at").notNull().default(sql`NOW()`),
+  updatedAt: timestamp("updated_at").notNull().default(sql`NOW()`),
 });
 
 // Appointments table
@@ -225,6 +242,7 @@ export const medicalHistory = pgTable("medical_history", {
 export const usersRelations = relations(users, ({ many }) => ({
   authSessions: many(authSessions),
   staffVerifications: many(staffVerifications),
+  staffPresence: many(staffPresence),
   patientAppointments: many(appointments, { relationName: "patient_appointments" }),
   doctorAppointments: many(appointments, { relationName: "doctor_appointments" }),
   patientQueueTokens: many(queueTokens, { relationName: "patient_queue_tokens" }),
@@ -243,6 +261,11 @@ export const authSessionsRelations = relations(authSessions, ({ one }) => ({
 
 export const staffVerificationsRelations = relations(staffVerifications, ({ one }) => ({
   staff: one(users, { fields: [staffVerifications.staffId], references: [users.id] }),
+}));
+
+export const staffPresenceRelations = relations(staffPresence, ({ one }) => ({
+  staff: one(users, { fields: [staffPresence.staffId], references: [users.id] }),
+  admin: one(users, { fields: [staffPresence.adminId], references: [users.id] }),
 }));
 
 export const appointmentsRelations = relations(appointments, ({ one, many }) => ({
@@ -332,6 +355,12 @@ export const insertStaffVerificationSchema = createInsertSchema(staffVerificatio
   checkedInAt: true,
 });
 
+export const insertStaffPresenceSchema = createInsertSchema(staffPresence).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 export const insertAppointmentSchema = createInsertSchema(appointments).omit({
   id: true,
   createdAt: true,
@@ -392,6 +421,8 @@ export type AuthSession = typeof authSessions.$inferSelect;
 export type InsertAuthSession = z.infer<typeof insertAuthSessionSchema>;
 export type StaffVerification = typeof staffVerifications.$inferSelect;
 export type InsertStaffVerification = z.infer<typeof insertStaffVerificationSchema>;
+export type StaffPresence = typeof staffPresence.$inferSelect;
+export type InsertStaffPresence = z.infer<typeof insertStaffPresenceSchema>;
 export type Appointment = typeof appointments.$inferSelect;
 export type InsertAppointment = z.infer<typeof insertAppointmentSchema>;
 export type QueueToken = typeof queueTokens.$inferSelect;
