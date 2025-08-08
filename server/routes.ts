@@ -54,8 +54,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log('🔥 TEST APPROVE - Appointment updated');
 
       // Send email notification
-      const patient = await storage.getUserById(appointment.patientId);
-      const doctor = await storage.getUserById(appointment.doctorId);
+      const patient = await storage.getUser(appointment.patientId);
+      const doctor = await storage.getUser(appointment.doctorId);
       
       console.log('🔥 TEST APPROVE - Patient:', { id: patient?.id, email: patient?.email });
       console.log('🔥 TEST APPROVE - Doctor:', { id: doctor?.id, name: `${doctor?.firstName} ${doctor?.lastName}` });
@@ -455,7 +455,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Send SMS notification to patient
       try {
-        const doctor = await storage.getUserById(appointmentDetails.doctorId);
+        const doctor = await storage.getUser(appointmentDetails.doctorId);
         await smsService.sendAppointmentRequest(patientInfo.phoneNumber, {
           doctorName: `Dr. ${doctor?.firstName} ${doctor?.lastName}`,
           preferredDate: new Date(appointmentDetails.preferredDate).toLocaleDateString(),
@@ -531,8 +531,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Send SMS notification
       try {
-        const patient = await storage.getUserById(appointment.patientId);
-        const doctor = await storage.getUserById(appointment.doctorId);
+        const patient = await storage.getUser(appointment.patientId);
+        const doctor = await storage.getUser(appointment.doctorId);
         
         if (status === 'approved') {
           await emailService.sendAppointmentApproved(patient?.email || '', {
@@ -662,8 +662,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Send email and SMS notifications to patient
       try {
-        const patient = appointment.patient || await storage.getUserById(appointment.patientId);
-        const doctor = appointment.doctor || await storage.getUserById(appointment.doctorId);
+        const patient = appointment.patient || await storage.getUser(appointment.patientId);
+        const doctor = appointment.doctor || await storage.getUser(appointment.doctorId);
         
         console.log('🔥 APPROVAL - Patient data:', { id: patient?.id, email: patient?.email });
         console.log('🔥 APPROVAL - Doctor data:', { id: doctor?.id, name: `${doctor?.firstName} ${doctor?.lastName}` });
@@ -738,8 +738,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Send SMS notification to patient
       try {
-        const patient = appointment.patient || await storage.getUserById(appointment.patientId);
-        const doctor = appointment.doctor || await storage.getUserById(appointment.doctorId);
+        const patient = appointment.patient || await storage.getUser(appointment.patientId);
+        const doctor = appointment.doctor || await storage.getUser(appointment.doctorId);
         
         if (patient && doctor) {
           const appointmentDate = new Date(appointment.appointmentDate);
@@ -870,8 +870,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         try {
           // Get patient and doctor details for email
-          const patient = await storage.getUserById(appointment.patientId);
-          const doctor = await storage.getUserById(appointment.doctorId);
+          const patient = await storage.getUser(appointment.patientId);
+          const doctor = await storage.getUser(appointment.doctorId);
           
           console.log('🔥 RESCHEDULE DEBUG - Patient email:', patient?.email);
           console.log('🔥 RESCHEDULE DEBUG - Doctor name:', doctor?.firstName, doctor?.lastName);
@@ -2093,8 +2093,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           console.log('🔥 RESCHEDULE DEBUG - Starting email notification process');
           
           // Get patient and doctor details for email notification
-          const patient = await storage.getUserById(appointment.patientId);
-          const doctor = await storage.getUserById(appointment.doctorId);
+          const patient = await storage.getUser(appointment.patientId);
+          const doctor = await storage.getUser(appointment.doctorId);
           
           console.log('🔥 RESCHEDULE DEBUG - Patient email:', patient?.email);
           console.log('🔥 RESCHEDULE DEBUG - Doctor details:', doctor ? `${doctor.firstName} ${doctor.lastName}` : 'Not found');
