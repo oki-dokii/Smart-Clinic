@@ -755,20 +755,8 @@ export default function SmartClinicDashboard() {
               </div>
               <Button 
                 className="w-full bg-green-500 hover:bg-green-600"
-                onClick={() => {
-                  if (queuePosition) {
-                    toast({
-                      title: "Queue Status",
-                      description: `You are #${queuePosition.tokenNumber} in queue. ${queuePosition.estimatedWaitTime} minutes remaining.`,
-                    });
-                  } else {
-                    toast({
-                      title: "Not in Queue",
-                      description: "Join the queue first to track your position.",
-                      variant: "destructive",
-                    });
-                  }
-                }}
+                onClick={() => setLocation("/live-queue")}
+                data-testid="button-track-live-queue"
               >
                 Track Live
               </Button>
