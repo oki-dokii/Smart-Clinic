@@ -960,7 +960,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
 
       res.json(queueToken);
+      
+      // Trigger WebSocket broadcast for live queue updates
+      await queueService.broadcastWebSocketUpdate(doctorId);
     } catch (error: any) {
+      res.status(400).json({ message: error.message });
+    }
+  });
+
+  // Test endpoint to add queue token for testing (admin only)
+  app.post("/api/queue/test-add", authMiddleware, requireRole(['admin']), async (req, res) => {
+    try {
+      const { patientId, doctorId } = z.object({
+        patientId: z.string(),
+        doctorId: z.string()
+      }).parse(req.body);
+
+      const tokenNumber = await storage.getNextTokenNumber(doctorId);
+      const queueToken = await storage.createQueueToken({
+        tokenNumber,
+        patientId,
+        doctorId,
+        priority: 1
+      });
+
+      console.log('🔥 TEST QUEUE TOKEN CREATED:', queueToken);
+      
+      // Trigger WebSocket broadcast for live queue updates
+      await queueService.broadcastWebSocketUpdate(doctorId);
+      console.log('🔥 TEST BROADCAST SENT');
+
+      res.json({ success: true, queueToken });
+    } catch (error: any) {
+      console.error('🔥 TEST QUEUE ERROR:', error);
       res.status(400).json({ message: error.message });
     }
   });
