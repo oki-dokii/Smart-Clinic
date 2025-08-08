@@ -2729,50 +2729,45 @@ export default function ClinicDashboard() {
                         </div>
                       </div>
 
-                      {/* Revenue Breakdown */}
+                      {/* Medicine Stock Status */}
                       <div className="space-y-3">
-                        <h4 className="font-semibold text-gray-800">Revenue Breakdown</h4>
+                        <h4 className="font-semibold text-gray-800">Medicine Stock Status</h4>
                         <div className="space-y-2">
-                          <div className="flex items-center justify-between">
-                            <span className="text-sm text-gray-600">Consultations</span>
-                            <span className="text-sm font-medium">$400</span>
-                          </div>
-                          <div className="flex items-center justify-between">
-                            <span className="text-sm text-gray-600">Procedures</span>
-                            <span className="text-sm font-medium">$150</span>
-                          </div>
-                          <div className="flex items-center justify-between">
-                            <span className="text-sm text-gray-600">Prescriptions</span>
-                            <span className="text-sm font-medium">$50</span>
-                          </div>
-                          <div className="border-t pt-2 mt-2">
-                            <div className="flex items-center justify-between font-semibold">
-                              <span>Total</span>
-                              <span className="text-green-600">$600</span>
+                          {medicines && medicines.slice(0, 3).map((medicine) => (
+                            <div key={medicine.id} className="flex items-center justify-between p-2 bg-gray-50 rounded">
+                              <span className="text-sm font-medium">{medicine.name}</span>
+                              <Badge className={
+                                medicine.stock === 0 ? 'bg-red-100 text-red-800' :
+                                medicine.stock <= 5 ? 'bg-yellow-100 text-yellow-800' :
+                                'bg-green-100 text-green-800'
+                              }>
+                                {medicine.stock} units
+                              </Badge>
                             </div>
-                          </div>
+                          ))}
+                          {(!medicines || medicines.length === 0) && (
+                            <div className="text-sm text-gray-500 text-center py-4">
+                              No medicine data available
+                            </div>
+                          )}
                         </div>
                       </div>
 
-                      {/* Queue Efficiency */}
+                      {/* Appointment Status Summary */}
                       <div className="space-y-3">
-                        <h4 className="font-semibold text-gray-800">Queue Efficiency</h4>
+                        <h4 className="font-semibold text-gray-800">Appointment Status Summary</h4>
                         <div className="space-y-2">
                           <div className="flex items-center justify-between">
-                            <span className="text-sm text-gray-600">Average Wait Time</span>
-                            <span className="text-sm font-medium text-orange-600">
-                              {liveQueueTokens?.length ? 
-                                Math.round(liveQueueTokens.reduce((sum, token) => sum + (token.estimatedWaitTime || 0), 0) / liveQueueTokens.length) 
-                                : 15} min
-                            </span>
-                          </div>
-                          <div className="flex items-center justify-between">
-                            <span className="text-sm text-gray-600">Patients Served</span>
+                            <span className="text-sm text-gray-600">Patients Served Today</span>
                             <span className="text-sm font-medium text-green-600">{stats?.completedAppointments || 0}</span>
                           </div>
                           <div className="flex items-center justify-between">
                             <span className="text-sm text-gray-600">Currently Waiting</span>
                             <span className="text-sm font-medium text-blue-600">{liveQueueTokens?.length || 0}</span>
+                          </div>
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm text-gray-600">Total Scheduled Today</span>
+                            <span className="text-sm font-medium text-purple-600">{stats?.patientsToday || 0}</span>
                           </div>
                         </div>
                       </div>
