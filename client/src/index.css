@@ -192,6 +192,82 @@
 .medicine-card.overdue {
   border-left-color: hsl(var(--healthcare-red));
   background: linear-gradient(to right, hsl(0, 84%, 98%), white);
+  animation: flash-red 2s infinite;
+}
+
+/* Flash animations for urgent notifications */
+@keyframes flash-red {
+  0%, 50%, 100% { 
+    background: linear-gradient(to right, hsl(0, 84%, 98%), white);
+    border-left-color: hsl(var(--healthcare-red));
+  }
+  25% { 
+    background: linear-gradient(to right, hsl(0, 84%, 95%), hsl(0, 84%, 98%));
+    border-left-color: hsl(0, 84%, 60%);
+  }
+}
+
+@keyframes flash-orange {
+  0%, 50%, 100% { 
+    background-color: transparent;
+    color: #ea580c;
+  }
+  25% { 
+    background-color: hsl(24, 95%, 95%);
+    color: #c2410c;
+  }
+}
+
+@keyframes pulse-red {
+  0%, 100% {
+    transform: scale(1);
+    background-color: hsl(0, 84%, 60%);
+  }
+  50% {
+    transform: scale(1.05);
+    background-color: hsl(0, 84%, 50%);
+  }
+}
+
+@keyframes pulse-orange {
+  0%, 100% {
+    transform: scale(1);
+    background-color: hsl(24, 95%, 90%);
+    color: hsl(24, 95%, 30%);
+  }
+  50% {
+    transform: scale(1.05);
+    background-color: hsl(24, 95%, 85%);
+    color: hsl(24, 95%, 25%);
+  }
+}
+
+/* Flash animation classes */
+.flash-urgent {
+  animation: flash-red 2s infinite;
+}
+
+.flash-delay {
+  animation: flash-orange 2s infinite;
+}
+
+.pulse-urgent {
+  animation: pulse-red 2s infinite;
+}
+
+.pulse-delay {
+  animation: pulse-orange 2s infinite;
+}
+
+/* Glow effect for urgent items */
+.glow-urgent {
+  box-shadow: 0 0 10px hsl(0, 84%, 80%), 0 0 20px hsl(0, 84%, 70%), 0 0 30px hsl(0, 84%, 60%);
+  animation: pulse-red 2s infinite;
+}
+
+.glow-delay {
+  box-shadow: 0 0 10px hsl(24, 95%, 80%), 0 0 20px hsl(24, 95%, 70%), 0 0 30px hsl(24, 95%, 60%);
+  animation: pulse-orange 2s infinite;
 }
 
 /* Appointment card */

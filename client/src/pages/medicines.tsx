@@ -625,8 +625,9 @@ Lisinopril 10mg - Once daily at 9:00 PM - For blood pressure"
                   })
                   .map((medicine: CustomMedicine) => {
                   const medicineStats = missedDoses.find((md: any) => md.medicineName === medicine.name);
+                  const hasOverdueOrMissed = medicineStats && (medicineStats.missedDoses > 0 || medicineStats.overdueToday > 0);
                   return (
-                    <Card key={medicine.id}>
+                    <Card key={medicine.id} className={hasOverdueOrMissed ? 'medicine-card overdue glow-urgent' : 'medicine-card'}>
                       <CardHeader>
                         <div className="flex items-center justify-between">
                           <CardTitle className="flex items-center gap-2">
@@ -663,12 +664,12 @@ Lisinopril 10mg - Once daily at 9:00 PM - For blood pressure"
                         {medicineStats && (medicineStats.missedDoses > 0 || medicineStats.overdueToday > 0) && (
                           <div className="flex gap-2 mt-2">
                             {medicineStats.missedDoses > 0 && (
-                              <Badge className="bg-red-100 text-red-800 text-xs">
+                              <Badge className="bg-red-100 text-red-800 text-xs pulse-urgent">
                                 {medicineStats.missedDoses} missed doses
                               </Badge>
                             )}
                             {medicineStats.overdueToday > 0 && (
-                              <Badge className="bg-orange-100 text-orange-800 text-xs">
+                              <Badge className="bg-orange-100 text-orange-800 text-xs pulse-delay">
                                 {medicineStats.overdueToday} overdue today
                               </Badge>
                             )}

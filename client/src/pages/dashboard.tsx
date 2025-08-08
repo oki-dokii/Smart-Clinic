@@ -736,10 +736,14 @@ export default function SmartClinicDashboard() {
                   {reminders?.filter((r: any) => !r.isTaken).length || 0}
                 </span>
                 {reminders?.some((r: any) => !r.isTaken && new Date(r.scheduledAt) < new Date()) && (
-                  <Badge className="bg-red-500 text-white text-xs">Urgent</Badge>
+                  <Badge className="bg-red-500 text-white text-xs pulse-urgent">Urgent</Badge>
                 )}
               </div>
-              <div className="text-sm text-gray-600 mb-4">
+              <div className={`text-sm text-gray-600 mb-4 ${
+                reminders?.filter((r: any) => !r.isTaken && new Date(r.scheduledAt) < new Date()).length > 0 
+                  ? 'flash-urgent text-red-600' 
+                  : ''
+              }`}>
                 {reminders?.filter((r: any) => !r.isTaken && new Date(r.scheduledAt) < new Date()).length || 0} dose(s) overdue
               </div>
               <Button 
@@ -789,11 +793,11 @@ export default function SmartClinicDashboard() {
                       return relevantDelays.map((delay: any) => {
                         const doctor = doctors.find(d => d.id === delay.doctorId);
                         return (
-                          <div key={delay.id} className="mb-4">
+                          <div key={delay.id} className="mb-4 glow-delay p-3 rounded-lg">
                             <div className="flex items-center gap-2 mb-1">
-                              <span className="text-2xl font-bold text-orange-600">Delayed</span>
+                              <span className="text-2xl font-bold text-orange-600 flash-delay">Delayed</span>
                             </div>
-                            <div className="text-sm text-gray-600 mb-4">
+                            <div className="text-sm text-gray-600 mb-4 flash-delay">
                               Dr. {doctor?.firstName || 'Unknown'} {doctor?.lastName || 'Doctor'} is running {delay.delayMinutes} minutes late
                               {delay.reason && (
                                 <div className="text-xs text-gray-500 mt-1">Reason: {delay.reason}</div>
@@ -948,7 +952,7 @@ export default function SmartClinicDashboard() {
           ) : null}
 
           {/* Medicine Reminders */}
-          <Card>
+          <Card className={reminders?.filter((r: any) => !r.isTaken && new Date(r.scheduledAt) < new Date()).length > 0 ? 'glow-urgent' : ''}>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Pill className="w-5 h-5 text-orange-500" />
