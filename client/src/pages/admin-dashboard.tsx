@@ -341,6 +341,10 @@ export default function ClinicDashboard() {
   const [selectedPatient, setSelectedPatient] = useState<User | null>(null)
   const [showHistoryModal, setShowHistoryModal] = useState(false)
   const [showEditModal, setShowEditModal] = useState(false)
+  
+  // Search functionality states
+  const [appointmentSearchQuery, setAppointmentSearchQuery] = useState("")
+  const [patientSearchQuery, setPatientSearchQuery] = useState("")
   const [editPatientForm, setEditPatientForm] = useState({
     firstName: '',
     lastName: '',
@@ -2730,6 +2734,19 @@ export default function ClinicDashboard() {
                   </Button>
                 </div>
 
+                {/* Search Bar for Appointments */}
+                <div className="mb-6">
+                  <div className="relative">
+                    <Input
+                      placeholder="Search appointments by patient name, doctor name, symptoms, or status..."
+                      value={appointmentSearchQuery}
+                      onChange={(e) => setAppointmentSearchQuery(e.target.value)}
+                      className="pl-4 pr-4"
+                      data-testid="input-appointment-search"
+                    />
+                  </div>
+                </div>
+
                 {appointmentsLoading ? (
                   <div className="space-y-4">
                     {[1, 2, 3, 4].map(i => (
@@ -2740,6 +2757,21 @@ export default function ClinicDashboard() {
                   <div className="space-y-4">
                     {appointments && appointments.length > 0 ? (
                       appointments
+                        .filter((appointment) => {
+                          if (!appointmentSearchQuery) return true;
+                          const query = appointmentSearchQuery.toLowerCase();
+                          const patientName = `${appointment.patient?.firstName || ''} ${appointment.patient?.lastName || ''}`.toLowerCase();
+                          const doctorName = `${appointment.doctor?.firstName || ''} ${appointment.doctor?.lastName || ''}`.toLowerCase();
+                          const symptoms = (appointment.symptoms || '').toLowerCase();
+                          const status = (appointment.status || '').toLowerCase();
+                          const type = (appointment.type || '').toLowerCase();
+                          
+                          return patientName.includes(query) ||
+                                 doctorName.includes(query) ||
+                                 symptoms.includes(query) ||
+                                 status.includes(query) ||
+                                 type.includes(query);
+                        })
                         .sort((a, b) => {
                           // Pending approval first, then by creation date
                           if (a.status === 'pending_approval' && b.status !== 'pending_approval') return -1;
@@ -3096,6 +3128,19 @@ export default function ClinicDashboard() {
                   </Dialog>
                 </div>
 
+                {/* Search Bar for Patient Records */}
+                <div className="mb-6">
+                  <div className="relative">
+                    <Input
+                      placeholder="Search patients by name, phone number, or email..."
+                      value={patientSearchQuery}
+                      onChange={(e) => setPatientSearchQuery(e.target.value)}
+                      className="pl-4 pr-4"
+                      data-testid="input-patient-search"
+                    />
+                  </div>
+                </div>
+
                 {patientsLoading ? (
                   <div className="space-y-4">
                     {[1, 2, 3, 4, 5].map(i => (
@@ -3105,7 +3150,21 @@ export default function ClinicDashboard() {
                 ) : (
                   <div className="space-y-4">
                     {Array.isArray(patients) && patients.length > 0 ? (
-                      patients.map((patient: any) => (
+                      patients
+                        .filter((patient: any) => {
+                          if (!patientSearchQuery) return true;
+                          const query = patientSearchQuery.toLowerCase();
+                          const fullName = `${patient.firstName || ''} ${patient.lastName || ''}`.toLowerCase();
+                          const phoneNumber = (patient.phoneNumber || '').toLowerCase();
+                          const email = (patient.email || '').toLowerCase();
+                          const address = (patient.address || '').toLowerCase();
+                          
+                          return fullName.includes(query) ||
+                                 phoneNumber.includes(query) ||
+                                 email.includes(query) ||
+                                 address.includes(query);
+                        })
+                        .map((patient: any) => (
                         <Card key={patient.id} className="p-4">
                           <div className="flex items-center justify-between">
                             <div className="flex items-center gap-4">

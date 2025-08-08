@@ -56,6 +56,7 @@ export default function MedicinesPage() {
     endDate: "",
     status: "active"
   });
+  const [medicineSearchQuery, setMedicineSearchQuery] = useState("");
 
   // Fetch custom medicines
   const { data: customMedicines = [], isLoading: loadingCustom } = useQuery({
@@ -565,6 +566,19 @@ Lisinopril 10mg - Once daily at 9:00 PM - For blood pressure"
             </Dialog>
           </div>
         </div>
+        
+        {/* Search Bar for Medicines */}
+        <div className="px-4 sm:px-6 py-4 bg-white border-b border-gray-200">
+          <div className="relative">
+            <Input
+              placeholder="Search medicines by name, dosage, frequency, or instructions..."
+              value={medicineSearchQuery}
+              onChange={(e) => setMedicineSearchQuery(e.target.value)}
+              className="pl-4 pr-4"
+              data-testid="input-medicine-search"
+            />
+          </div>
+        </div>
       </header>
 
       <div className="max-w-6xl mx-auto p-6">
@@ -595,7 +609,21 @@ Lisinopril 10mg - Once daily at 9:00 PM - For blood pressure"
                   </CardContent>
                 </Card>
               ) : (
-                customMedicines.map((medicine: CustomMedicine) => {
+                customMedicines
+                  .filter((medicine: CustomMedicine) => {
+                    if (!medicineSearchQuery) return true;
+                    const query = medicineSearchQuery.toLowerCase();
+                    const name = (medicine.name || '').toLowerCase();
+                    const dosage = (medicine.dosage || '').toLowerCase();
+                    const frequency = (medicine.frequency || '').toLowerCase();
+                    const instructions = (medicine.instructions || '').toLowerCase();
+                    
+                    return name.includes(query) ||
+                           dosage.includes(query) ||
+                           frequency.includes(query) ||
+                           instructions.includes(query);
+                  })
+                  .map((medicine: CustomMedicine) => {
                   const medicineStats = missedDoses.find((md: any) => md.medicineName === medicine.name);
                   return (
                     <Card key={medicine.id}>
