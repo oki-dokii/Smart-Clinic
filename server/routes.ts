@@ -1988,10 +1988,59 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { appointmentId } = req.params;
       const updates = { ...req.body, updatedAt: new Date() };
       
+      // Get the original appointment first to compare dates
+      const originalAppointment = await storage.getAppointmentById(appointmentId);
+      if (!originalAppointment) {
+        return res.status(404).json({ message: "Appointment not found" });
+      }
+      
       const appointment = await storage.updateAppointment(appointmentId, updates);
       
       if (!appointment) {
         return res.status(404).json({ message: "Appointment not found" });
+      }
+
+      // Check if appointment date was changed (rescheduled)
+      const wasRescheduled = updates.appointmentDate && 
+        new Date(updates.appointmentDate).getTime() !== new Date(originalAppointment.appointmentDate).getTime();
+
+      if (wasRescheduled) {
+        try {
+          // Get patient and doctor details for email notification
+          const patient = await storage.getUserById(appointment.patientId);
+          const doctor = await storage.getUserById(appointment.doctorId);
+          
+          if (patient && doctor && patient.email) {
+            console.log('🔥 RESCHEDULE NOTIFICATION - Sending email to:', patient.email);
+            
+            const originalDate = new Date(originalAppointment.appointmentDate);
+            const newDate = new Date(appointment.appointmentDate);
+            
+            await emailService.sendAppointmentRescheduled(patient.email, {
+              doctorName: `Dr. ${doctor.firstName} ${doctor.lastName}`,
+              originalDate: originalDate.toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata' }),
+              originalTime: originalDate.toLocaleTimeString('en-IN', { 
+                hour: 'numeric', 
+                minute: '2-digit', 
+                hour12: true, 
+                timeZone: 'Asia/Kolkata' 
+              }),
+              newDate: newDate.toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata' }),
+              newTime: newDate.toLocaleTimeString('en-IN', { 
+                hour: 'numeric', 
+                minute: '2-digit', 
+                hour12: true, 
+                timeZone: 'Asia/Kolkata' 
+              }),
+              clinic: 'SmartClinic'
+            });
+            
+            console.log('🔥 RESCHEDULE NOTIFICATION - Email sent successfully');
+          }
+        } catch (emailError) {
+          console.error('🔥 RESCHEDULE EMAIL ERROR:', emailError);
+          // Don't fail the request if email fails
+        }
       }
 
       res.json(appointment);

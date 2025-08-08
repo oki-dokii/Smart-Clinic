@@ -446,6 +446,70 @@ class EmailService {
       };
     }
   }
+
+  async sendAppointmentRescheduled(
+    email: string,
+    details: {
+      doctorName: string;
+      originalDate: string;
+      originalTime: string;
+      newDate: string;
+      newTime: string;
+      clinic?: string;
+    }
+  ): Promise<{ success: boolean; error?: string }> {
+    const emailContent = {
+      subject: '📅 Appointment Rescheduled - SmartClinic',
+      html: `<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+        <div style="text-align: center; margin-bottom: 30px;">
+          <h1 style="color: #f59e0b; margin: 0;">📅 Appointment Rescheduled</h1>
+          <p style="color: #6b7280; margin: 10px 0;">Your appointment has been moved to a new time</p>
+        </div>
+        
+        <div style="background-color: #fff7ed; border: 1px solid #fed7aa; border-radius: 8px; padding: 20px; margin-bottom: 20px;">
+          <h2 style="color: #ea580c; margin: 0 0 15px 0; font-size: 18px;">Rescheduled Appointment Details</h2>
+          
+          <div style="margin-bottom: 20px;">
+            <h3 style="color: #dc2626; margin: 0 0 10px 0; font-size: 16px;">❌ Previous Appointment (Cancelled)</h3>
+            <div style="background-color: #fee2e2; padding: 15px; border-radius: 6px; border-left: 4px solid #dc2626;">
+              <p style="margin: 5px 0;"><strong>Doctor:</strong> ${details.doctorName}</p>
+              <p style="margin: 5px 0;"><strong>Date:</strong> ${details.originalDate}</p>
+              <p style="margin: 5px 0;"><strong>Time:</strong> ${details.originalTime}</p>
+              <p style="margin: 5px 0;"><strong>Location:</strong> ${details.clinic || 'SmartClinic'}</p>
+            </div>
+          </div>
+          
+          <div>
+            <h3 style="color: #16a34a; margin: 0 0 10px 0; font-size: 16px;">✅ New Appointment Details</h3>
+            <div style="background-color: #dcfce7; padding: 15px; border-radius: 6px; border-left: 4px solid #16a34a;">
+              <p style="margin: 5px 0;"><strong>Doctor:</strong> ${details.doctorName}</p>
+              <p style="margin: 5px 0;"><strong>New Date:</strong> ${details.newDate}</p>
+              <p style="margin: 5px 0;"><strong>New Time:</strong> ${details.newTime}</p>
+              <p style="margin: 5px 0;"><strong>Location:</strong> ${details.clinic || 'SmartClinic'}</p>
+            </div>
+          </div>
+        </div>
+        
+        <div style="background-color: #eff6ff; border: 1px solid #bfdbfe; border-radius: 8px; padding: 20px; margin-bottom: 20px;">
+          <h3 style="color: #1d4ed8; margin: 0 0 10px 0;">📋 Important Notes:</h3>
+          <ul style="color: #374151; margin: 0; padding-left: 20px;">
+            <li>Please arrive 15 minutes before your new appointment time</li>
+            <li>Bring your ID and any relevant medical documents</li>
+            <li>If you need to reschedule again, please contact us at least 24 hours in advance</li>
+            <li>Contact reception if you have any questions about this change</li>
+          </ul>
+        </div>
+        
+        <div style="text-align: center; padding: 20px; background-color: #f9fafb; border-radius: 8px;">
+          <p style="color: #6b7280; margin: 0; font-size: 14px;">Thank you for your understanding!</p>
+          <p style="color: #6b7280; margin: 5px 0 0 0; font-size: 14px;">— SmartClinic Team</p>
+        </div>
+      </div>`,
+      text: `Appointment Rescheduled - SmartClinic\n\nYour appointment has been moved to a new time:\n\nPrevious Appointment (Cancelled):\nDoctor: ${details.doctorName}\nDate: ${details.originalDate}\nTime: ${details.originalTime}\nLocation: ${details.clinic || 'SmartClinic'}\n\nNew Appointment Details:\nDoctor: ${details.doctorName}\nNew Date: ${details.newDate}\nNew Time: ${details.newTime}\nLocation: ${details.clinic || 'SmartClinic'}\n\nImportant Notes:\n- Please arrive 15 minutes before your new appointment time\n- Bring your ID and any relevant medical documents\n- If you need to reschedule again, please contact us at least 24 hours in advance\n- Contact reception if you have any questions about this change\n\nThank you for your understanding!\n— SmartClinic Team`
+    };
+
+    return await this.sendEmail(email, emailContent);
+  }
 }
 
 export const emailService = new EmailService();
