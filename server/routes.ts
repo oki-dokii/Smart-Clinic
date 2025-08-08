@@ -1980,6 +1980,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   app.put("/api/appointments/:appointmentId", authMiddleware, async (req, res) => {
+    console.log('🚨🚨🚨 RESCHEDULE ROUTE HIT!!! 🚨🚨🚨');
+    console.log('🚨 Method:', req.method, 'Path:', req.path);
+    console.log('🚨 Appointment ID:', req.params.appointmentId);
+    console.log('🚨 Request body:', JSON.stringify(req.body, null, 2));
+    
     try {
       if (req.user!.role !== 'admin' && req.user!.role !== 'doctor' && req.user!.role !== 'staff') {
         return res.status(403).json({ message: "Admin access required" });
