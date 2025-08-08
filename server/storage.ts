@@ -466,6 +466,14 @@ export class DatabaseStorage implements IStorage {
     });
   }
 
+  async getAppointmentById(id: string): Promise<Appointment | null> {
+    const [appointment] = await db.select()
+      .from(appointments)
+      .where(eq(appointments.id, id))
+      .limit(1);
+    return appointment || null;
+  }
+
   async updateAppointment(id: string, appointment: Partial<InsertAppointment>): Promise<Appointment | undefined> {
     const [updatedAppointment] = await db.update(appointments)
       .set({ ...appointment, updatedAt: new Date() })

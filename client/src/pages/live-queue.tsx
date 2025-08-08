@@ -198,7 +198,7 @@ export default function LiveQueueTracker() {
                   #{queuePosition?.tokenNumber || 'N/A'}
                 </div>
                 <div className="text-lg mb-4 opacity-90">
-                  Estimated wait: {dynamicWaitTime > 0 ? `${dynamicWaitTime} minutes` : 'Check with reception'}
+                  Estimated wait: {dynamicWaitTime > 0 ? `${dynamicWaitTime} minutes` : 'Your turn soon'}
                   {dynamicWaitTime > 0 && (
                     <div className="text-sm opacity-75 mt-1">
                       <div className="flex items-center gap-2">

@@ -66,7 +66,7 @@ export class QueueService {
           const queuePosition = doctorQueue.findIndex(t => t.id === token.id) + 1;
           
           if (queuePosition > 0) {
-            const dynamicWaitTime = this.calculateDynamicWaitTime(token, queuePosition);
+            const dynamicWaitTime = await this.calculateDynamicWaitTime(token, queuePosition);
             await storage.updateQueueTokenWaitTime(token.id, dynamicWaitTime);
           }
         }
@@ -143,22 +143,34 @@ export class QueueService {
     }
   }
 
-  // Calculate dynamic wait time based on current time and queue position
-  calculateDynamicWaitTime(queueToken: any, queuePosition: number): number {
+  // Calculate dynamic wait time based on actual appointment times
+  async calculateDynamicWaitTime(queueToken: any, queuePosition: number): Promise<number> {
     const now = new Date();
+    
+    // If this token has an appointment, calculate based on appointment time
+    if (queueToken.appointmentId) {
+      try {
+        const appointment = await storage.getAppointmentById(queueToken.appointmentId);
+        if (appointment) {
+          const appointmentTime = new Date(appointment.appointmentDate);
+          const waitTimeMinutes = Math.max(0, Math.floor((appointmentTime.getTime() - now.getTime()) / (1000 * 60)));
+          
+          console.log(`🔥 Appointment-based wait calculation: appointment at ${appointmentTime.toISOString()}, wait=${waitTimeMinutes}min`);
+          return waitTimeMinutes;
+        }
+      } catch (error) {
+        console.error('Error fetching appointment for wait time calculation:', error);
+      }
+    }
+    
+    // Fallback for walk-ins or if appointment lookup fails
     const createdAt = new Date(queueToken.createdAt);
     const elapsedMinutes = Math.floor((now.getTime() - createdAt.getTime()) / (1000 * 60));
-    
-    // Average consultation time per patient
-    const averageConsultationTime = 15; // minutes
-    
-    // Calculate initial wait time based on queue position
+    const averageConsultationTime = 15; // minutes - only used for walk-ins
     const baseWaitTime = (queuePosition - 1) * averageConsultationTime;
-    
-    // Subtract elapsed time to get remaining wait time
     const remainingWaitTime = Math.max(0, baseWaitTime - elapsedMinutes);
     
-    console.log(`🔥 Dynamic wait calculation: position=${queuePosition}, elapsed=${elapsedMinutes}min, base=${baseWaitTime}min, remaining=${remainingWaitTime}min`);
+    console.log(`🔥 Fallback wait calculation: position=${queuePosition}, elapsed=${elapsedMinutes}min, base=${baseWaitTime}min, remaining=${remainingWaitTime}min`);
     
     return remainingWaitTime;
   }
@@ -172,7 +184,7 @@ export class QueueService {
         const token = queue[i];
         if (token.status === 'waiting') {
           const queuePosition = i + 1; // 1-based position
-          const dynamicWaitTime = this.calculateDynamicWaitTime(token, queuePosition);
+          const dynamicWaitTime = await this.calculateDynamicWaitTime(token, queuePosition);
           
           // Update the token with new wait time
           await storage.updateQueueTokenWaitTime(token.id, dynamicWaitTime);
