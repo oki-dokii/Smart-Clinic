@@ -27,7 +27,8 @@ import {
   Star,
   Eye,
   Mail,
-  PhoneCall
+  PhoneCall,
+  Pill
 } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -2123,23 +2124,31 @@ export default function ClinicDashboard() {
                     </CardContent>
                   </Card>
 
-                  {/* Revenue Today */}
+                  {/* Medicine Inventory */}
                   <Card>
                     <CardHeader className="pb-3">
                       <CardTitle className="text-sm font-medium text-gray-600 flex items-center gap-2">
-                        <DollarSign className="w-4 h-4 text-green-500" />
-                        Revenue Today
+                        <Pill className="w-4 h-4 text-green-500" />
+                        Medicine Inventory
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
                       <div className="flex items-center gap-2 mb-2">
-                        <span className="text-3xl font-bold">${statsLoading ? '...' : (stats?.revenue || 2450)}</span>
-                        <Badge className="bg-green-100 text-green-800 text-xs flex items-center gap-1">
-                          <TrendingUp className="w-3 h-3" />
-                          +5.8%
+                        <span className="text-3xl font-bold">{
+                          medicines ? medicines.reduce((total: number, med: any) => total + med.stock, 0) : '...'
+                        }</span>
+                        <Badge className={`text-xs flex items-center gap-1 ${
+                          medicines && medicines.filter((med: any) => med.stock <= 5).length > 0 
+                            ? 'bg-red-100 text-red-800' 
+                            : 'bg-green-100 text-green-800'
+                        }`}>
+                          <AlertTriangle className="w-3 h-3" />
+                          {medicines ? medicines.filter((med: any) => med.stock <= 5).length : 0} Low Stock
                         </Badge>
                       </div>
-                      <p className="text-sm text-gray-600">18 consultations completed</p>
+                      <p className="text-sm text-gray-600">
+                        {medicines ? medicines.length : 0} types available
+                      </p>
                     </CardContent>
                   </Card>
 
