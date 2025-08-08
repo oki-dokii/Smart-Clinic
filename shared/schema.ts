@@ -5,12 +5,33 @@ import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
 // Enums
-export const userRoleEnum = pgEnum("user_role", ["admin", "staff", "doctor", "nurse", "patient"]);
+export const userRoleEnum = pgEnum("user_role", ["super_admin", "admin", "staff", "doctor", "nurse", "patient"]);
 export const appointmentStatusEnum = pgEnum("appointment_status", ["scheduled", "confirmed", "in_progress", "completed", "cancelled", "no_show", "pending_approval"]);
 export const appointmentTypeEnum = pgEnum("appointment_type", ["clinic", "home_visit", "telehealth"]);
 export const queueStatusEnum = pgEnum("queue_status", ["waiting", "called", "in_progress", "completed", "missed"]);
 export const medicineFrequencyEnum = pgEnum("medicine_frequency", ["once_daily", "twice_daily", "three_times_daily", "four_times_daily", "as_needed", "weekly", "monthly"]);
 export const prescriptionStatusEnum = pgEnum("prescription_status", ["active", "completed", "cancelled", "paused"]);
+export const clinicStatusEnum = pgEnum("clinic_status", ["active", "inactive", "suspended"]);
+
+// Clinics table
+export const clinics = pgTable("clinics", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: text("name").notNull(),
+  address: text("address").notNull(),
+  phoneNumber: varchar("phone_number", { length: 20 }),
+  email: varchar("email", { length: 255 }),
+  status: clinicStatusEnum("status").notNull().default("active"),
+  latitude: real("latitude"),
+  longitude: real("longitude"),
+  workingHours: jsonb("working_hours"), // JSON object with days and hours
+  description: text("description"),
+  licenseNumber: text("license_number"),
+  establishedDate: timestamp("established_date"),
+  capacity: integer("capacity").default(50), // maximum patients per day
+  isMainBranch: boolean("is_main_branch").notNull().default(false),
+  createdAt: timestamp("created_at").notNull().default(sql`NOW()`),
+  updatedAt: timestamp("updated_at").notNull().default(sql`NOW()`),
+});
 
 // Users table
 export const users = pgTable("users", {
@@ -23,6 +44,7 @@ export const users = pgTable("users", {
   dateOfBirth: timestamp("date_of_birth"),
   address: text("address"),
   emergencyContact: text("emergency_contact"),
+  clinicId: varchar("clinic_id").references(() => clinics.id), // Users can be associated with a clinic
   isActive: boolean("is_active").notNull().default(true),
   isApproved: boolean("is_approved").notNull().default(false),
   createdAt: timestamp("created_at").notNull().default(sql`NOW()`),
@@ -67,6 +89,7 @@ export const authSessions = pgTable("auth_sessions", {
 export const staffVerifications = pgTable("staff_verifications", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   staffId: varchar("staff_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  clinicId: varchar("clinic_id").notNull().references(() => clinics.id, { onDelete: "cascade" }),
   latitude: real("latitude").notNull(),
   longitude: real("longitude").notNull(),
   checkedInAt: timestamp("checked_in_at").notNull().default(sql`NOW()`),
@@ -81,6 +104,7 @@ export const staffVerifications = pgTable("staff_verifications", {
 export const staffPresence = pgTable("staff_presence", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   staffId: varchar("staff_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  clinicId: varchar("clinic_id").notNull().references(() => clinics.id, { onDelete: "cascade" }),
   date: timestamp("date").notNull(),
   isPresent: boolean("is_present").notNull().default(false),
   checkInTime: timestamp("check_in_time"),
@@ -97,6 +121,7 @@ export const appointments = pgTable("appointments", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   patientId: varchar("patient_id").notNull().references(() => users.id, { onDelete: "cascade" }),
   doctorId: varchar("doctor_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  clinicId: varchar("clinic_id").notNull().references(() => clinics.id, { onDelete: "cascade" }),
   appointmentDate: timestamp("appointment_date").notNull(),
   duration: integer("duration").notNull().default(30), // minutes
   type: appointmentTypeEnum("type").notNull().default("clinic"),
@@ -119,6 +144,7 @@ export const queueTokens = pgTable("queue_tokens", {
   tokenNumber: integer("token_number").notNull(),
   patientId: varchar("patient_id").notNull().references(() => users.id, { onDelete: "cascade" }),
   doctorId: varchar("doctor_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  clinicId: varchar("clinic_id").notNull().references(() => clinics.id, { onDelete: "cascade" }),
   appointmentId: varchar("appointment_id").references(() => appointments.id, { onDelete: "cascade" }),
   status: queueStatusEnum("status").notNull().default("waiting"),
   estimatedWaitTime: integer("estimated_wait_time").default(0), // minutes
@@ -137,6 +163,7 @@ export const medicines = pgTable("medicines", {
   strength: text("strength"), // 500mg, 10ml, etc.
   manufacturer: text("manufacturer"),
   stock: integer("stock").notNull().default(0),
+  clinicId: varchar("clinic_id").notNull().references(() => clinics.id, { onDelete: "cascade" }),
   createdAt: timestamp("created_at").notNull().default(sql`NOW()`),
 });
 
@@ -239,7 +266,17 @@ export const medicalHistory = pgTable("medical_history", {
 });
 
 // Relations
-export const usersRelations = relations(users, ({ many }) => ({
+export const clinicsRelations = relations(clinics, ({ many }) => ({
+  users: many(users),
+  appointments: many(appointments),
+  queueTokens: many(queueTokens),
+  staffVerifications: many(staffVerifications),
+  staffPresence: many(staffPresence),
+  medicines: many(medicines),
+}));
+
+export const usersRelations = relations(users, ({ one, many }) => ({
+  clinic: one(clinics, { fields: [users.clinicId], references: [clinics.id] }),
   authSessions: many(authSessions),
   staffVerifications: many(staffVerifications),
   staffPresence: many(staffPresence),
@@ -261,16 +298,19 @@ export const authSessionsRelations = relations(authSessions, ({ one }) => ({
 
 export const staffVerificationsRelations = relations(staffVerifications, ({ one }) => ({
   staff: one(users, { fields: [staffVerifications.staffId], references: [users.id] }),
+  clinic: one(clinics, { fields: [staffVerifications.clinicId], references: [clinics.id] }),
 }));
 
 export const staffPresenceRelations = relations(staffPresence, ({ one }) => ({
   staff: one(users, { fields: [staffPresence.staffId], references: [users.id] }),
   admin: one(users, { fields: [staffPresence.adminId], references: [users.id] }),
+  clinic: one(clinics, { fields: [staffPresence.clinicId], references: [clinics.id] }),
 }));
 
 export const appointmentsRelations = relations(appointments, ({ one, many }) => ({
   patient: one(users, { fields: [appointments.patientId], references: [users.id], relationName: "patient_appointments" }),
   doctor: one(users, { fields: [appointments.doctorId], references: [users.id], relationName: "doctor_appointments" }),
+  clinic: one(clinics, { fields: [appointments.clinicId], references: [clinics.id] }),
   queueTokens: many(queueTokens),
   prescriptions: many(prescriptions),
   homeVisits: many(homeVisits),
@@ -280,10 +320,12 @@ export const appointmentsRelations = relations(appointments, ({ one, many }) => 
 export const queueTokensRelations = relations(queueTokens, ({ one }) => ({
   patient: one(users, { fields: [queueTokens.patientId], references: [users.id], relationName: "patient_queue_tokens" }),
   doctor: one(users, { fields: [queueTokens.doctorId], references: [users.id], relationName: "doctor_queue_tokens" }),
+  clinic: one(clinics, { fields: [queueTokens.clinicId], references: [clinics.id] }),
   appointment: one(appointments, { fields: [queueTokens.appointmentId], references: [appointments.id] }),
 }));
 
-export const medicinesRelations = relations(medicines, ({ many }) => ({
+export const medicinesRelations = relations(medicines, ({ one, many }) => ({
+  clinic: one(clinics, { fields: [medicines.clinicId], references: [clinics.id] }),
   prescriptions: many(prescriptions),
 }));
 
@@ -316,6 +358,12 @@ export const medicalHistoryRelations = relations(medicalHistory, ({ one }) => ({
 }));
 
 // Insert schemas
+export const insertClinicSchema = createInsertSchema(clinics).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 export const insertUserSchema = createInsertSchema(users).omit({
   id: true,
   createdAt: true,
@@ -411,6 +459,8 @@ export const insertPatientFeedbackSchema = createInsertSchema(patientFeedback).o
 });
 
 // Types
+export type Clinic = typeof clinics.$inferSelect;
+export type InsertClinic = z.infer<typeof insertClinicSchema>;
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type OtpSession = typeof otpSessions.$inferSelect;
