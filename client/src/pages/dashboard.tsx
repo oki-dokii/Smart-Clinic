@@ -760,74 +760,75 @@ export default function SmartClinicDashboard() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              {(() => {
-                // Only show delay notifications if patient has appointment today
-                if (!hasAppointmentToday(appointments)) {
-                  return (
-                    <div>
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="text-lg text-gray-500">No appointments today</span>
-                      </div>
-                      <div className="text-sm text-gray-500 mb-4">Doctor status will be shown on your appointment day</div>
-                    </div>
-                  );
-                }
-
-                // Group delay notifications by doctor and keep only the latest one for each doctor
-                // Filter to only show delays for doctors with whom patient has appointment today
-                const latestDelaysByDoctor = delayNotifications.reduce((acc: any, delay: any) => {
-                  if (hasAppointmentToday(appointments, delay.doctorId)) {
-                    if (!acc[delay.doctorId] || new Date(delay.createdAt) > new Date(acc[delay.doctorId].createdAt)) {
-                      acc[delay.doctorId] = delay;
+              {!hasAppointmentToday(appointments) ? (
+                // No appointment today - show message only
+                <div>
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-lg text-gray-500">No appointments today</span>
+                  </div>
+                  <div className="text-sm text-gray-500 mb-4">Doctor status will be shown on your appointment day</div>
+                </div>
+              ) : (
+                // Has appointment today - show status and button
+                <div>
+                  {(() => {
+                    // Group delay notifications by doctor and keep only the latest one for each doctor
+                    // Filter to only show delays for doctors with whom patient has appointment today
+                    const latestDelaysByDoctor = delayNotifications.reduce((acc: any, delay: any) => {
+                      if (hasAppointmentToday(appointments, delay.doctorId)) {
+                        if (!acc[delay.doctorId] || new Date(delay.createdAt) > new Date(acc[delay.doctorId].createdAt)) {
+                          acc[delay.doctorId] = delay;
+                        }
+                      }
+                      return acc;
+                    }, {});
+                    
+                    const relevantDelays = Object.values(latestDelaysByDoctor);
+                    
+                    if (relevantDelays.length > 0) {
+                      return relevantDelays.map((delay: any) => {
+                        const doctor = doctors.find(d => d.id === delay.doctorId);
+                        return (
+                          <div key={delay.id} className="mb-4">
+                            <div className="flex items-center gap-2 mb-1">
+                              <span className="text-2xl font-bold text-orange-600">Delayed</span>
+                            </div>
+                            <div className="text-sm text-gray-600 mb-4">
+                              Dr. {doctor?.firstName || 'Unknown'} {doctor?.lastName || 'Doctor'} is running {delay.delayMinutes} minutes late
+                              {delay.reason && (
+                                <div className="text-xs text-gray-500 mt-1">Reason: {delay.reason}</div>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      });
+                    } else {
+                      return (
+                        <div>
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className="text-2xl font-bold text-green-600">On Time</span>
+                          </div>
+                          <div className="text-sm text-gray-600 mb-4">Your doctor is on schedule today</div>
+                        </div>
+                      );
                     }
-                  }
-                  return acc;
-                }, {});
-                
-                const relevantDelays = Object.values(latestDelaysByDoctor);
-                
-                if (relevantDelays.length > 0) {
-                  return relevantDelays.map((delay: any) => {
-                    const doctor = doctors.find(d => d.id === delay.doctorId);
-                    return (
-                      <div key={delay.id} className="mb-4">
-                        <div className="flex items-center gap-2 mb-1">
-                          <span className="text-2xl font-bold text-orange-600">Delayed</span>
-                        </div>
-                        <div className="text-sm text-gray-600 mb-4">
-                          Dr. {doctor?.firstName || 'Unknown'} {doctor?.lastName || 'Doctor'} is running {delay.delayMinutes} minutes late
-                          {delay.reason && (
-                            <div className="text-xs text-gray-500 mt-1">Reason: {delay.reason}</div>
-                          )}
-                        </div>
-                      </div>
-                    );
-                  });
-                } else {
-                  return (
-                    <div>
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="text-2xl font-bold text-green-600">On Time</span>
-                      </div>
-                      <div className="text-sm text-gray-600 mb-4">Your doctor is on schedule today</div>
-                    </div>
-                  );
-                }
-              })()
-              <Button 
-                className="w-full bg-blue-500 hover:bg-blue-600"
-                onClick={() => {
-                  queryClient.invalidateQueries({ queryKey: ["/api/delays"] });
-                  queryClient.invalidateQueries({ queryKey: ["/api/appointments"] });
-                  queryClient.invalidateQueries({ queryKey: ["/api/queue/position"] });
-                  toast({
-                    title: "Updates Retrieved",
-                    description: "Doctor schedule and appointment status updated successfully.",
-                  });
-                }}
-              >
-                Get Updates
-              </Button>
+                  })()}
+                  <Button 
+                    className="w-full bg-blue-500 hover:bg-blue-600"
+                    onClick={() => {
+                      queryClient.invalidateQueries({ queryKey: ["/api/delays"] });
+                      queryClient.invalidateQueries({ queryKey: ["/api/appointments"] });
+                      queryClient.invalidateQueries({ queryKey: ["/api/queue/position"] });
+                      toast({
+                        title: "Updates Retrieved",
+                        description: "Doctor schedule and appointment status updated successfully.",
+                      });
+                    }}
+                  >
+                    Get Updates
+                  </Button>
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>
@@ -944,6 +945,7 @@ export default function SmartClinicDashboard() {
               </div>
             </CardContent>
           </Card>
+          ) : null}
 
           {/* Medicine Reminders */}
           <Card>
