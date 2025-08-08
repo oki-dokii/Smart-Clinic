@@ -383,18 +383,24 @@ export class DatabaseStorage implements IStorage {
     console.log(`Storage: Getting appointments for user ${userId} with role ${role}`);
     console.log(`Storage: Looking for appointments where patientId = ${userId}`);
     
-    // For dashboard context, always show appointments where the user is the patient
-    // regardless of their current role. Doctors/staff/admin can still book appointments as patients
+    // For dashboard context, show only future scheduled/confirmed appointments where the user is the patient
+    const now = new Date();
     const appointmentRecords = await db.select().from(appointments)
-      .where(eq(appointments.patientId, userId))
+      .where(
+        and(
+          eq(appointments.patientId, userId),
+          gte(appointments.appointmentDate, now),
+          sql`${appointments.status} IN ('scheduled', 'confirmed', 'pending_approval')`
+        )
+      )
       .orderBy(asc(appointments.appointmentDate));
     
-    console.log(`Storage: Raw Drizzle query returned ${appointmentRecords.length} appointments`);
+    console.log(`Storage: Raw Drizzle query returned ${appointmentRecords.length} future appointments`);
     if (appointmentRecords.length > 0) {
-      console.log(`Storage: First appointment:`, appointmentRecords[0]);
+      console.log(`Storage: Next appointment:`, appointmentRecords[0]);
     }
     
-    console.log(`Storage: Found ${appointmentRecords.length} appointments for user ${userId}`);
+    console.log(`Storage: Found ${appointmentRecords.length} future appointments for user ${userId}`);
     
     // Manually join with users
     const appointmentsWithUsers = [];
@@ -459,11 +465,13 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getAppointments(userId?: string): Promise<(Appointment & { patient: User; doctor: User })[]> {
-    console.log('Storage: Getting appointments...');
+    console.log('Storage: Getting appointments for admin...');
     
-    // Use direct query with manual joins to avoid Drizzle relation issues
-    const appointmentRecords = await db.select().from(appointments).orderBy(asc(appointments.appointmentDate));
-    console.log('Storage: Direct query found appointments:', appointmentRecords?.length || 0);
+    // For admin dashboard, exclude completed, cancelled, and no_show appointments
+    const appointmentRecords = await db.select().from(appointments)
+      .where(sql`${appointments.status} NOT IN ('completed', 'cancelled', 'no_show')`)
+      .orderBy(desc(appointments.appointmentDate));
+    console.log('Storage: Direct query found active appointments:', appointmentRecords?.length || 0);
     
     // Manually join with users
     const appointmentsWithUsers = [];
