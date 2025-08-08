@@ -8,6 +8,16 @@ Preferred communication style: Simple, everyday language.
 
 # Recent Changes
 
+## 2025-08-08 - Complete Medicine Management with Edit/Delete Functionality
+- COMPLETED: Full CRUD operations for medicine management (Create, Read, Update, Delete)
+- ADDED: Edit medicine functionality with comprehensive form including name, dosage, frequency, timings, instructions, and status
+- ADDED: Delete medicine functionality with confirmation dialog and cascade deletion of associated reminders
+- ENHANCED: Medicine cards now display edit and delete buttons with proper permissions for patients and admins
+- IMPROVED: Frontend state management for editing medicines with real-time validation and error handling
+- FIXED: All LSP/TypeScript errors in storage layer resolved with proper Drizzle ORM query patterns
+- COMPLETED: Backend API endpoints for PUT /api/custom-medicines/:id and DELETE /api/custom-medicines/:id
+- VERIFIED: Complete medicine workflow now supports full lifecycle management from creation to deletion
+
 ## 2025-08-08 - Email Notification System Implementation
 - MIGRATED: Complete switch from SMS to email notifications for all system communications
 - ENHANCED: Professional email templates with healthcare-themed styling for appointments, medicines, and delays

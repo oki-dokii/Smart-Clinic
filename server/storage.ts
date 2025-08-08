@@ -17,7 +17,7 @@ import { eq, and, gte, lte, desc, asc, sql } from "drizzle-orm";
 export interface IStorage {
   // Users
   getUser(id: string): Promise<User | undefined>;
-  getUserByPhone(phoneNumber: string): Promise<User | undefined>;
+  getUserByPhone(phoneNumber: string): Promise<User | null>;
   getUserByEmail(email: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
   updateUser(id: string, user: Partial<InsertUser>): Promise<User | undefined>;
@@ -90,12 +90,14 @@ export interface IStorage {
   addMedicine(medicine: Omit<Medicine, 'id' | 'createdAt' | 'updatedAt'>): Promise<Medicine>;
   getMedicineById(medicineId: string): Promise<Medicine | null>;
   updateMedicine(medicineId: string, updates: Partial<Medicine>): Promise<Medicine | null>;
+  deleteMedicine(medicineId: string): Promise<boolean>;
   
   // Prescriptions
   createPrescription(prescription: InsertPrescription): Promise<Prescription>;
   getPrescription(id: string): Promise<Prescription | undefined>;
   getPrescriptionWithDetails(id: string): Promise<(Prescription & { medicine: Medicine; patient: User; doctor: User }) | undefined>;
   getPatientPrescriptions(patientId: string): Promise<(Prescription & { medicine: Medicine; doctor: User })[]>;
+  deletePrescription(prescriptionId: string): Promise<boolean>;
   
   // Admin-specific methods
   getAllQueueTokens(): Promise<(QueueToken & { patient: User; doctor: User })[]>;
@@ -150,9 +152,17 @@ export class DatabaseStorage implements IStorage {
     return user || undefined;
   }
 
-  async getUserByPhone(phoneNumber: string): Promise<User | undefined> {
+  async getUserByPhone(phoneNumber: string): Promise<User | null> {
     const [user] = await db.select().from(users).where(eq(users.phoneNumber, phoneNumber));
-    return user || undefined;
+    return user || null;
+  }
+
+  async updateUserApproval(id: string, isApproved: boolean): Promise<User | undefined> {
+    const [updatedUser] = await db.update(users)
+      .set({ isApproved, updatedAt: new Date() })
+      .where(eq(users.id, id))
+      .returning();
+    return updatedUser || undefined;
   }
 
   async getUserByEmail(email: string): Promise<User | undefined> {
@@ -650,6 +660,27 @@ export class DatabaseStorage implements IStorage {
     return updatedMedicine || null;
   }
 
+  async deleteMedicine(medicineId: string): Promise<boolean> {
+    try {
+      // First, delete all associated reminders
+      await db.delete(medicineReminders)
+        .where(sql`prescription_id IN (SELECT id FROM prescriptions WHERE medicine_id = ${medicineId})`);
+      
+      // Then, delete all associated prescriptions
+      await db.delete(prescriptions)
+        .where(eq(prescriptions.medicineId, medicineId));
+      
+      // Finally, delete the medicine
+      await db.delete(medicines)
+        .where(eq(medicines.id, medicineId));
+      
+      return true;
+    } catch (error) {
+      console.error('Error deleting medicine:', error);
+      return false;
+    }
+  }
+
   // Prescriptions
   async createPrescription(prescription: InsertPrescription): Promise<Prescription> {
     const [newPrescription] = await db.insert(prescriptions).values(prescription).returning();
@@ -706,6 +737,23 @@ export class DatabaseStorage implements IStorage {
     return updatedPrescription || undefined;
   }
 
+  async deletePrescription(prescriptionId: string): Promise<boolean> {
+    try {
+      // First, delete all associated medicine reminders
+      await db.delete(medicineReminders)
+        .where(eq(medicineReminders.prescriptionId, prescriptionId));
+      
+      // Then, delete the prescription
+      await db.delete(prescriptions)
+        .where(eq(prescriptions.id, prescriptionId));
+      
+      return true;
+    } catch (error) {
+      console.error('Error deleting prescription:', error);
+      return false;
+    }
+  }
+
   // Medicine Reminders
   async createMedicineReminder(reminder: InsertMedicineReminder): Promise<MedicineReminder> {
     const [newReminder] = await db.insert(medicineReminders).values(reminder).returning();
@@ -718,7 +766,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getPatientReminders(patientId: string, date?: Date): Promise<any[]> {
-    const baseConditions = [];
+    const baseConditions = [eq(prescriptions.patientId, patientId)];
     if (date) {
       const startOfDay = new Date(date);
       startOfDay.setHours(0, 0, 0, 0);
@@ -731,91 +779,42 @@ export class DatabaseStorage implements IStorage {
       );
     }
     
-    return await db.select({
-      id: medicineReminders.id,
-      prescriptionId: medicineReminders.prescriptionId,
-      scheduledAt: medicineReminders.scheduledAt,
-      takenAt: medicineReminders.takenAt,
-      skippedAt: medicineReminders.skippedAt,
-      isTaken: medicineReminders.isTaken,
-      isSkipped: medicineReminders.isSkipped,
-      smsReminderSent: medicineReminders.smsReminderSent,
-      notes: medicineReminders.notes,
-      createdAt: medicineReminders.createdAt,
-      prescription: {
-        id: prescriptions.id,
-        dosage: prescriptions.dosage,
-        frequency: prescriptions.frequency,
-        instructions: prescriptions.instructions,
-        startDate: prescriptions.startDate,
-        endDate: prescriptions.endDate,
-        status: prescriptions.status,
-        medicine: {
-          id: medicines.id,
-          name: medicines.name,
-          description: medicines.description,
-          dosageForm: medicines.dosageForm,
-          strength: medicines.strength,
-          manufacturer: medicines.manufacturer
+    // Use Drizzle's query API for nested relations
+    return await db.query.medicineReminders.findMany({
+      where: and(...baseConditions),
+      with: {
+        prescription: {
+          with: {
+            medicine: true
+          }
         }
-      }
-    })
-    .from(medicineReminders)
-    .innerJoin(prescriptions, eq(medicineReminders.prescriptionId, prescriptions.id))
-    .innerJoin(medicines, eq(prescriptions.medicineId, medicines.id))
-    .where(and(
-      eq(prescriptions.patientId, patientId),
-      ...baseConditions
-    ))
-    .orderBy(asc(medicineReminders.scheduledAt));
+      },
+      orderBy: asc(medicineReminders.scheduledAt)
+    });
   }
 
   async getDueReminders(): Promise<any[]> {
     const now = new Date();
     const fiveMinutesAgo = new Date(now.getTime() - 5 * 60 * 1000);
     
-    return await db.select({
-      id: medicineReminders.id,
-      prescriptionId: medicineReminders.prescriptionId,
-      scheduledAt: medicineReminders.scheduledAt,
-      takenAt: medicineReminders.takenAt,
-      skippedAt: medicineReminders.skippedAt,
-      isTaken: medicineReminders.isTaken,
-      isSkipped: medicineReminders.isSkipped,
-      smsReminderSent: medicineReminders.smsReminderSent,
-      notes: medicineReminders.notes,
-      createdAt: medicineReminders.createdAt,
-      prescription: {
-        id: prescriptions.id,
-        dosage: prescriptions.dosage,
-        frequency: prescriptions.frequency,
-        instructions: prescriptions.instructions,
-        medicine: {
-          id: medicines.id,
-          name: medicines.name,
-          description: medicines.description,
-          dosageForm: medicines.dosageForm,
-          strength: medicines.strength
-        },
-        patient: {
-          id: users.id,
-          phoneNumber: users.phoneNumber,
-          firstName: users.firstName,
-          lastName: users.lastName
+    // Use Drizzle's query API for nested relations
+    return await db.query.medicineReminders.findMany({
+      where: and(
+        lte(medicineReminders.scheduledAt, now),
+        gte(medicineReminders.scheduledAt, fiveMinutesAgo),
+        eq(medicineReminders.isTaken, false),
+        eq(medicineReminders.isSkipped, false),
+        eq(medicineReminders.smsReminderSent, false)
+      ),
+      with: {
+        prescription: {
+          with: {
+            medicine: true,
+            patient: true
+          }
         }
       }
-    })
-    .from(medicineReminders)
-    .innerJoin(prescriptions, eq(medicineReminders.prescriptionId, prescriptions.id))
-    .innerJoin(medicines, eq(prescriptions.medicineId, medicines.id))
-    .innerJoin(users, eq(prescriptions.patientId, users.id))
-    .where(and(
-      lte(medicineReminders.scheduledAt, now),
-      gte(medicineReminders.scheduledAt, fiveMinutesAgo),
-      eq(medicineReminders.isTaken, false),
-      eq(medicineReminders.isSkipped, false),
-      eq(medicineReminders.smsReminderSent, false)
-    ));
+    });
   }
 
   async markReminderTaken(id: string): Promise<MedicineReminder | undefined> {
@@ -1365,12 +1364,6 @@ export class DatabaseStorage implements IStorage {
       .where(eq(users.id, userId));
   }
 
-  async getUserByPhone(phoneNumber: string): Promise<User | null> {
-    const [user] = await db.select()
-      .from(users)
-      .where(eq(users.phoneNumber, phoneNumber));
-    return user || null;
-  }
 }
 
 export const storage = new DatabaseStorage();

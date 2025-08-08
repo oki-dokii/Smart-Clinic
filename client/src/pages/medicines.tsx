@@ -42,8 +42,10 @@ export default function MedicinesPage() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false);
   const [uploadText, setUploadText] = useState("");
+  const [editingMedicine, setEditingMedicine] = useState<CustomMedicine | null>(null);
   const [newMedicine, setNewMedicine] = useState<CustomMedicine>({
     name: "",
     dosage: "",
@@ -80,12 +82,36 @@ export default function MedicinesPage() {
       queryClient.invalidateQueries({ queryKey: ['/api/custom-medicines'] });
       queryClient.invalidateQueries({ queryKey: ['/api/reminders'] });
       setIsAddDialogOpen(false);
-      setNewMedicine({
-        name: "", dosage: "", frequency: "once_daily", timings: ["08:00"],
-        instructions: "", startDate: new Date().toISOString().split('T')[0],
-        endDate: "", status: "active"
-      });
+      resetNewMedicine();
       toast({ title: "Medicine Added", description: "Your custom medicine has been added successfully." });
+    }
+  });
+
+  // Edit medicine mutation
+  const editMedicineMutation = useMutation({
+    mutationFn: async (medicine: CustomMedicine) => {
+      const response = await apiRequest('PUT', `/api/custom-medicines/${medicine.id}`, medicine);
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/custom-medicines'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/reminders'] });
+      setIsEditDialogOpen(false);
+      setEditingMedicine(null);
+      toast({ title: "Medicine Updated", description: "Your medicine has been updated successfully." });
+    }
+  });
+
+  // Delete medicine mutation
+  const deleteMedicineMutation = useMutation({
+    mutationFn: async (medicineId: string) => {
+      const response = await apiRequest('DELETE', `/api/custom-medicines/${medicineId}`);
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/custom-medicines'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/reminders'] });
+      toast({ title: "Medicine Deleted", description: "The medicine has been deleted successfully." });
     }
   });
 
@@ -135,6 +161,50 @@ export default function MedicinesPage() {
       ...prev,
       timings: prev.timings.map((t, i) => i === index ? time : t)
     }));
+  };
+
+  const resetNewMedicine = () => {
+    setNewMedicine({
+      name: "", dosage: "", frequency: "once_daily", timings: ["08:00"],
+      instructions: "", startDate: new Date().toISOString().split('T')[0],
+      endDate: "", status: "active"
+    });
+  };
+
+  const startEditMedicine = (medicine: CustomMedicine) => {
+    setEditingMedicine({ ...medicine });
+    setIsEditDialogOpen(true);
+  };
+
+  const updateEditingMedicine = (field: keyof CustomMedicine, value: any) => {
+    setEditingMedicine(prev => prev ? { ...prev, [field]: value } : null);
+  };
+
+  const addEditTiming = () => {
+    setEditingMedicine(prev => prev ? {
+      ...prev,
+      timings: [...(prev.timings || []), "12:00"]
+    } : null);
+  };
+
+  const removeEditTiming = (index: number) => {
+    setEditingMedicine(prev => prev ? {
+      ...prev,
+      timings: (prev.timings || []).filter((_, i) => i !== index)
+    } : null);
+  };
+
+  const updateEditTiming = (index: number, time: string) => {
+    setEditingMedicine(prev => prev ? {
+      ...prev,
+      timings: (prev.timings || []).map((t, i) => i === index ? time : t)
+    } : null);
+  };
+
+  const handleDeleteMedicine = (medicineId: string, medicineName: string) => {
+    if (window.confirm(`Are you sure you want to delete "${medicineName}"? This will also delete all associated reminders.`)) {
+      deleteMedicineMutation.mutate(medicineId);
+    }
   };
 
   const getStatusColor = (status: string) => {
@@ -325,6 +395,147 @@ Lisinopril 10mg - Once daily at 9:00 PM - For blood pressure"
                 </div>
               </DialogContent>
             </Dialog>
+
+            {/* Edit Medicine Dialog */}
+            <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+              <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+                <DialogHeader>
+                  <DialogTitle>Edit Medicine</DialogTitle>
+                </DialogHeader>
+                {editingMedicine && (
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <Label>Medicine Name</Label>
+                        <Input
+                          value={editingMedicine.name}
+                          onChange={(e) => updateEditingMedicine('name', e.target.value)}
+                          placeholder="e.g., Aspirin"
+                          data-testid="input-edit-medicine-name"
+                        />
+                      </div>
+                      <div>
+                        <Label>Dosage</Label>
+                        <Input
+                          value={editingMedicine.dosage}
+                          onChange={(e) => updateEditingMedicine('dosage', e.target.value)}
+                          placeholder="e.g., 75mg, 1 tablet"
+                          data-testid="input-edit-medicine-dosage"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <Label>Frequency</Label>
+                      <Select value={editingMedicine.frequency} onValueChange={(value) => updateEditingMedicine('frequency', value)}>
+                        <SelectTrigger data-testid="select-edit-medicine-frequency">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="once_daily">Once Daily</SelectItem>
+                          <SelectItem value="twice_daily">Twice Daily</SelectItem>
+                          <SelectItem value="three_times_daily">Three Times Daily</SelectItem>
+                          <SelectItem value="four_times_daily">Four Times Daily</SelectItem>
+                          <SelectItem value="as_needed">As Needed</SelectItem>
+                          <SelectItem value="weekly">Weekly</SelectItem>
+                          <SelectItem value="monthly">Monthly</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div>
+                      <Label>Timings</Label>
+                      <div className="space-y-2">
+                        {(editingMedicine.timings || []).map((time, index) => (
+                          <div key={index} className="flex items-center gap-2">
+                            <Input
+                              type="time"
+                              value={time}
+                              onChange={(e) => updateEditTiming(index, e.target.value)}
+                              className="flex-1"
+                              data-testid={`input-edit-timing-${index}`}
+                            />
+                            {(editingMedicine.timings || []).length > 1 && (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => removeEditTiming(index)}
+                                data-testid={`button-remove-timing-${index}`}
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            )}
+                          </div>
+                        ))}
+                        <Button variant="outline" onClick={addEditTiming} className="w-full" data-testid="button-add-edit-timing">
+                          <Plus className="w-4 h-4 mr-2" />
+                          Add Timing
+                        </Button>
+                      </div>
+                    </div>
+
+                    <div>
+                      <Label>Instructions</Label>
+                      <Textarea
+                        value={editingMedicine.instructions}
+                        onChange={(e) => updateEditingMedicine('instructions', e.target.value)}
+                        placeholder="e.g., Take with food, before meals, etc."
+                        data-testid="textarea-edit-medicine-instructions"
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <Label>Start Date</Label>
+                        <Input
+                          type="date"
+                          value={editingMedicine.startDate}
+                          onChange={(e) => updateEditingMedicine('startDate', e.target.value)}
+                          data-testid="input-edit-medicine-start-date"
+                        />
+                      </div>
+                      <div>
+                        <Label>End Date (Optional)</Label>
+                        <Input
+                          type="date"
+                          value={editingMedicine.endDate || ''}
+                          onChange={(e) => updateEditingMedicine('endDate', e.target.value)}
+                          data-testid="input-edit-medicine-end-date"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <Label>Status</Label>
+                      <Select value={editingMedicine.status} onValueChange={(value) => updateEditingMedicine('status', value)}>
+                        <SelectTrigger data-testid="select-edit-medicine-status">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="active">Active</SelectItem>
+                          <SelectItem value="completed">Completed</SelectItem>
+                          <SelectItem value="paused">Paused</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="flex gap-3">
+                      <Button variant="outline" onClick={() => setIsEditDialogOpen(false)} className="flex-1">
+                        Cancel
+                      </Button>
+                      <Button 
+                        onClick={() => editMedicineMutation.mutate(editingMedicine)}
+                        disabled={editMedicineMutation.isPending || !editingMedicine.name || !editingMedicine.dosage}
+                        className="flex-1"
+                        data-testid="button-save-edit-medicine"
+                      >
+                        {editMedicineMutation.isPending ? "Saving..." : "Save Changes"}
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </DialogContent>
+            </Dialog>
           </div>
         </div>
       </header>
@@ -367,9 +578,32 @@ Lisinopril 10mg - Once daily at 9:00 PM - For blood pressure"
                             <Pill className="w-5 h-5 text-blue-500" />
                             {medicine.name}
                           </CardTitle>
-                          <Badge className={getStatusColor(medicine.status)}>
-                            {medicine.status}
-                          </Badge>
+                          <div className="flex items-center gap-2">
+                            <Badge className={getStatusColor(medicine.status)}>
+                              {medicine.status}
+                            </Badge>
+                            <div className="flex gap-1">
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => startEditMedicine(medicine)}
+                                disabled={editMedicineMutation.isPending}
+                                data-testid={`button-edit-medicine-${medicine.id}`}
+                              >
+                                <Edit className="w-4 h-4" />
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => handleDeleteMedicine(medicine.id!, medicine.name)}
+                                disabled={deleteMedicineMutation.isPending}
+                                className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                                data-testid={`button-delete-medicine-${medicine.id}`}
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </div>
+                          </div>
                         </div>
                         {medicineStats && (medicineStats.missedDoses > 0 || medicineStats.overdueToday > 0) && (
                           <div className="flex gap-2 mt-2">

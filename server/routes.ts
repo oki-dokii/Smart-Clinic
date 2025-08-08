@@ -900,6 +900,83 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Custom medicine routes - properly implemented
+  
+  // Edit medicine
+  app.put("/api/custom-medicines/:id", authMiddleware, requireRole(['patient', 'admin']), async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { name, dosage, frequency, instructions, startDate, endDate, timings } = req.body;
+      
+      // Get existing prescription to update
+      const prescription = await storage.getPrescription(id);
+      if (!prescription) {
+        return res.status(404).json({ message: "Medicine not found" });
+      }
+      
+      // Update medicine details
+      const updatedMedicine = await storage.updateMedicine(prescription.medicineId, {
+        name,
+        dosage: dosage || '1 tablet',
+        manufacturer: 'Patient Added'
+      });
+      
+      // Update prescription
+      const updatedPrescription = await storage.updatePrescription(id, {
+        dosage,
+        frequency,
+        instructions,
+        startDate: new Date(startDate),
+        endDate: endDate ? new Date(endDate) : null
+      });
+      
+      res.json({ 
+        success: true, 
+        medicine: {
+          id: updatedPrescription.id,
+          name: updatedMedicine.name,
+          dosage: updatedPrescription.dosage,
+          frequency: updatedPrescription.frequency,
+          instructions: updatedPrescription.instructions,
+          startDate: updatedPrescription.startDate,
+          endDate: updatedPrescription.endDate,
+          timings: timings || []
+        }
+      });
+    } catch (error: any) {
+      console.error('Error updating medicine:', error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+  
+  // Delete medicine
+  app.delete("/api/custom-medicines/:id", authMiddleware, requireRole(['patient', 'admin']), async (req, res) => {
+    try {
+      const { id } = req.params;
+      
+      // Get prescription first
+      const prescription = await storage.getPrescription(id);
+      if (!prescription) {
+        return res.status(404).json({ message: "Medicine not found" });
+      }
+      
+      // Delete associated reminders first
+      await storage.deletePrescriptionReminders(id);
+      
+      // Delete prescription
+      await storage.deletePrescription(id);
+      
+      // Delete medicine if it was patient-added
+      if (prescription.medicine.manufacturer === 'Patient Added') {
+        await storage.deleteMedicine(prescription.medicineId);
+      }
+      
+      res.json({ success: true, message: "Medicine deleted successfully" });
+    } catch (error: any) {
+      console.error('Error deleting medicine:', error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+
   app.post("/api/custom-medicines", authMiddleware, requireRole(['patient', 'admin']), async (req, res) => {
     try {
       const { name, dosage, frequency, instructions, startDate, endDate, timings } = req.body;
