@@ -85,29 +85,14 @@ export default function Homepage() {
       return response.json();
     },
     onSuccess: (result) => {
-      // Store authentication token and user data
-      if (result.token && result.admin) {
-        localStorage.setItem("auth_token", result.token);
-        localStorage.setItem("user", JSON.stringify(result.admin));
-        
-        toast({
-          title: "Clinic Registered Successfully!",
-          description: `Welcome to ${result.clinic.name}! Redirecting to your admin dashboard...`
-        });
-        
-        // Redirect to admin dashboard after successful registration
-        setTimeout(() => {
-          navigate("/admin-dashboard");
-        }, 1500);
-      } else {
-        toast({
-          title: "Clinic Registered Successfully!",
-          description: `${result.clinic.name} has been registered. Please log in with your admin credentials.`
-        });
-      }
+      toast({
+        title: "Application Submitted Successfully!",
+        description: `Thank you for registering ${result.clinic.name}! We will review your application and update you within 48 hours.`
+      });
       
-      setIsRegistering(false);
+      // Reset form and close dialog
       form.reset();
+      setIsRegistering(false);
     },
     onError: (error: any) => {
       toast({
