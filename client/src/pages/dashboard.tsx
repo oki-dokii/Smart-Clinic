@@ -118,7 +118,7 @@ export default function SmartClinicDashboard() {
 
   const { data: reminders = [] } = useQuery({
     queryKey: ["/api/reminders"],
-    enabled: !!user && user.role === "patient",
+    enabled: !!user, // Enable for all users, not just patients
   });
 
   // Calculate overdue medicines from reminders (same logic as medicines page)
@@ -734,7 +734,7 @@ export default function SmartClinicDashboard() {
           </Card>
 
           {/* Pending Medicines */}
-          <Card className="border-orange-200">
+          <Card className={`border-orange-200 ${hasOverdue ? 'glow-urgent' : ''}`}>
             <CardHeader className="pb-3">
               <CardTitle className="text-sm font-medium text-gray-600 flex items-center gap-2">
                 <Pill className="w-4 h-4 text-orange-500" />
@@ -743,20 +743,20 @@ export default function SmartClinicDashboard() {
             </CardHeader>
             <CardContent>
               <div className="flex items-center gap-2 mb-1">
-                <span className="text-2xl font-bold">
-                  {reminders?.filter((r: any) => !r.isTaken).length || 0}
+                <span className={`text-2xl font-bold ${hasOverdue ? 'flash-urgent text-red-600' : ''}`}>
+                  {Array.isArray(reminders) ? reminders.filter((r: any) => !r.isTaken).length : 0}
                 </span>
                 {hasOverdue && (
                   <Badge className="bg-red-500 text-white text-xs pulse-urgent">Urgent</Badge>
                 )}
               </div>
-              <div className={`text-sm text-gray-600 mb-4 ${
-                hasOverdue ? 'flash-urgent text-red-600' : ''
+              <div className={`text-sm mb-4 ${
+                hasOverdue ? 'flash-urgent text-red-600 font-medium' : 'text-gray-600'
               }`}>
                 {totalOverdue} dose(s) overdue
               </div>
               <Button 
-                className="w-full bg-orange-500 hover:bg-orange-600"
+                className={`w-full ${hasOverdue ? 'bg-red-500 hover:bg-red-600 pulse-urgent' : 'bg-orange-500 hover:bg-orange-600'}`}
                 onClick={() => setLocation("/medicines")}
               >
                 Manage Medicines
@@ -765,7 +765,7 @@ export default function SmartClinicDashboard() {
           </Card>
 
           {/* Doctor Status */}
-          <Card className="border-red-200">
+          <Card className={`border-red-200 ${delayNotifications && Array.isArray(delayNotifications) && delayNotifications.length > 0 ? 'glow-delay' : ''}`}>
             <CardHeader className="pb-3">
               <CardTitle className="text-sm font-medium text-gray-600 flex items-center gap-2">
                 <Clock className="w-4 h-4 text-red-500" />
@@ -827,7 +827,7 @@ export default function SmartClinicDashboard() {
                     }
                   })()}
                   <Button 
-                    className="w-full bg-blue-500 hover:bg-blue-600"
+                    className={`w-full ${relevantDelays.length > 0 ? 'bg-orange-500 hover:bg-orange-600 pulse-delay' : 'bg-blue-500 hover:bg-blue-600'}`}
                     onClick={() => {
                       queryClient.invalidateQueries({ queryKey: ["/api/delays"] });
                       queryClient.invalidateQueries({ queryKey: ["/api/appointments"] });
