@@ -304,30 +304,28 @@ export default function ClinicDashboard() {
     setIsContactModalOpen(true)
   }
   
-  // Emergency alerts state
-  const [emergencyAlerts, setEmergencyAlerts] = useState<EmergencyAlert[]>([
-    {
-      id: '1',
-      message: 'Patient in Room 3 needs immediate attention',
-      type: 'critical',
-      timeAgo: '2 min ago',
-      color: 'red'
-    },
-    {
-      id: '2', 
-      message: 'Low stock: Paracetamol (5 units left)',
-      type: 'warning',
-      timeAgo: '15 min ago',
-      color: 'orange'
-    },
-    {
-      id: '3',
-      message: "Dr. Johnson's next appointment is delayed",
-      type: 'info',
-      timeAgo: '30 min ago',
-      color: 'blue'
-    }
-  ])
+  // Get real feedback data for notifications
+  const { data: feedbackData = [] } = useQuery({
+    queryKey: ['/api/feedback'],
+    refetchInterval: 30000 // Refresh every 30 seconds for real-time updates
+  })
+
+  // Filter unread feedback for notifications
+  const unreadFeedback = feedbackData.filter((feedback: any) => !feedback.isRead)
+
+  // Emergency alerts state (for other non-feedback alerts)
+  const [emergencyAlerts, setEmergencyAlerts] = useState<EmergencyAlert[]>([])
+
+  // For testing purposes, you can temporarily add some alerts
+  // const [emergencyAlerts, setEmergencyAlerts] = useState<EmergencyAlert[]>([
+  //   {
+  //     id: '3',
+  //     message: "Dr. Johnson's next appointment is delayed",
+  //     type: 'info',
+  //     timeAgo: '30 min ago',
+  //     color: 'blue'
+  //   }
+  // ])
 
 
 
@@ -1564,7 +1562,11 @@ export default function ClinicDashboard() {
                     data-testid="button-notifications"
                   >
                     <Bell className="w-5 h-5" />
-                    <Badge className="bg-red-500 text-white text-xs ml-1">3</Badge>
+                    {unreadFeedback.length > 0 && (
+                      <Badge className="bg-red-500 text-white text-xs ml-1">
+                        {unreadFeedback.length}
+                      </Badge>
+                    )}
                   </Button>
                 </DialogTrigger>
                 <DialogContent className="max-w-md">
@@ -1572,21 +1574,53 @@ export default function ClinicDashboard() {
                     <DialogTitle>Notifications</DialogTitle>
                   </DialogHeader>
                   <div className="space-y-4">
-                    <div className="p-3 bg-blue-50 rounded-lg border-l-4 border-blue-500">
-                      <div className="font-medium text-sm">New Patient Registration</div>
-                      <div className="text-xs text-gray-600">John Smith registered 5 minutes ago</div>
-                    </div>
-                    <div className="p-3 bg-yellow-50 rounded-lg border-l-4 border-yellow-500">
-                      <div className="font-medium text-sm">Appointment Reminder</div>
-                      <div className="text-xs text-gray-600">Dr. Johnson has 3 appointments today</div>
-                    </div>
-                    <div className="p-3 bg-red-50 rounded-lg border-l-4 border-red-500">
-                      <div className="font-medium text-sm">Low Stock Alert</div>
-                      <div className="text-xs text-gray-600">Paracetamol running low (5 units left)</div>
-                    </div>
-                    <Button className="w-full" variant="outline">
-                      Mark All as Read
-                    </Button>
+                    {unreadFeedback.length === 0 ? (
+                      <div className="text-center py-8 text-gray-500">
+                        <Bell className="w-12 h-12 mx-auto mb-4 text-gray-300" />
+                        <p>No new notifications</p>
+                      </div>
+                    ) : (
+                      <>
+                        {unreadFeedback.map((feedback: any) => (
+                          <div key={feedback.id} className="p-3 bg-blue-50 rounded-lg border-l-4 border-blue-500">
+                            <div className="flex justify-between items-start">
+                              <div className="flex-1">
+                                <div className="font-medium text-sm">Patient Feedback</div>
+                                <div className="text-xs text-gray-600 mt-1">{feedback.message}</div>
+                                <div className="text-xs text-gray-400 mt-2">
+                                  Rating: {feedback.rating}/5 stars
+                                </div>
+                                <div className="text-xs text-gray-400">
+                                  {new Date(feedback.createdAt).toLocaleDateString()} {new Date(feedback.createdAt).toLocaleTimeString()}
+                                </div>
+                              </div>
+                              <Button 
+                                size="sm" 
+                                variant="ghost"
+                                onClick={() => handleMarkAsRead(feedback.id)}
+                                disabled={markAsReadMutation.isPending}
+                                data-testid={`button-mark-read-${feedback.id}`}
+                              >
+                                Mark as Read
+                              </Button>
+                            </div>
+                          </div>
+                        ))}
+                        <Button 
+                          className="w-full" 
+                          variant="outline"
+                          onClick={() => {
+                            unreadFeedback.forEach((feedback: any) => {
+                              handleMarkAsRead(feedback.id)
+                            })
+                          }}
+                          disabled={markAsReadMutation.isPending}
+                          data-testid="button-mark-all-read"
+                        >
+                          {markAsReadMutation.isPending ? 'Marking...' : 'Mark All as Read'}
+                        </Button>
+                      </>
+                    )}
                   </div>
                 </DialogContent>
               </Dialog>
