@@ -377,149 +377,7 @@ export default function ClinicDashboard() {
     dateOfBirth: ''
   })
 
-  // Function to remove emergency alert
-  const removeAlert = (alertId: string) => {
-    setEmergencyAlerts(prev => prev.filter(alert => alert.id !== alertId))
-    toast({
-      title: 'Alert Resolved',
-      description: 'Emergency alert has been successfully resolved and removed.',
-    })
-  }
 
-  // Function to add emergency alert
-  const addEmergencyAlert = (message: string, type: 'critical' | 'warning' | 'info', duration?: number) => {
-    const alertId = `alert-${Date.now()}`
-    const newAlert: EmergencyAlert = {
-      id: alertId,
-      message,
-      type,
-      timeAgo: 'Just now',
-      color: type === 'critical' ? 'red' : type === 'warning' ? 'yellow' : 'blue'
-    }
-    
-    setEmergencyAlerts(prev => [newAlert, ...prev])
-    
-    // Auto-remove info alerts after specified duration (default 5 minutes)
-    if (type === 'info' && duration) {
-      setTimeout(() => {
-        setEmergencyAlerts(prev => prev.filter(alert => alert.id !== alertId))
-      }, duration)
-    }
-  }
-
-  // Emergency Alert Monitoring System
-  const checkEmergencyConditions = useCallback(() => {
-    if (!stats || !appointments || !patients || !users) return
-
-    const now = new Date()
-    const currentHour = now.getHours()
-    
-    // Only check during business hours (8 AM - 6 PM)
-    if (currentHour < 8 || currentHour > 18) return
-
-    // 1. Check for delayed appointments (more than 30 minutes late)
-    const todayAppointments = appointments.data.filter((apt: any) => {
-      const aptDate = new Date(apt.appointmentDate)
-      return aptDate.toDateString() === now.toDateString() && apt.status === 'scheduled'
-    })
-
-    todayAppointments.forEach((apt: any) => {
-      const appointmentTime = new Date(apt.appointmentDate)
-      const delayMinutes = (now.getTime() - appointmentTime.getTime()) / (1000 * 60)
-      
-      if (delayMinutes > 30 && !emergencyAlerts.some(alert => alert.id.includes(apt.id))) {
-        const doctorName = apt.doctor ? `${apt.doctor.firstName} ${apt.doctor.lastName}` : 'Unknown Doctor'
-        const patientName = apt.patient ? `${apt.patient.firstName} ${apt.patient.lastName}` : 'Unknown Patient'
-        
-        addEmergencyAlert(
-          `Appointment delayed: ${patientName} with ${doctorName} is ${Math.round(delayMinutes)} minutes overdue`,
-          'warning'
-        )
-      }
-    })
-
-    // 2. Check for missing staff (no check-in today)
-    const doctorsAndStaff = users.filter((user: any) => 
-      user.role === 'doctor' || user.role === 'staff'
-    )
-    
-    doctorsAndStaff.forEach((staffMember: any) => {
-      const hasCheckedIn = staffPresence?.some((presence: any) => 
-        presence.userId === staffMember.id
-      )
-      
-      if (!hasCheckedIn && currentHour > 9 && !emergencyAlerts.some(alert => alert.id.includes(`staff-${staffMember.id}`))) {
-        addEmergencyAlert(
-          `Staff Alert: ${staffMember.firstName} ${staffMember.lastName} has not checked in today`,
-          'warning'
-        )
-      }
-    })
-
-    // 3. Check for high patient load (more than 15 patients today)
-    if (stats.patientsToday > 15 && !emergencyAlerts.some(alert => alert.message.includes('High patient volume'))) {
-      addEmergencyAlert(
-        `High patient volume: ${stats.patientsToday} patients scheduled today`,
-        'info'
-      )
-    }
-
-    // 4. Check for low medicine stock
-    if (medicines && medicines.length > 0) {
-      medicines.forEach((medicine: any) => {
-        if (medicine.stock <= 5 && medicine.stock > 0 && !emergencyAlerts.some(alert => alert.id.includes(`stock-${medicine.id}`))) {
-          addEmergencyAlert(
-            `Low stock alert: ${medicine.name} has only ${medicine.stock} units remaining`,
-            'warning'
-          )
-        } else if (medicine.stock === 0 && !emergencyAlerts.some(alert => alert.id.includes(`outstock-${medicine.id}`))) {
-          addEmergencyAlert(
-            `Out of stock: ${medicine.name} is completely out of stock`,
-            'critical'
-          )
-        }
-      })
-    }
-
-    // 5. Check for system capacity (if queue is too long)
-    if (liveQueueTokens && liveQueueTokens.length > 8 && !emergencyAlerts.some(alert => alert.message.includes('Queue overload'))) {
-      addEmergencyAlert(
-        `Queue overload: ${liveQueueTokens.length} patients currently waiting`,
-        'warning'
-      )
-    }
-
-    setLastAlertCheck(now)
-  }, [stats, appointments, patients, users, staffPresence, medicines, liveQueueTokens, emergencyAlerts])
-
-  // Test function to demonstrate alerts
-  const triggerTestAlerts = () => {
-    // Test critical alert for out of stock medicine
-    if (medicines && medicines.length > 0) {
-      const firstMedicine = medicines[0]
-      if (firstMedicine.stock === 0) {
-        addEmergencyAlert(
-          `Out of stock: ${firstMedicine.name} is completely out of stock`,
-          'critical'
-        )
-      }
-    }
-
-    // Test warning alert for high queue
-    if (liveQueueTokens && liveQueueTokens.length > 0) {
-      addEmergencyAlert(
-        `Queue monitoring: ${liveQueueTokens.length} patients currently in queue`,
-        'warning'
-      )
-    }
-
-    // Test info alert
-    addEmergencyAlert(
-      `System check: Emergency alert system is functioning normally`,
-      'info',
-      300000 // Auto-remove after 5 minutes
-    )
-  }
 
   // Form submission handlers
   const handlePatientSubmitOriginal = async () => {
@@ -1203,6 +1061,154 @@ export default function ClinicDashboard() {
   // Debug: Log medicines data
   console.log('Medicines data:', medicines, 'Loading:', medicinesLoading, 'Force render:', forceRender)
   console.log('First medicine stock:', medicines[0]?.stock)
+
+  // Function to remove emergency alert
+  const removeAlert = (alertId: string) => {
+    setEmergencyAlerts(prev => prev.filter(alert => alert.id !== alertId))
+    toast({
+      title: 'Alert Resolved',
+      description: 'Emergency alert has been successfully resolved and removed.',
+    })
+  }
+
+  // Function to add emergency alert
+  const addEmergencyAlert = (message: string, type: 'critical' | 'warning' | 'info', duration?: number) => {
+    const alertId = `alert-${Date.now()}`
+    const newAlert: EmergencyAlert = {
+      id: alertId,
+      message,
+      type,
+      timeAgo: 'Just now',
+      color: type === 'critical' ? 'red' : type === 'warning' ? 'yellow' : 'blue'
+    }
+    
+    setEmergencyAlerts(prev => [newAlert, ...prev])
+    
+    // Auto-remove info alerts after specified duration (default 5 minutes)
+    if (type === 'info' && duration) {
+      setTimeout(() => {
+        setEmergencyAlerts(prev => prev.filter(alert => alert.id !== alertId))
+      }, duration)
+    }
+  }
+
+  // Emergency Alert Monitoring System
+  const checkEmergencyConditions = useCallback(() => {
+    if (!stats || !appointments || !patients || !users) return
+
+    const now = new Date()
+    const currentHour = now.getHours()
+    
+    // Only check during business hours (8 AM - 6 PM)
+    if (currentHour < 8 || currentHour > 18) return
+
+    // 1. Check for delayed appointments (more than 30 minutes late)
+    const todayAppointments = appointments.filter((apt: any) => {
+      const aptDate = new Date(apt.appointmentDate)
+      return aptDate.toDateString() === now.toDateString() && apt.status === 'scheduled'
+    })
+
+    todayAppointments.forEach((apt: any) => {
+      const appointmentTime = new Date(apt.appointmentDate)
+      const delayMinutes = (now.getTime() - appointmentTime.getTime()) / (1000 * 60)
+      
+      if (delayMinutes > 30 && !emergencyAlerts.some(alert => alert.id.includes(apt.id))) {
+        const doctorName = apt.doctor ? `${apt.doctor.firstName} ${apt.doctor.lastName}` : 'Unknown Doctor'
+        const patientName = apt.patient ? `${apt.patient.firstName} ${apt.patient.lastName}` : 'Unknown Patient'
+        
+        addEmergencyAlert(
+          `Appointment delayed: ${patientName} with ${doctorName} is ${Math.round(delayMinutes)} minutes overdue`,
+          'warning'
+        )
+      }
+    })
+
+    // 2. Check for missing staff (no check-in today)
+    const doctorsAndStaff = users.filter((user: any) => 
+      user.role === 'doctor' || user.role === 'staff'
+    )
+    
+    doctorsAndStaff.forEach((staffMember: any) => {
+      const hasCheckedIn = staffPresence?.some((presence: any) => 
+        presence.userId === staffMember.id
+      )
+      
+      if (!hasCheckedIn && currentHour > 9 && !emergencyAlerts.some(alert => alert.id.includes(`staff-${staffMember.id}`))) {
+        addEmergencyAlert(
+          `Staff Alert: ${staffMember.firstName} ${staffMember.lastName} has not checked in today`,
+          'warning'
+        )
+      }
+    })
+
+    // 3. Check for high patient load (more than 15 patients today)
+    if (stats.patientsToday > 15 && !emergencyAlerts.some(alert => alert.message.includes('High patient volume'))) {
+      addEmergencyAlert(
+        `High patient volume: ${stats.patientsToday} patients scheduled today`,
+        'info'
+      )
+    }
+
+    // 4. Check for low medicine stock
+    if (medicines && medicines.length > 0) {
+      medicines.forEach((medicine: any) => {
+        if (medicine.stock <= 5 && medicine.stock > 0 && !emergencyAlerts.some(alert => alert.id.includes(`stock-${medicine.id}`))) {
+          addEmergencyAlert(
+            `Low stock alert: ${medicine.name} has only ${medicine.stock} units remaining`,
+            'warning'
+          )
+        } else if (medicine.stock === 0 && !emergencyAlerts.some(alert => alert.id.includes(`outstock-${medicine.id}`))) {
+          addEmergencyAlert(
+            `Out of stock: ${medicine.name} is completely out of stock`,
+            'critical'
+          )
+        }
+      })
+    }
+
+    // 5. Check for queue overload (more than 8 patients waiting)
+    const waitingInQueue = liveQueueTokens?.filter((token: any) => 
+      token.status === 'waiting' || token.status === 'called'
+    ).length || 0
+    
+    if (waitingInQueue > 8 && !emergencyAlerts.some(alert => alert.message.includes('Queue overload'))) {
+      addEmergencyAlert(
+        `Queue overload: ${waitingInQueue} patients currently waiting`,
+        'warning'
+      )
+    }
+
+    setLastAlertCheck(now)
+  }, [stats, appointments, patients, users, staffPresence, medicines, liveQueueTokens, emergencyAlerts])
+
+  // Test function to demonstrate alerts
+  const triggerTestAlerts = () => {
+    // Test critical alert for out of stock medicine
+    if (medicines && medicines.length > 0) {
+      const firstMedicine = medicines[0]
+      if (firstMedicine.stock === 0) {
+        addEmergencyAlert(
+          `Out of stock: ${firstMedicine.name} is completely out of stock`,
+          'critical'
+        )
+      }
+    }
+
+    // Test warning alert for high queue
+    if (liveQueueTokens && liveQueueTokens.length > 0) {
+      addEmergencyAlert(
+        `Queue monitoring: ${liveQueueTokens.length} patients currently in queue`,
+        'warning'
+      )
+    }
+
+    // Test info alert
+    addEmergencyAlert(
+      `System check: Emergency alert system is functioning normally`,
+      'info',
+      300000 // Auto-remove after 5 minutes
+    )
+  }
   
   // Debug: Log staff data
   console.log('Staff members:', staffMembers, 'Total users:', users?.length, 'Users loading:', usersLoading)
