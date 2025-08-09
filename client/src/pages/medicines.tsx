@@ -644,9 +644,9 @@ Lisinopril 10mg - Once daily at 9:00 PM - For blood pressure"
                     <Card key={medicine.id} className={`medicine-card bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 ${hasOverdueOrMissed ? 'overdue glow-urgent' : ''}`}>
                       <CardHeader>
                         <div className="flex items-center justify-between">
-                          <CardTitle className="flex items-center gap-2 font-bold text-lg text-black dark:text-white" data-theme-color="medicine-title">
+                          <CardTitle className="flex items-center gap-2 font-bold text-lg">
                             <Pill className="w-5 h-5 text-blue-500" />
-                            <span className="font-semibold text-black dark:text-white">
+                            <span className="font-semibold text-gray-900 dark:text-white">
                               {medicine.name || 'MISSING MEDICINE NAME'}
                             </span>
                           </CardTitle>
@@ -695,18 +695,18 @@ Lisinopril 10mg - Once daily at 9:00 PM - For blood pressure"
                       <CardContent>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           <div>
-                            <p className="text-base font-medium text-gray-700 dark:text-gray-200">
-                              Dosage: <span className="font-semibold text-black dark:text-white">{medicine.dosage || 'No dosage'}</span>
+                            <p className="text-base font-medium text-gray-700 dark:text-gray-300">
+                              Dosage: <span className="font-semibold text-gray-900 dark:text-white">{medicine.dosage || 'No dosage'}</span>
                             </p>
-                            <p className="text-base font-medium text-gray-700 dark:text-gray-200">
-                              Frequency: <span className="font-semibold text-black dark:text-white">{medicine.frequency?.replace('_', ' ') || 'Not specified'}</span>
+                            <p className="text-base font-medium text-gray-700 dark:text-gray-300">
+                              Frequency: <span className="font-semibold text-gray-900 dark:text-white">{medicine.frequency?.replace('_', ' ') || 'Not specified'}</span>
                             </p>
-                            <p className="text-base font-medium text-gray-700 dark:text-gray-200">
-                              Instructions: <span className="font-semibold text-black dark:text-white">{medicine.instructions || 'Take as prescribed'}</span>
+                            <p className="text-base font-medium text-gray-700 dark:text-gray-300">
+                              Instructions: <span className="font-semibold text-gray-900 dark:text-white">{medicine.instructions || 'Take as prescribed'}</span>
                             </p>
                           </div>
                         <div>
-                          <p className="text-base mb-2 font-medium text-gray-700 dark:text-gray-200">Timings:</p>
+                          <p className="text-base mb-2 font-medium text-gray-700 dark:text-gray-300">Timings:</p>
                           <div className="flex flex-wrap gap-2">
                             {(medicine.timings || []).map((time, index) => (
                               <Badge key={index} variant="outline" className="flex items-center gap-1 text-gray-700 dark:text-gray-200 border-gray-300 dark:border-gray-600">

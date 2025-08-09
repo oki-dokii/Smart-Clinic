@@ -68,49 +68,9 @@
   color: hsl(var(--muted-foreground));
 }
 
-/* Force medicine card text to be visible in dark mode */
-.dark [data-theme-color="medicine-title"],
-.dark [data-theme-color="medicine-title"] span {
+/* Simple dark mode fix for medicine cards */
+.dark .medicine-card {
   color: white !important;
-}
-
-.dark .medicine-card .text-base,
-.dark .medicine-card p,
-.dark .medicine-card span,
-.dark .medicine-card h3,
-.dark .medicine-card .font-semibold,
-.dark .medicine-card .font-medium {
-  color: white !important;
-}
-
-/* Ensure all medicine card content is visible in dark mode */
-.dark .medicine-card [style*="color"] {
-  color: white !important;
-}
-
-/* Override Badge colors in dark mode for medicine cards */
-.dark .medicine-card .border-input {
-  border-color: hsl(var(--border)) !important;
-  color: hsl(var(--foreground)) !important;
-  background-color: transparent !important;
-}
-
-/* Force all text elements to be visible in dark mode medicine cards */
-.dark .medicine-card *,
-.dark .medicine-card span,
-.dark .medicine-card p,
-.dark .medicine-card div,
-.dark .medicine-card h1,
-.dark .medicine-card h2,
-.dark .medicine-card h3,
-.dark .medicine-card h4 {
-  color: white !important;
-}
-
-/* Special handling for Badge components in medicine cards */
-.dark .medicine-card .inline-flex {
-  color: white !important;
-  border-color: rgba(255, 255, 255, 0.2) !important;
 }
 
 .dark .text-blue-100 {
