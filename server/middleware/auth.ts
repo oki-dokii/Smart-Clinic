@@ -54,14 +54,14 @@ export function requireRole(roles: string[]) {
   };
 }
 
-// Strict admin access control - only allows soham.banerjee@iiitb.ac.in
+// Strict admin access control - only allows 44441100sf@gmail.com
 export function requireSuperAdmin(req: Request, res: Response, next: NextFunction): void {
   if (!req.user) {
     res.status(401).json({ message: 'Authentication required' });
     return;
   }
 
-  const AUTHORIZED_ADMIN_EMAIL = 'soham.banerjee@iiitb.ac.in';
+  const AUTHORIZED_ADMIN_EMAIL = '44441100sf@gmail.com';
   
   // Check if user has admin role AND authorized email
   if (req.user.role !== 'admin' || req.user.email !== AUTHORIZED_ADMIN_EMAIL) {

@@ -64,7 +64,7 @@ function SuperAdminRoute({ children }: { children: React.ReactNode }) {
 
     // Check super admin access
     if (currentUser) {
-      const AUTHORIZED_ADMIN_EMAIL = 'soham.banerjee@iiitb.ac.in';
+      const AUTHORIZED_ADMIN_EMAIL = '44441100sf@gmail.com';
       
       if (currentUser.role !== 'admin' || currentUser.email !== AUTHORIZED_ADMIN_EMAIL) {
         console.log('🔥 UNAUTHORIZED ADMIN ACCESS ATTEMPT:', {
@@ -99,7 +99,7 @@ function SuperAdminRoute({ children }: { children: React.ReactNode }) {
   }
 
   // Check if user is authorized super admin
-  const AUTHORIZED_ADMIN_EMAIL = 'soham.banerjee@iiitb.ac.in';
+  const AUTHORIZED_ADMIN_EMAIL = '44441100sf@gmail.com';
   if (currentUser.role !== 'admin' || currentUser.email !== AUTHORIZED_ADMIN_EMAIL) {
     return (
       <div className="flex items-center justify-center min-h-screen">

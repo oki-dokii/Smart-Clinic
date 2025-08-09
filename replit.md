@@ -13,12 +13,12 @@ Preferred communication style: Simple, everyday language.
   - Added role-based access control for all routes
   - Prevents unauthorized access to admin, staff, and patient pages
 - **Super Admin Access Control**: Implemented strict admin access restriction:
-  - Only soham.banerjee@iiitb.ac.in can access admin dashboard and functions
+  - Only 44441100sf@gmail.com can access admin dashboard and functions
   - Added SuperAdminRoute component for frontend protection
   - Added requireSuperAdmin middleware for backend API protection
   - Protected critical routes: user management, dashboard stats, reports, medicine management
   - Unauthorized users redirected to appropriate dashboards with clear error messages
-- **Email Notifications**: Added automatic email notifications for new clinic registrations using existing Gmail SMTP
+- **Email Notifications**: Added automatic email notifications for new clinic registrations sent to 44441100sf@gmail.com using existing Gmail SMTP
 - **Dark Mode Enhancement**: Implemented independent dark mode toggle for admin dashboard, replacing settings icon with Moon/Sun toggle button for easy theme switching
 
 # System Architecture

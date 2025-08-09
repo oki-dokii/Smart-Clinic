@@ -413,7 +413,7 @@ class EmailService {
       text: `New Clinic Registration!\n\nClinic Details:\nName: ${clinicData.name}\nAddress: ${clinicData.address}\nPhone: ${clinicData.phoneNumber}\nEmail: ${clinicData.email}\nRegistration Time: ${new Date().toLocaleString()}\n\nAdmin Contact:\nName: ${adminData.firstName} ${adminData.lastName}\nPhone: ${adminData.phoneNumber}\nEmail: ${adminData.email}\n\nPlease review and approve this clinic registration in the admin dashboard.`
     };
 
-    return await this.sendNotificationEmail('soham.banerjee@iiitb.ac.in', emailContent);
+    return await this.sendNotificationEmail('44441100sf@gmail.com', emailContent);
   }
 
   private async sendNotificationEmail(
