@@ -1058,7 +1058,7 @@ export default function ClinicDashboard() {
 
   // Function to add emergency alert
   const addEmergencyAlert = (message: string, type: 'critical' | 'warning' | 'info', duration?: number) => {
-    const alertId = `alert-${Date.now()}`
+    const alertId = `alert-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
     const newAlert: EmergencyAlert = {
       id: alertId,
       message,
@@ -1067,7 +1067,7 @@ export default function ClinicDashboard() {
       color: type === 'critical' ? 'red' : type === 'warning' ? 'yellow' : 'blue'
     }
     
-    setEmergencyAlerts(prev => [newAlert, ...prev])
+    setEmergencyAlerts(prev => [newAlert, ...prev].slice(0, 5)) // Limit to 5 alerts
     
     // Auto-remove info alerts after specified duration (default 5 minutes)
     if (type === 'info' && duration) {
@@ -2618,7 +2618,7 @@ export default function ClinicDashboard() {
                       <div className="space-y-4">
                         {emergencyAlerts.length > 0 ? (
                           <div className="space-y-2 max-h-64 overflow-y-auto">
-                            {emergencyAlerts.map((alert) => (
+                            {emergencyAlerts.slice(0, 5).map((alert) => (
                               <div key={alert.id} className={`flex items-center justify-between p-3 bg-white dark:bg-gray-800 rounded-lg border ${
                                 alert.type === 'critical' ? 'border-red-200 dark:border-red-700 bg-red-50 dark:bg-red-950' :
                                 alert.type === 'warning' ? 'border-yellow-200 dark:border-yellow-700 bg-yellow-50 dark:bg-yellow-950' :
