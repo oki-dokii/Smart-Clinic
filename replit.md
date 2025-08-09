@@ -7,6 +7,11 @@ SmartClinic is a comprehensive healthcare management system built as a full-stac
 Preferred communication style: Simple, everyday language.
 
 ## Recent Changes (August 2025)
+- **CRITICAL Security Fixes**: Fixed major authentication vulnerabilities:
+  - Removed hardcoded JWT token from admin dashboard (line 860)
+  - Implemented proper route-level authentication protection
+  - Added role-based access control for all routes
+  - Prevents unauthorized access to admin, staff, and patient pages
 - **Dark Mode Enhancement**: Implemented independent dark mode toggle for admin dashboard, replacing settings icon with Moon/Sun toggle button for easy theme switching
 
 # System Architecture
