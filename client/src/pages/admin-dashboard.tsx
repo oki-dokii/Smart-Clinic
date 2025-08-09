@@ -179,6 +179,7 @@ export default function ClinicDashboard() {
     email: '',
     phoneNumber: ''
   })
+  const [isEditProfileOpen, setIsEditProfileOpen] = useState(false)
   
   // Reschedule form state
   const [rescheduleForm, setRescheduleForm] = useState({
@@ -666,7 +667,13 @@ export default function ClinicDashboard() {
     if (!currentUser) return
     
     try {
-      const response = await fetch(`/api/users/${currentUser.id}`, {
+      console.log('🔥 ADMIN PROFILE UPDATE - Starting update with data:', {
+        firstName: adminProfileForm.firstName,
+        lastName: adminProfileForm.lastName,
+        email: adminProfileForm.email
+      })
+      
+      const response = await fetch('/api/users/me', {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -679,22 +686,30 @@ export default function ClinicDashboard() {
         })
       })
 
+      console.log('🔥 ADMIN PROFILE UPDATE - Response status:', response.status)
+
       if (!response.ok) {
         const error = await response.json()
+        console.error('🔥 ADMIN PROFILE UPDATE - Error response:', error)
         throw new Error(error.message || 'Update failed')
       }
       
+      const updatedUser = await response.json()
+      console.log('🔥 ADMIN PROFILE UPDATE - Updated user:', updatedUser)
+      
       // Force cache invalidation to refresh user data
       await queryClient.invalidateQueries({ queryKey: ['/api/users/me'] })
-      await queryClient.invalidateQueries({ queryKey: [`/api/users/${currentUser.id}`] })
       await queryClient.refetchQueries({ queryKey: ['/api/users/me'] })
+      
+      // Close the dialog
+      setIsEditProfileOpen(false)
       
       toast({
         title: 'Profile Updated',
         description: 'Your admin profile has been successfully updated.',
       })
     } catch (error: any) {
-      console.error('Admin profile update error:', error)
+      console.error('🔥 ADMIN PROFILE UPDATE - Error:', error)
       toast({
         title: 'Update Failed',
         description: error.message || 'Failed to update profile. Please try again.',
@@ -1715,7 +1730,8 @@ export default function ClinicDashboard() {
                       </div>
                     </div>
                     <div className="space-y-2">
-                      <Dialog onOpenChange={(open) => {
+                      <Dialog open={isEditProfileOpen} onOpenChange={(open) => {
+                        setIsEditProfileOpen(open)
                         if (open && currentUser) {
                           // Reset form when dialog opens
                           setAdminProfileForm({
@@ -1784,7 +1800,13 @@ export default function ClinicDashboard() {
                               >
                                 Save Changes
                               </Button>
-                              <Button variant="outline" className="flex-1">Cancel</Button>
+                              <Button 
+                                variant="outline" 
+                                className="flex-1"
+                                onClick={() => setIsEditProfileOpen(false)}
+                              >
+                                Cancel
+                              </Button>
                             </div>
                           </div>
                         </DialogContent>
