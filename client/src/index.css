@@ -68,6 +68,17 @@
   color: hsl(var(--muted-foreground));
 }
 
+/* Force medicine card text to be visible in dark mode */
+.dark [data-theme-color="medicine-title"] {
+  color: white !important;
+}
+
+.dark .medicine-card .text-base,
+.dark .medicine-card p,
+.dark .medicine-card span {
+  color: white !important;
+}
+
 .dark .text-blue-100 {
   color: hsl(var(--accent-foreground));
 }
