@@ -1715,7 +1715,17 @@ export default function ClinicDashboard() {
                       </div>
                     </div>
                     <div className="space-y-2">
-                      <Dialog>
+                      <Dialog onOpenChange={(open) => {
+                        if (open && currentUser) {
+                          // Reset form when dialog opens
+                          setAdminProfileForm({
+                            firstName: currentUser.firstName || '',
+                            lastName: currentUser.lastName || '',
+                            email: currentUser.email || '',
+                            phoneNumber: currentUser.phoneNumber || ''
+                          })
+                        }
+                      }}>
                         <DialogTrigger asChild>
                           <Button variant="outline" className="w-full justify-start">
                             <User className="w-4 h-4 mr-2" />
@@ -1731,7 +1741,7 @@ export default function ClinicDashboard() {
                               <Label htmlFor="edit-firstName">First Name</Label>
                               <Input 
                                 id="edit-firstName" 
-                                value={adminProfileForm.firstName || currentUser?.firstName || ''}
+                                value={adminProfileForm.firstName}
                                 onChange={(e) => setAdminProfileForm({...adminProfileForm, firstName: e.target.value})}
                                 placeholder="First Name"
                               />
@@ -1740,7 +1750,7 @@ export default function ClinicDashboard() {
                               <Label htmlFor="edit-lastName">Last Name</Label>
                               <Input 
                                 id="edit-lastName" 
-                                value={adminProfileForm.lastName || currentUser?.lastName || ''}
+                                value={adminProfileForm.lastName}
                                 onChange={(e) => setAdminProfileForm({...adminProfileForm, lastName: e.target.value})}
                                 placeholder="Last Name"
                               />
@@ -1750,7 +1760,7 @@ export default function ClinicDashboard() {
                               <Input 
                                 id="edit-email" 
                                 type="email"
-                                value={adminProfileForm.email || currentUser?.email || ''}
+                                value={adminProfileForm.email}
                                 onChange={(e) => setAdminProfileForm({...adminProfileForm, email: e.target.value})}
                                 placeholder="Email Address"
                               />
