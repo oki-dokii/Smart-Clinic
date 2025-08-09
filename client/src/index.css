@@ -68,9 +68,13 @@
   color: hsl(var(--muted-foreground));
 }
 
-/* Simple dark mode fix for medicine cards */
+/* Better dark mode colors for medicine cards */
 .dark .medicine-card {
-  color: white !important;
+  color: #e5e5e5 !important;
+}
+
+.dark .medicine-card .font-semibold {
+  color: #f0f0f0 !important;
 }
 
 .dark .text-blue-100 {
