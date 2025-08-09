@@ -2317,25 +2317,25 @@ export default function ClinicDashboard() {
 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                   {/* Emergency Alerts */}
-                  <Card className="border-red-200 bg-red-50">
+                  <Card className="border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-950">
                     <CardHeader>
-                      <CardTitle className="text-red-700 flex items-center gap-2">
+                      <CardTitle className="text-red-700 dark:text-red-300 flex items-center gap-2">
                         <AlertTriangle className="w-5 h-5" />
                         Emergency Alerts
                       </CardTitle>
-                      <p className="text-sm text-red-600">Urgent notifications requiring immediate attention</p>
+                      <p className="text-sm text-red-600 dark:text-red-400">Urgent notifications requiring immediate attention</p>
                     </CardHeader>
                     <CardContent>
                       <div className="space-y-4">
                         {emergencyAlerts.length > 0 ? (
                           emergencyAlerts.map((alert) => (
-                            <div key={alert.id} className={`flex items-center justify-between p-3 bg-white rounded-lg border border-${alert.color}-200`}>
+                            <div key={alert.id} className={`flex items-center justify-between p-3 bg-white dark:bg-gray-800 rounded-lg border border-${alert.color}-200 dark:border-${alert.color}-700`}>
                               <div className="flex items-center gap-3">
-                                <div className={`w-2 h-2 bg-${alert.color}-500 rounded-full`}></div>
-                                <span className="text-sm font-medium">{alert.message}</span>
+                                <div className={`w-2 h-2 bg-${alert.color}-500 dark:bg-${alert.color}-400 rounded-full`}></div>
+                                <span className="text-sm font-medium text-gray-900 dark:text-gray-100">{alert.message}</span>
                               </div>
                               <div className="flex items-center gap-2">
-                                <span className="text-xs text-gray-500">{alert.timeAgo}</span>
+                                <span className="text-xs text-gray-500 dark:text-gray-400">{alert.timeAgo}</span>
                                 <Button 
                                   size="sm" 
                                   variant="outline" 
@@ -2351,11 +2351,11 @@ export default function ClinicDashboard() {
                           ))
                         ) : (
                           <div className="text-center py-8">
-                            <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                              <AlertTriangle className="w-6 h-6 text-green-600" />
+                            <div className="w-12 h-12 bg-green-100 dark:bg-green-900 rounded-full flex items-center justify-center mx-auto mb-3">
+                              <AlertTriangle className="w-6 h-6 text-green-600 dark:text-green-400" />
                             </div>
-                            <h3 className="text-lg font-semibold text-gray-900 mb-2">All Clear!</h3>
-                            <p className="text-gray-600">No emergency alerts at this time.</p>
+                            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">All Clear!</h3>
+                            <p className="text-gray-600 dark:text-gray-400">No emergency alerts at this time.</p>
                           </div>
                         )}
                       </div>
@@ -2366,10 +2366,10 @@ export default function ClinicDashboard() {
                   <Card>
                     <CardHeader>
                       <CardTitle className="flex items-center gap-2">
-                        <BarChart3 className="w-5 h-5 text-blue-500" />
+                        <BarChart3 className="w-5 h-5 text-blue-500 dark:text-blue-400" />
                         Quick Actions
                       </CardTitle>
-                      <p className="text-sm text-gray-600">Common administrative tasks</p>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">Common administrative tasks</p>
                     </CardHeader>
                     <CardContent>
                       <div className="grid grid-cols-2 gap-4">
