@@ -324,17 +324,7 @@ export default function ClinicDashboard() {
 
   // Emergency alerts state (for other non-feedback alerts)
   const [emergencyAlerts, setEmergencyAlerts] = useState<EmergencyAlert[]>([])
-
-  // For testing purposes, you can temporarily add some alerts
-  // const [emergencyAlerts, setEmergencyAlerts] = useState<EmergencyAlert[]>([
-  //   {
-  //     id: '3',
-  //     message: "Dr. Johnson's next appointment is delayed",
-  //     type: 'info',
-  //     timeAgo: '30 min ago',
-  //     color: 'blue'
-  //   }
-  // ])
+  const [lastAlertCheck, setLastAlertCheck] = useState<Date>(new Date())
 
 
 
@@ -394,6 +384,141 @@ export default function ClinicDashboard() {
       title: 'Alert Resolved',
       description: 'Emergency alert has been successfully resolved and removed.',
     })
+  }
+
+  // Function to add emergency alert
+  const addEmergencyAlert = (message: string, type: 'critical' | 'warning' | 'info', duration?: number) => {
+    const alertId = `alert-${Date.now()}`
+    const newAlert: EmergencyAlert = {
+      id: alertId,
+      message,
+      type,
+      timeAgo: 'Just now',
+      color: type === 'critical' ? 'red' : type === 'warning' ? 'yellow' : 'blue'
+    }
+    
+    setEmergencyAlerts(prev => [newAlert, ...prev])
+    
+    // Auto-remove info alerts after specified duration (default 5 minutes)
+    if (type === 'info' && duration) {
+      setTimeout(() => {
+        setEmergencyAlerts(prev => prev.filter(alert => alert.id !== alertId))
+      }, duration)
+    }
+  }
+
+  // Emergency Alert Monitoring System
+  const checkEmergencyConditions = useCallback(() => {
+    if (!dashboardStats.data || !appointments.data || !patients.data || !staffData.data) return
+
+    const now = new Date()
+    const currentHour = now.getHours()
+    
+    // Only check during business hours (8 AM - 6 PM)
+    if (currentHour < 8 || currentHour > 18) return
+
+    // 1. Check for delayed appointments (more than 30 minutes late)
+    const todayAppointments = appointments.data.filter((apt: any) => {
+      const aptDate = new Date(apt.appointmentDate)
+      return aptDate.toDateString() === now.toDateString() && apt.status === 'scheduled'
+    })
+
+    todayAppointments.forEach((apt: any) => {
+      const appointmentTime = new Date(apt.appointmentDate)
+      const delayMinutes = (now.getTime() - appointmentTime.getTime()) / (1000 * 60)
+      
+      if (delayMinutes > 30 && !emergencyAlerts.some(alert => alert.id.includes(apt.id))) {
+        const doctorName = apt.doctor ? `${apt.doctor.firstName} ${apt.doctor.lastName}` : 'Unknown Doctor'
+        const patientName = apt.patient ? `${apt.patient.firstName} ${apt.patient.lastName}` : 'Unknown Patient'
+        
+        addEmergencyAlert(
+          `Appointment delayed: ${patientName} with ${doctorName} is ${Math.round(delayMinutes)} minutes overdue`,
+          'warning'
+        )
+      }
+    })
+
+    // 2. Check for missing staff (no check-in today)
+    const doctorsAndStaff = staffData.data.filter((user: any) => 
+      user.role === 'doctor' || user.role === 'staff'
+    )
+    
+    doctorsAndStaff.forEach((staffMember: any) => {
+      const hasCheckedIn = staffPresence.data?.some((presence: any) => 
+        presence.userId === staffMember.id
+      )
+      
+      if (!hasCheckedIn && currentHour > 9 && !emergencyAlerts.some(alert => alert.id.includes(`staff-${staffMember.id}`))) {
+        addEmergencyAlert(
+          `Staff Alert: ${staffMember.firstName} ${staffMember.lastName} has not checked in today`,
+          'warning'
+        )
+      }
+    })
+
+    // 3. Check for high patient load (more than 15 patients today)
+    if (dashboardStats.data.patientsToday > 15 && !emergencyAlerts.some(alert => alert.message.includes('High patient volume'))) {
+      addEmergencyAlert(
+        `High patient volume: ${dashboardStats.data.patientsToday} patients scheduled today`,
+        'info'
+      )
+    }
+
+    // 4. Check for low medicine stock
+    if (medicines.data && medicines.data.length > 0) {
+      medicines.data.forEach((medicine: any) => {
+        if (medicine.stock <= 5 && medicine.stock > 0 && !emergencyAlerts.some(alert => alert.id.includes(`stock-${medicine.id}`))) {
+          addEmergencyAlert(
+            `Low stock alert: ${medicine.name} has only ${medicine.stock} units remaining`,
+            'warning'
+          )
+        } else if (medicine.stock === 0 && !emergencyAlerts.some(alert => alert.id.includes(`outstock-${medicine.id}`))) {
+          addEmergencyAlert(
+            `Out of stock: ${medicine.name} is completely out of stock`,
+            'critical'
+          )
+        }
+      })
+    }
+
+    // 5. Check for system capacity (if queue is too long)
+    if (liveQueueTokens && liveQueueTokens.length > 8 && !emergencyAlerts.some(alert => alert.message.includes('Queue overload'))) {
+      addEmergencyAlert(
+        `Queue overload: ${liveQueueTokens.length} patients currently waiting`,
+        'warning'
+      )
+    }
+
+    setLastAlertCheck(now)
+  }, [dashboardStats.data, appointments.data, patients.data, staffData.data, staffPresence.data, medicines.data, liveQueueTokens, emergencyAlerts])
+
+  // Test function to demonstrate alerts
+  const triggerTestAlerts = () => {
+    // Test critical alert for out of stock medicine
+    if (medicines.data && medicines.data.length > 0) {
+      const firstMedicine = medicines.data[0]
+      if (firstMedicine.stock === 0) {
+        addEmergencyAlert(
+          `Out of stock: ${firstMedicine.name} is completely out of stock`,
+          'critical'
+        )
+      }
+    }
+
+    // Test warning alert for high queue
+    if (liveQueueTokens && liveQueueTokens.length > 0) {
+      addEmergencyAlert(
+        `Queue monitoring: ${liveQueueTokens.length} patients currently in queue`,
+        'warning'
+      )
+    }
+
+    // Test info alert
+    addEmergencyAlert(
+      `System check: Emergency alert system is functioning normally`,
+      'info',
+      300000 // Auto-remove after 5 minutes
+    )
   }
 
   // Form submission handlers
@@ -889,6 +1014,46 @@ export default function ClinicDashboard() {
       })
     }
   }, [currentUser])
+
+  // Emergency alert monitoring - check every 2 minutes
+  useEffect(() => {
+    const alertInterval = setInterval(() => {
+      checkEmergencyConditions()
+    }, 120000) // Check every 2 minutes
+
+    // Initial check after 5 seconds
+    const initialTimeout = setTimeout(() => {
+      checkEmergencyConditions()
+    }, 5000)
+
+    return () => {
+      clearInterval(alertInterval)
+      clearTimeout(initialTimeout)
+    }
+  }, [checkEmergencyConditions])
+
+  // Update alert timestamps every minute
+  useEffect(() => {
+    const timestampInterval = setInterval(() => {
+      setEmergencyAlerts(prev => prev.map(alert => {
+        const alertTime = new Date(parseInt(alert.id.split('-')[1]))
+        const now = new Date()
+        const diffMinutes = Math.floor((now.getTime() - alertTime.getTime()) / (1000 * 60))
+        
+        let timeAgo = 'Just now'
+        if (diffMinutes >= 60) {
+          const hours = Math.floor(diffMinutes / 60)
+          timeAgo = `${hours} hour${hours > 1 ? 's' : ''} ago`
+        } else if (diffMinutes > 0) {
+          timeAgo = `${diffMinutes} min ago`
+        }
+        
+        return { ...alert, timeAgo }
+      }))
+    }, 60000) // Update every minute
+
+    return () => clearInterval(timestampInterval)
+  }, [])
 
   // Redirect if not admin
   useEffect(() => {
@@ -2429,31 +2594,57 @@ export default function ClinicDashboard() {
                         Emergency Alerts
                       </CardTitle>
                       <p className="text-sm text-red-600 dark:text-red-400">Urgent notifications requiring immediate attention</p>
+                      <div className="text-right">
+                        <Button 
+                          size="sm" 
+                          variant="outline" 
+                          onClick={triggerTestAlerts}
+                          className="text-xs"
+                          data-testid="button-test-alerts"
+                        >
+                          Test Alerts
+                        </Button>
+                      </div>
                     </CardHeader>
                     <CardContent>
                       <div className="space-y-4">
                         {emergencyAlerts.length > 0 ? (
-                          emergencyAlerts.map((alert) => (
-                            <div key={alert.id} className={`flex items-center justify-between p-3 bg-white dark:bg-gray-800 rounded-lg border border-${alert.color}-200 dark:border-${alert.color}-700`}>
-                              <div className="flex items-center gap-3">
-                                <div className={`w-2 h-2 bg-${alert.color}-500 dark:bg-${alert.color}-400 rounded-full`}></div>
-                                <span className="text-sm font-medium text-gray-900 dark:text-gray-100">{alert.message}</span>
+                          <div className="space-y-2 max-h-64 overflow-y-auto">
+                            {emergencyAlerts.map((alert) => (
+                              <div key={alert.id} className={`flex items-center justify-between p-3 bg-white dark:bg-gray-800 rounded-lg border ${
+                                alert.type === 'critical' ? 'border-red-200 dark:border-red-700 bg-red-50 dark:bg-red-950' :
+                                alert.type === 'warning' ? 'border-yellow-200 dark:border-yellow-700 bg-yellow-50 dark:bg-yellow-950' :
+                                'border-blue-200 dark:border-blue-700 bg-blue-50 dark:bg-blue-950'
+                              }`}>
+                                <div className="flex items-center gap-3">
+                                  <div className={`w-2 h-2 rounded-full ${
+                                    alert.type === 'critical' ? 'bg-red-500 dark:bg-red-400' :
+                                    alert.type === 'warning' ? 'bg-yellow-500 dark:bg-yellow-400' :
+                                    'bg-blue-500 dark:bg-blue-400'
+                                  }`}></div>
+                                  <div className="flex items-center gap-2">
+                                    {alert.type === 'critical' && <AlertTriangle className="w-4 h-4 text-red-600 dark:text-red-400" />}
+                                    {alert.type === 'warning' && <Clock className="w-4 h-4 text-yellow-600 dark:text-yellow-400" />}
+                                    {alert.type === 'info' && <Bell className="w-4 h-4 text-blue-600 dark:text-blue-400" />}
+                                    <span className="text-sm font-medium text-gray-900 dark:text-gray-100">{alert.message}</span>
+                                  </div>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <span className="text-xs text-gray-500 dark:text-gray-400">{alert.timeAgo}</span>
+                                  <Button 
+                                    size="sm" 
+                                    variant="outline" 
+                                    className="text-xs bg-transparent"
+                                    onClick={() => removeAlert(alert.id)}
+                                    data-testid={`button-resolve-${alert.id}`}
+                                  >
+                                    <X className="w-3 h-3 mr-1" />
+                                    Resolve
+                                  </Button>
+                                </div>
                               </div>
-                              <div className="flex items-center gap-2">
-                                <span className="text-xs text-gray-500 dark:text-gray-400">{alert.timeAgo}</span>
-                                <Button 
-                                  size="sm" 
-                                  variant="outline" 
-                                  className="text-xs bg-transparent"
-                                  onClick={() => removeAlert(alert.id)}
-                                  data-testid={`button-resolve-${alert.id}`}
-                                >
-                                  <X className="w-3 h-3 mr-1" />
-                                  Resolve
-                                </Button>
-                              </div>
-                            </div>
-                          ))
+                            ))}
+                          </div>
                         ) : (
                           <div className="text-center py-8">
                             <div className="w-12 h-12 bg-green-100 dark:bg-green-900 rounded-full flex items-center justify-center mx-auto mb-3">
