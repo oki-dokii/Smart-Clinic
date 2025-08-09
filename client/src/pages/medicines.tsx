@@ -50,7 +50,7 @@ export default function MedicinesPage() {
     name: "",
     dosage: "",
     frequency: "once_daily",
-    timings: ["08:00"],
+    timings: ["08:00"] as string[],
     instructions: "",
     startDate: new Date().toISOString().split('T')[0],
     endDate: "",
@@ -59,12 +59,12 @@ export default function MedicinesPage() {
   const [medicineSearchQuery, setMedicineSearchQuery] = useState("");
 
   // Fetch custom medicines
-  const { data: customMedicines = [], isLoading: loadingCustom } = useQuery({
+  const { data: customMedicines = [], isLoading: loadingCustom } = useQuery<CustomMedicine[]>({
     queryKey: ['/api/custom-medicines'],
   });
 
   // Fetch reminders  
-  const { data: reminders = [], isLoading: loadingReminders } = useQuery({
+  const { data: reminders = [], isLoading: loadingReminders } = useQuery<MedicineReminder[]>({
     queryKey: ['/api/reminders'],
   });
 
@@ -146,21 +146,21 @@ export default function MedicinesPage() {
   const addTiming = () => {
     setNewMedicine(prev => ({
       ...prev,
-      timings: [...prev.timings, "12:00"]
+      timings: [...(prev.timings || []), "12:00"]
     }));
   };
 
   const removeTiming = (index: number) => {
     setNewMedicine(prev => ({
       ...prev,
-      timings: prev.timings.filter((_, i) => i !== index)
+      timings: (prev.timings || []).filter((_, i) => i !== index)
     }));
   };
 
   const updateTiming = (index: number, time: string) => {
     setNewMedicine(prev => ({
       ...prev,
-      timings: prev.timings.map((t, i) => i === index ? time : t)
+      timings: (prev.timings || []).map((t, i) => i === index ? time : t)
     }));
   };
 
@@ -359,7 +359,7 @@ Lisinopril 10mg - Once daily at 9:00 PM - For blood pressure"
                   <div>
                     <Label>Timings</Label>
                     <div className="space-y-2">
-                      {newMedicine.timings.map((time, index) => (
+                      {(newMedicine.timings || []).map((time, index) => (
                         <div key={index} className="flex items-center gap-2">
                           <Input
                             type="time"
@@ -367,7 +367,7 @@ Lisinopril 10mg - Once daily at 9:00 PM - For blood pressure"
                             onChange={(e) => updateTiming(index, e.target.value)}
                             className="flex-1"
                           />
-                          {newMedicine.timings.length > 1 && (
+                          {(newMedicine.timings || []).length > 1 && (
                             <Button
                               variant="outline"
                               size="sm"
@@ -781,7 +781,7 @@ Lisinopril 10mg - Once daily at 9:00 PM - For blood pressure"
                               size="sm"
                               variant="outline"
                               className="bg-orange-500 hover:bg-orange-600 text-white border-orange-500"
-                              onClick={() => updateReminderMutation.mutate({ id: reminder.id, status: 'not_taken' })}
+                              onClick={() => updateReminderMutation.mutate({ id: reminder.id, status: 'skipped' })}
                               disabled={updateReminderMutation.isPending}
                             >
                               <AlertCircle className="w-3 h-3 mr-1" />
