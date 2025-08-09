@@ -1216,9 +1216,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/medicines", authMiddleware, async (req, res) => {
     try {
       const { search } = req.query;
+      // Only return actual clinic medicines, not patient-added ones
       const medicines = search 
-        ? await storage.searchMedicines(search as string)
-        : await storage.getAllMedicines();
+        ? await storage.searchClinicMedicines(search as string, req.user!.clinicId)
+        : await storage.getClinicMedicines(req.user!.clinicId);
       res.json(medicines);
     } catch (error: any) {
       res.status(400).json({ message: error.message });

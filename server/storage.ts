@@ -13,7 +13,7 @@ import {
   type PatientFeedback, type InsertPatientFeedback, type Clinic, type InsertClinic
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, and, gte, lte, desc, asc, sql } from "drizzle-orm";
+import { eq, and, gte, lte, desc, asc, sql, not } from "drizzle-orm";
 
 export interface IStorage {
   // Users
@@ -98,7 +98,9 @@ export interface IStorage {
   getMedicineByName(name: string): Promise<Medicine | undefined>;
   getAllMedicines(): Promise<Medicine[]>;
   getMedicinesByClinic(clinicId: string): Promise<Medicine[]>;
+  getClinicMedicines(clinicId: string): Promise<Medicine[]>;
   searchMedicines(query: string): Promise<Medicine[]>;
+  searchClinicMedicines(query: string, clinicId: string): Promise<Medicine[]>;
   addMedicine(medicine: Omit<Medicine, 'id' | 'createdAt' | 'updatedAt'>): Promise<Medicine>;
   getMedicineById(medicineId: string): Promise<Medicine | null>;
   updateMedicine(medicineId: string, updates: Partial<Medicine>): Promise<Medicine | null>;
@@ -873,9 +875,30 @@ export class DatabaseStorage implements IStorage {
       .orderBy(asc(medicines.name));
   }
 
+  async getClinicMedicines(clinicId: string): Promise<Medicine[]> {
+    // Only return medicines that are NOT patient-added (exclude manufacturer = 'Patient Added')
+    return await db.select().from(medicines)
+      .where(and(
+        eq(medicines.clinicId, clinicId),
+        not(eq(medicines.manufacturer, 'Patient Added'))
+      ))
+      .orderBy(asc(medicines.name));
+  }
+
   async searchMedicines(query: string): Promise<Medicine[]> {
     return await db.select().from(medicines)
       .where(sql`${medicines.name} ILIKE ${'%' + query + '%'}`)
+      .orderBy(asc(medicines.name));
+  }
+
+  async searchClinicMedicines(query: string, clinicId: string): Promise<Medicine[]> {
+    // Only search medicines that are NOT patient-added (exclude manufacturer = 'Patient Added')
+    return await db.select().from(medicines)
+      .where(and(
+        eq(medicines.clinicId, clinicId),
+        not(eq(medicines.manufacturer, 'Patient Added')),
+        sql`${medicines.name} ILIKE ${'%' + query + '%'}`
+      ))
       .orderBy(asc(medicines.name));
   }
 
