@@ -20,24 +20,40 @@ googleProvider.addScope('profile');
 // Auth helper functions
 export const signInWithGoogle = async () => {
   try {
-    // Try popup first, fallback to redirect if popup is blocked
+    console.log('Attempting Google sign-in with popup...');
     const result = await signInWithPopup(auth, googleProvider);
+    console.log('Google sign-in successful:', result.user.email);
     return result.user;
   } catch (error: any) {
-    console.error('Google sign-in error:', error);
+    console.error('Google sign-in error details:', error);
+    console.error('Error code:', error.code);
+    console.error('Error message:', error.message);
     
-    // If popup is blocked, provide helpful error message
+    // If popup is blocked or fails, try redirect as fallback
     if (error.code === 'auth/popup-blocked' || error.code === 'auth/popup-closed-by-user') {
-      throw new Error('Popup was blocked. Please allow popups for this site or try again.');
+      console.log('Popup blocked, trying redirect...');
+      try {
+        await signInWithRedirect(auth, googleProvider);
+        // Note: redirect will reload the page, so we won't reach this return
+        return null;
+      } catch (redirectError: any) {
+        console.error('Redirect also failed:', redirectError);
+        throw new Error('Google sign-in failed. Please try email authentication instead.');
+      }
     }
     
     // If domain not authorized, provide helpful message
     if (error.code === 'auth/unauthorized-domain') {
-      throw new Error('This domain is not authorized for Google sign-in. Please contact support.');
+      throw new Error('This domain is not authorized for Google sign-in. Domain configuration may need time to propagate.');
+    }
+    
+    // For iframe errors, suggest email alternative
+    if (error.message?.includes('iframe') || error.message?.includes('url')) {
+      throw new Error('Google sign-in configuration issue. Please use email signup for now.');
     }
     
     // Generic error with user-friendly message
-    throw new Error(`Google sign-in failed: ${error.message || 'Please try again or use email login instead.'}`);
+    throw new Error(`Google sign-in failed: ${error.message || 'Please try email login instead.'}`);
   }
 };
 
