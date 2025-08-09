@@ -2903,6 +2903,114 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Google Authentication routes
+  app.post("/api/auth/google", async (req, res) => {
+    try {
+      const { googleId, email, firstName, lastName, profilePicture } = req.body;
+      
+      if (!googleId || !email || !firstName) {
+        return res.status(400).json({ message: "Missing required Google user data" });
+      }
+
+      // Check if user exists with this Google ID
+      let user = await storage.getUserByGoogleId(googleId);
+      let isNewUser = false;
+
+      if (!user) {
+        // Check if user exists with this email
+        user = await storage.getUserByEmail(email);
+        
+        if (user) {
+          // User exists with email, add Google ID
+          user = await storage.updateUser(user.id, {
+            googleId,
+            profilePicture
+          });
+        } else {
+          // Create new user
+          user = await storage.createUser({
+            googleId,
+            email,
+            firstName,
+            lastName,
+            profilePicture,
+            role: 'patient',
+            isActive: true,
+            isApproved: true,
+            phoneNumber: null
+          });
+          isNewUser = true;
+        }
+      }
+
+      if (!user) {
+        return res.status(500).json({ message: "Failed to create or update user" });
+      }
+
+      // Generate JWT token
+      const token = authService.generateToken(user.id, user.role, user.clinicId || null);
+
+      // Create auth session
+      await storage.createAuthSession({
+        userId: user.id,
+        token,
+        expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
+        ipAddress: req.ip || '',
+        userAgent: req.get('User-Agent') || ''
+      });
+
+      res.json({
+        user,
+        token,
+        isNewUser,
+        message: isNewUser ? 'Account created successfully!' : 'Welcome back!'
+      });
+    } catch (error: any) {
+      console.error('Google auth error:', error);
+      res.status(400).json({ message: error.message });
+    }
+  });
+
+  // Patient profile routes
+  app.get("/api/patients/profile", authMiddleware, requireRole(['patient']), async (req, res) => {
+    try {
+      const user = await storage.getUser(req.user!.id);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      res.json(user);
+    } catch (error: any) {
+      res.status(400).json({ message: error.message });
+    }
+  });
+
+  app.put("/api/patients/profile", authMiddleware, requireRole(['patient']), async (req, res) => {
+    try {
+      const profileData = req.body;
+      
+      // Remove any fields that shouldn't be updated via profile
+      const allowedFields = {
+        firstName: profileData.firstName,
+        lastName: profileData.lastName,
+        email: profileData.email,
+        phoneNumber: profileData.phoneNumber,
+        dateOfBirth: profileData.dateOfBirth,
+        address: profileData.address,
+        emergencyContact: profileData.emergencyContact
+      };
+
+      const updatedUser = await storage.updateUser(req.user!.id, allowedFields);
+      
+      if (!updatedUser) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      res.json(updatedUser);
+    } catch (error: any) {
+      res.status(400).json({ message: error.message });
+    }
+  });
+
   // Start background services
   schedulerService.start();
 
