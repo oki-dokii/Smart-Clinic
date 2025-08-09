@@ -641,7 +641,7 @@ Lisinopril 10mg - Once daily at 9:00 PM - For blood pressure"
                     hasData: !!medicine.name 
                   });
                   return (
-                    <Card key={medicine.id} className={`medicine-card bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700 ${hasOverdueOrMissed ? 'overdue glow-urgent' : ''}`}>
+                    <Card key={medicine.id} className={`medicine-card border-gray-200 dark:border-gray-700 ${hasOverdueOrMissed ? 'overdue glow-urgent' : ''}`}>
                       <CardHeader>
                         <div className="flex items-center justify-between">
                           <CardTitle className="flex items-center gap-2 font-bold text-lg">
