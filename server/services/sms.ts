@@ -87,7 +87,7 @@ export class SmsService {
               await twilioClient.messages.create({
                 body: message,
                 from: TWILIO_PHONE_NUMBER,
-                to: appointment.patient.phoneNumber
+                to: appointment.patient.phoneNumber || ''
               });
               console.log(`Delay notification SMS successfully sent to ${appointment.patient.phoneNumber}`);
             } catch (error) {
@@ -126,6 +126,23 @@ export class SmsService {
         console.log(`Appointment reminder SMS successfully sent to ${phoneNumber}`);
       } catch (error) {
         console.error('Failed to send appointment reminder SMS via Twilio:', error);
+      }
+    }
+  }
+
+  async send(phoneNumber: string, message: string): Promise<void> {
+    console.log(`SMS to ${phoneNumber}: ${message}`);
+    
+    if (twilioClient && TWILIO_PHONE_NUMBER) {
+      try {
+        await twilioClient.messages.create({
+          body: message,
+          from: TWILIO_PHONE_NUMBER,
+          to: phoneNumber
+        });
+        console.log(`SMS successfully sent to ${phoneNumber}`);
+      } catch (error) {
+        console.error('Failed to send SMS via Twilio:', error);
       }
     }
   }
