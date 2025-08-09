@@ -1575,22 +1575,22 @@ export default function ClinicDashboard() {
                   </DialogHeader>
                   <div className="space-y-4">
                     {unreadFeedback.length === 0 ? (
-                      <div className="text-center py-8 text-gray-500">
-                        <Bell className="w-12 h-12 mx-auto mb-4 text-gray-300" />
+                      <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+                        <Bell className="w-12 h-12 mx-auto mb-4 text-gray-300 dark:text-gray-600" />
                         <p>No new notifications</p>
                       </div>
                     ) : (
                       <>
                         {unreadFeedback.map((feedback: any) => (
-                          <div key={feedback.id} className="p-3 bg-blue-50 rounded-lg border-l-4 border-blue-500">
+                          <div key={feedback.id} className="p-3 bg-blue-50 dark:bg-blue-950 rounded-lg border-l-4 border-blue-500 dark:border-blue-400">
                             <div className="flex justify-between items-start">
                               <div className="flex-1">
-                                <div className="font-medium text-sm">Patient Feedback</div>
-                                <div className="text-xs text-gray-600 mt-1">{feedback.message}</div>
-                                <div className="text-xs text-gray-400 mt-2">
+                                <div className="font-medium text-sm text-gray-900 dark:text-gray-100">Patient Feedback</div>
+                                <div className="text-xs text-gray-600 dark:text-gray-300 mt-1">{feedback.message}</div>
+                                <div className="text-xs text-gray-400 dark:text-gray-400 mt-2">
                                   Rating: {feedback.rating}/5 stars
                                 </div>
-                                <div className="text-xs text-gray-400">
+                                <div className="text-xs text-gray-400 dark:text-gray-500">
                                   {new Date(feedback.createdAt).toLocaleDateString()} {new Date(feedback.createdAt).toLocaleTimeString()}
                                 </div>
                               </div>
@@ -1600,6 +1600,7 @@ export default function ClinicDashboard() {
                                 onClick={() => handleMarkAsRead(feedback.id)}
                                 disabled={markAsReadMutation.isPending}
                                 data-testid={`button-mark-read-${feedback.id}`}
+                                className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100"
                               >
                                 Mark as Read
                               </Button>
@@ -1609,10 +1610,10 @@ export default function ClinicDashboard() {
                         <Button 
                           className="w-full" 
                           variant="outline"
-                          onClick={() => {
-                            unreadFeedback.forEach((feedback: any) => {
-                              handleMarkAsRead(feedback.id)
-                            })
+                          onClick={async () => {
+                            for (const feedback of unreadFeedback) {
+                              await markAsReadMutation.mutateAsync(feedback.id)
+                            }
                           }}
                           disabled={markAsReadMutation.isPending}
                           data-testid="button-mark-all-read"
@@ -1641,14 +1642,14 @@ export default function ClinicDashboard() {
                     <DialogTitle>Admin Profile</DialogTitle>
                   </DialogHeader>
                   <div className="space-y-4">
-                    <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-lg">
-                      <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center">
-                        <User className="w-8 h-8 text-blue-600" />
+                    <div className="flex items-center gap-4 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                      <div className="w-16 h-16 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center">
+                        <User className="w-8 h-8 text-blue-600 dark:text-blue-400" />
                       </div>
                       <div>
-                        <h3 className="font-semibold">{currentUser?.firstName} {currentUser?.lastName}</h3>
-                        <p className="text-sm text-gray-600">System Administrator</p>
-                        <p className="text-xs text-gray-500">{currentUser?.email || 'admin@smartclinic.com'}</p>
+                        <h3 className="font-semibold text-gray-900 dark:text-gray-100">{currentUser?.firstName} {currentUser?.lastName}</h3>
+                        <p className="text-sm text-gray-600 dark:text-gray-300">System Administrator</p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">{currentUser?.email || 'admin@smartclinic.com'}</p>
                       </div>
                     </div>
                     <div className="space-y-2">
