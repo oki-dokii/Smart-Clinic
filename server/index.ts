@@ -1,4 +1,4 @@
-import 'dotenv/config';
+import "dotenv/config";
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
@@ -62,41 +62,44 @@ app.use((req, res, next) => {
   // Other ports are firewalled. Default to 5000 if not specified.
   // this serves both the API and the client.
   // It is the only port that is not firewalled.
-  const port = parseInt(process.env.PORT || '5000', 10);
-  
-  if (process.env.NODE_ENV === 'development') {
+  const port = parseInt(process.env.PORT || "5000", 10);
+
+  if (process.env.NODE_ENV === "development") {
     // Simplified configuration for local development on macOS
     server.listen(port, () => {
       log(`serving on port ${port}`);
-      
+
       // Start automatic queue wait time updates every 60 seconds
       setInterval(async () => {
         try {
-          console.log('🔥 Running automatic queue wait time update...');
+          console.log("🔥 Running automatic queue wait time update...");
           await queueService.broadcastWebSocketUpdate();
         } catch (error) {
-          console.error('Error updating queue wait times:', error);
+          console.error("Error updating queue wait times:", error);
         }
       }, 60000); // 60 seconds
     });
   } else {
     // Production configuration with full options
-    server.listen({
-      port,
-      host: "0.0.0.0",
-      reusePort: true,
-    }, () => {
-      log(`serving on port ${port}`);
-      
-      // Start automatic queue wait time updates every 60 seconds
-      setInterval(async () => {
-        try {
-          console.log('🔥 Running automatic queue wait time update...');
-          await queueService.broadcastWebSocketUpdate();
-        } catch (error) {
-          console.error('Error updating queue wait times:', error);
-        }
-      }, 60000); // 60 seconds
-    });
+    server.listen(
+      {
+        port,
+        host: "0.0.0.0",
+        reusePort: true,
+      },
+      () => {
+        log(`serving on port ${port}`);
+
+        // Start automatic queue wait time updates every 60 seconds
+        setInterval(async () => {
+          try {
+            console.log("🔥 Running automatic queue wait time update...");
+            await queueService.broadcastWebSocketUpdate();
+          } catch (error) {
+            console.error("Error updating queue wait times:", error);
+          }
+        }, 60000); // 60 seconds
+      },
+    );
   }
 })();

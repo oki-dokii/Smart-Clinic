@@ -883,6 +883,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const appointment = await storage.updateAppointment(id, validatedData);
       
+      if (!appointment) {
+        return res.status(500).json({ message: "Failed to update appointment" });
+      }
+      
       // Check if appointment date was changed (rescheduled)
       const wasRescheduled = appointmentData.appointmentDate && 
         new Date(appointmentData.appointmentDate).getTime() !== new Date(existingAppointment.appointmentDate).getTime();
