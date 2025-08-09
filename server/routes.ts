@@ -2711,6 +2711,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
         clinicId: clinic.id
       });
       
+      // Send email notification to soham.banerjee@iiitb.ac.in
+      try {
+        console.log('🔥 CLINIC REGISTRATION - Sending email notification...');
+        const emailResult = await emailService.sendClinicRegistrationNotification(
+          validatedClinicData,
+          validatedAdminData
+        );
+        
+        if (emailResult.success) {
+          console.log('🔥 CLINIC REGISTRATION - Email notification sent successfully');
+        } else {
+          console.error('🔥 CLINIC REGISTRATION - Email notification failed:', emailResult.error);
+        }
+      } catch (emailError) {
+        console.error('🔥 CLINIC REGISTRATION - Email notification error:', emailError);
+        // Don't fail the registration if email fails
+      }
+      
       res.json({ 
         clinic, 
         message: 'Clinic registration submitted successfully! We will review your application and notify you within 48 hours.',

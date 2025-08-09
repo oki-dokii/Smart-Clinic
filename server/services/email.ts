@@ -372,6 +372,50 @@ class EmailService {
     return await this.sendNotificationEmail(email, emailContent);
   }
 
+  async sendClinicRegistrationNotification(
+    clinicData: any, 
+    adminData: any
+  ): Promise<{ success: boolean; error?: string }> {
+    const emailContent = {
+      subject: '🏥 New Clinic Registration - SmartClinic',
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+          <div style="text-align: center; margin-bottom: 30px;">
+            <h1 style="color: #2563eb; margin: 0;">🏥 New Clinic Registration</h1>
+            <p style="color: #666; margin: 5px 0;">SmartClinic Healthcare Management</p>
+          </div>
+          
+          <div style="background: #f8fafc; border-radius: 8px; padding: 30px; margin-bottom: 20px;">
+            <h2 style="color: #1e293b; margin-bottom: 20px;">Clinic Details</h2>
+            <div style="color: #374151; line-height: 1.6;">
+              <p><strong>Clinic Name:</strong> ${clinicData.name}</p>
+              <p><strong>Address:</strong> ${clinicData.address}</p>
+              <p><strong>Phone:</strong> ${clinicData.phoneNumber}</p>
+              <p><strong>Email:</strong> ${clinicData.email}</p>
+              <p><strong>Registration Time:</strong> ${new Date().toLocaleString()}</p>
+            </div>
+          </div>
+          
+          <div style="background: #fef3c7; border-radius: 8px; padding: 30px; margin-bottom: 20px;">
+            <h2 style="color: #92400e; margin-bottom: 20px;">Admin Contact Details</h2>
+            <div style="color: #92400e; line-height: 1.6;">
+              <p><strong>Name:</strong> ${adminData.firstName} ${adminData.lastName}</p>
+              <p><strong>Phone:</strong> ${adminData.phoneNumber}</p>
+              <p><strong>Email:</strong> ${adminData.email}</p>
+            </div>
+          </div>
+          
+          <div style="border-top: 1px solid #e2e8f0; padding-top: 20px; text-align: center;">
+            <p style="color: #94a3b8; font-size: 12px;">Please review and approve this clinic registration in the admin dashboard.</p>
+          </div>
+        </div>
+      `,
+      text: `New Clinic Registration!\n\nClinic Details:\nName: ${clinicData.name}\nAddress: ${clinicData.address}\nPhone: ${clinicData.phoneNumber}\nEmail: ${clinicData.email}\nRegistration Time: ${new Date().toLocaleString()}\n\nAdmin Contact:\nName: ${adminData.firstName} ${adminData.lastName}\nPhone: ${adminData.phoneNumber}\nEmail: ${adminData.email}\n\nPlease review and approve this clinic registration in the admin dashboard.`
+    };
+
+    return await this.sendNotificationEmail('soham.banerjee@iiitb.ac.in', emailContent);
+  }
+
   private async sendNotificationEmail(
     email: string,
     emailContent: { subject: string; html: string; text: string }
