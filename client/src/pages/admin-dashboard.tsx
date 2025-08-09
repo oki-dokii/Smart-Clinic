@@ -2719,50 +2719,110 @@ export default function ClinicDashboard() {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       {/* Patient Flow Chart */}
                       <div className="space-y-3">
-                        <h4 className="font-semibold text-gray-800">Today's Patient Flow</h4>
+                        <h4 className="font-semibold text-gray-800 dark:text-gray-200">Today's Patient Flow</h4>
                         <div className="space-y-2">
-                          <div className="flex items-center justify-between">
-                            <span className="text-sm text-gray-600">Morning (8-12 PM)</span>
-                            <div className="flex items-center gap-2">
-                              <div className="w-20 h-2 bg-gray-200 rounded-full overflow-hidden">
-                                <div className="w-3/4 h-full bg-blue-500"></div>
-                              </div>
-                              <span className="text-sm font-medium">3 patients</span>
-                            </div>
-                          </div>
-                          <div className="flex items-center justify-between">
-                            <span className="text-sm text-gray-600">Afternoon (12-5 PM)</span>
-                            <div className="flex items-center gap-2">
-                              <div className="w-20 h-2 bg-gray-200 rounded-full overflow-hidden">
-                                <div className="w-full h-full bg-green-500"></div>
-                              </div>
-                              <span className="text-sm font-medium">4 patients</span>
-                            </div>
-                          </div>
-                          <div className="flex items-center justify-between">
-                            <span className="text-sm text-gray-600">Evening (5-8 PM)</span>
-                            <div className="flex items-center gap-2">
-                              <div className="w-20 h-2 bg-gray-200 rounded-full overflow-hidden">
-                                <div className="w-0 h-full bg-orange-500"></div>
-                              </div>
-                              <span className="text-sm font-medium">0 patients</span>
-                            </div>
-                          </div>
+                          {(() => {
+                            const todayAppts = adminAppointments?.filter(appt => {
+                              const apptDate = new Date(appt.appointmentDate);
+                              const today = new Date();
+                              return apptDate.toDateString() === today.toDateString();
+                            }) || [];
+                            
+                            const morningAppts = todayAppts.filter(appt => {
+                              const hour = new Date(appt.appointmentDate).getHours();
+                              return hour >= 8 && hour < 12;
+                            }).length;
+                            
+                            const afternoonAppts = todayAppts.filter(appt => {
+                              const hour = new Date(appt.appointmentDate).getHours();
+                              return hour >= 12 && hour < 17;
+                            }).length;
+                            
+                            const eveningAppts = todayAppts.filter(appt => {
+                              const hour = new Date(appt.appointmentDate).getHours();
+                              return hour >= 17 && hour < 20;
+                            }).length;
+                            
+                            const maxAppts = Math.max(morningAppts, afternoonAppts, eveningAppts, 1);
+                            
+                            return (
+                              <>
+                                <div className="flex items-center justify-between">
+                                  <span className="text-sm text-gray-600 dark:text-gray-400">Morning (8-12 PM)</span>
+                                  <div className="flex items-center gap-2">
+                                    <div className="w-20 h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                                      <div 
+                                        className="h-full bg-blue-500" 
+                                        style={{ width: `${(morningAppts / maxAppts) * 100}%` }}
+                                      ></div>
+                                    </div>
+                                    <span className="text-sm font-medium dark:text-gray-300">{morningAppts} patients</span>
+                                  </div>
+                                </div>
+                                <div className="flex items-center justify-between">
+                                  <span className="text-sm text-gray-600 dark:text-gray-400">Afternoon (12-5 PM)</span>
+                                  <div className="flex items-center gap-2">
+                                    <div className="w-20 h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                                      <div 
+                                        className="h-full bg-green-500" 
+                                        style={{ width: `${(afternoonAppts / maxAppts) * 100}%` }}
+                                      ></div>
+                                    </div>
+                                    <span className="text-sm font-medium dark:text-gray-300">{afternoonAppts} patients</span>
+                                  </div>
+                                </div>
+                                <div className="flex items-center justify-between">
+                                  <span className="text-sm text-gray-600 dark:text-gray-400">Evening (5-8 PM)</span>
+                                  <div className="flex items-center gap-2">
+                                    <div className="w-20 h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                                      <div 
+                                        className="h-full bg-orange-500" 
+                                        style={{ width: `${(eveningAppts / maxAppts) * 100}%` }}
+                                      ></div>
+                                    </div>
+                                    <span className="text-sm font-medium dark:text-gray-300">{eveningAppts} patients</span>
+                                  </div>
+                                </div>
+                              </>
+                            );
+                          })()}
                         </div>
                       </div>
 
                       {/* Doctor Performance */}
                       <div className="space-y-3">
-                        <h4 className="font-semibold text-gray-800">Doctor Performance</h4>
+                        <h4 className="font-semibold text-gray-800 dark:text-gray-200">Doctor Performance</h4>
                         <div className="space-y-2">
-                          <div className="flex items-center justify-between p-2 bg-green-50 rounded">
-                            <span className="text-sm font-medium">Dr. Sarah Johnson</span>
-                            <Badge className="bg-green-100 text-green-800">4 completed</Badge>
-                          </div>
-                          <div className="flex items-center justify-between p-2 bg-blue-50 rounded">
-                            <span className="text-sm font-medium">Dr. Michael Davis</span>
-                            <Badge className="bg-blue-100 text-blue-800">3 completed</Badge>
-                          </div>
+                          {(() => {
+                            const doctors = staffMembers?.filter(staff => staff.role === 'doctor') || [];
+                            const todayCompletedAppts = adminAppointments?.filter(appt => {
+                              const apptDate = new Date(appt.appointmentDate);
+                              const today = new Date();
+                              return apptDate.toDateString() === today.toDateString() && appt.status === 'completed';
+                            }) || [];
+                            
+                            return doctors.map(doctor => {
+                              const completedCount = todayCompletedAppts.filter(appt => appt.doctorId === doctor.id).length;
+                              const bgColor = completedCount > 3 ? 'bg-green-50 dark:bg-green-900/20' : 
+                                            completedCount > 1 ? 'bg-blue-50 dark:bg-blue-900/20' : 
+                                            'bg-gray-50 dark:bg-gray-800';
+                              const badgeColor = completedCount > 3 ? 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-300' : 
+                                                completedCount > 1 ? 'bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-300' : 
+                                                'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300';
+                              
+                              return (
+                                <div key={doctor.id} className={`flex items-center justify-between p-2 ${bgColor} rounded`}>
+                                  <span className="text-sm font-medium dark:text-gray-200">Dr. {doctor.firstName} {doctor.lastName}</span>
+                                  <Badge className={badgeColor}>{completedCount} completed</Badge>
+                                </div>
+                              );
+                            });
+                          })()}
+                          {(!staffMembers || staffMembers.filter(s => s.role === 'doctor').length === 0) && (
+                            <div className="text-sm text-gray-500 dark:text-gray-400 text-center py-4">
+                              No doctor data available
+                            </div>
+                          )}
                         </div>
                       </div>
 
@@ -4234,20 +4294,37 @@ export default function ClinicDashboard() {
                     <CardContent>
                       <div className="space-y-4">
                         <div className="flex justify-between items-center">
-                          <span className="text-sm text-gray-600">Average Wait Time</span>
-                          <span className="font-semibold">15 min</span>
+                          <span className="text-sm text-gray-600 dark:text-gray-400">Average Wait Time</span>
+                          <span className="font-semibold dark:text-gray-200">
+                            {queueTokens && queueTokens.length > 0 
+                              ? `${Math.round(queueTokens.reduce((sum, token) => sum + (token.estimatedWaitTime || 0), 0) / queueTokens.length)} min`
+                              : '0 min'
+                            }
+                          </span>
                         </div>
                         <div className="flex justify-between items-center">
-                          <span className="text-sm text-gray-600">Queue Length</span>
-                          <span className="font-semibold">{queueTokens?.length || 0}</span>
+                          <span className="text-sm text-gray-600 dark:text-gray-400">Queue Length</span>
+                          <span className="font-semibold dark:text-gray-200">{queueTokens?.length || 0}</span>
                         </div>
                         <div className="flex justify-between items-center">
-                          <span className="text-sm text-gray-600">Cancelled Appointments</span>
-                          <span className="font-semibold">2</span>
+                          <span className="text-sm text-gray-600 dark:text-gray-400">Cancelled Appointments</span>
+                          <span className="font-semibold dark:text-gray-200">
+                            {adminAppointments?.filter(appt => {
+                              const today = new Date();
+                              const apptDate = new Date(appt.appointmentDate);
+                              return apptDate.toDateString() === today.toDateString() && appt.status === 'cancelled';
+                            }).length || 0}
+                          </span>
                         </div>
                         <div className="flex justify-between items-center">
-                          <span className="text-sm text-gray-600">No-Shows</span>
-                          <span className="font-semibold">1</span>
+                          <span className="text-sm text-gray-600 dark:text-gray-400">No-Shows</span>
+                          <span className="font-semibold dark:text-gray-200">
+                            {adminAppointments?.filter(appt => {
+                              const today = new Date();
+                              const apptDate = new Date(appt.appointmentDate);
+                              return apptDate.toDateString() === today.toDateString() && appt.status === 'no-show';
+                            }).length || 0}
+                          </span>
                         </div>
                       </div>
                     </CardContent>
@@ -4263,22 +4340,35 @@ export default function ClinicDashboard() {
                     </CardHeader>
                     <CardContent>
                       <div className="space-y-3">
-                        <div className="flex justify-between items-center">
-                          <span className="text-sm text-gray-600">General Consultation</span>
-                          <span className="font-semibold">45%</span>
-                        </div>
-                        <div className="flex justify-between items-center">
-                          <span className="text-sm text-gray-600">Pediatrics</span>
-                          <span className="font-semibold">25%</span>
-                        </div>
-                        <div className="flex justify-between items-center">
-                          <span className="text-sm text-gray-600">Cardiology</span>
-                          <span className="font-semibold">20%</span>
-                        </div>
-                        <div className="flex justify-between items-center">
-                          <span className="text-sm text-gray-600">Home Visits</span>
-                          <span className="font-semibold">10%</span>
-                        </div>
+                        {(() => {
+                          const todayAppts = adminAppointments?.filter(appt => {
+                            const today = new Date();
+                            const apptDate = new Date(appt.appointmentDate);
+                            return apptDate.toDateString() === today.toDateString();
+                          }) || [];
+                          
+                          const serviceTypes = todayAppts.reduce((acc, appt) => {
+                            const type = appt.type === 'home' ? 'Home Visits' : 'Clinic Visits';
+                            acc[type] = (acc[type] || 0) + 1;
+                            return acc;
+                          }, {} as Record<string, number>);
+                          
+                          const total = todayAppts.length;
+                          
+                          return Object.entries(serviceTypes).length > 0 ? 
+                            Object.entries(serviceTypes).map(([service, count]) => (
+                              <div key={service} className="flex justify-between items-center">
+                                <span className="text-sm text-gray-600 dark:text-gray-400">{service}</span>
+                                <span className="font-semibold dark:text-gray-200">
+                                  {total > 0 ? Math.round((count / total) * 100) : 0}%
+                                </span>
+                              </div>
+                            )) : (
+                              <div className="text-sm text-gray-500 dark:text-gray-400 text-center py-4">
+                                No service data for today
+                              </div>
+                            );
+                        })()}
                       </div>
                     </CardContent>
                   </Card>
@@ -4294,20 +4384,35 @@ export default function ClinicDashboard() {
                     <CardContent>
                       <div className="space-y-3">
                         <div className="flex justify-between items-center">
-                          <span className="text-sm text-gray-600">Database</span>
-                          <Badge className="bg-green-100 text-green-800">Online</Badge>
+                          <span className="text-sm text-gray-600 dark:text-gray-400">Database</span>
+                          <Badge className={`${
+                            adminAppointments ? 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-300' : 
+                            'bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-300'
+                          }`}>
+                            {adminAppointments ? 'Online' : 'Offline'}
+                          </Badge>
                         </div>
                         <div className="flex justify-between items-center">
-                          <span className="text-sm text-gray-600">SMS Service</span>
-                          <Badge className="bg-yellow-100 text-yellow-800">Limited</Badge>
+                          <span className="text-sm text-gray-600 dark:text-gray-400">SMS Service</span>
+                          <Badge className="bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-300">Active</Badge>
                         </div>
                         <div className="flex justify-between items-center">
-                          <span className="text-sm text-gray-600">Queue System</span>
-                          <Badge className="bg-green-100 text-green-800">Active</Badge>
+                          <span className="text-sm text-gray-600 dark:text-gray-400">Queue System</span>
+                          <Badge className={`${
+                            queueConnected ? 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-300' : 
+                            'bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-300'
+                          }`}>
+                            {queueConnected ? 'Connected' : 'Disconnected'}
+                          </Badge>
                         </div>
                         <div className="flex justify-between items-center">
-                          <span className="text-sm text-gray-600">Backup Status</span>
-                          <Badge className="bg-green-100 text-green-800">Current</Badge>
+                          <span className="text-sm text-gray-600 dark:text-gray-400">Staff Online</span>
+                          <Badge className={`${
+                            presentStaff > 0 ? 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-300' : 
+                            'bg-orange-100 dark:bg-orange-900 text-orange-800 dark:text-orange-300'
+                          }`}>
+                            {presentStaff}/{totalStaff}
+                          </Badge>
                         </div>
                       </div>
                     </CardContent>
