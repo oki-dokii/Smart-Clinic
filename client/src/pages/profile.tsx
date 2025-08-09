@@ -14,7 +14,6 @@ export default function ProfilePage() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [user, setUser] = useState<any>(null);
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
@@ -24,31 +23,34 @@ export default function ProfilePage() {
     emergencyContact: "",
   });
 
+  // Check authentication and redirect if needed
   useEffect(() => {
     const token = localStorage.getItem("auth_token");
-    const userData = localStorage.getItem("user");
-    
-    if (!token || !userData) {
-      setLocation("/login");
+    if (!token) {
+      setLocation("/patient-login");
       return;
     }
-    
-    const parsedUser = JSON.parse(userData);
-    setUser(parsedUser);
-    setFormData({
-      firstName: parsedUser.firstName || "",
-      lastName: parsedUser.lastName || "",
-      email: parsedUser.email || "",
-      dateOfBirth: parsedUser.dateOfBirth || "",
-      address: parsedUser.address || "",
-      emergencyContact: parsedUser.emergencyContact || "",
-    });
   }, [setLocation]);
 
-  const { data: profileData } = useQuery({
+  // Fetch user data from API
+  const { data: profileData, isLoading } = useQuery({
     queryKey: ["/api/users/me"],
-    enabled: !!user,
+    enabled: !!localStorage.getItem("auth_token"),
   });
+
+  // Update form data when profile data is loaded
+  useEffect(() => {
+    if (profileData) {
+      setFormData({
+        firstName: profileData.firstName || "",
+        lastName: profileData.lastName || "",
+        email: profileData.email || "",
+        dateOfBirth: profileData.dateOfBirth ? profileData.dateOfBirth.split('T')[0] : "",
+        address: profileData.address || "",
+        emergencyContact: profileData.emergencyContact || "",
+      });
+    }
+  }, [profileData]);
 
   const updateProfileMutation = useMutation({
     mutationFn: async (data: any) => {
@@ -60,8 +62,11 @@ export default function ProfilePage() {
         title: "Profile Updated",
         description: "Your profile has been successfully updated.",
       });
-      localStorage.setItem("user", JSON.stringify(updatedUser));
-      setUser(updatedUser);
+      // Update localStorage user data if it exists
+      const existingUser = localStorage.getItem("user");
+      if (existingUser) {
+        localStorage.setItem("user", JSON.stringify(updatedUser));
+      }
       queryClient.invalidateQueries({ queryKey: ["/api/users/me"] });
     },
     onError: (error: any) => {
@@ -81,8 +86,15 @@ export default function ProfilePage() {
     updateProfileMutation.mutate(formData);
   };
 
-  if (!user) {
-    return <div>Loading...</div>;
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading your profile...</p>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -127,6 +139,7 @@ export default function ProfilePage() {
                     value={formData.firstName}
                     onChange={(e) => handleInputChange("firstName", e.target.value)}
                     placeholder="Enter your first name"
+                    data-testid="input-firstName"
                   />
                 </div>
                 <div>
@@ -136,6 +149,7 @@ export default function ProfilePage() {
                     value={formData.lastName}
                     onChange={(e) => handleInputChange("lastName", e.target.value)}
                     placeholder="Enter your last name"
+                    data-testid="input-lastName"
                   />
                 </div>
               </div>
@@ -151,6 +165,7 @@ export default function ProfilePage() {
                     onChange={(e) => handleInputChange("email", e.target.value)}
                     placeholder="Enter your email address"
                     className="pl-10"
+                    data-testid="input-email"
                   />
                 </div>
               </div>
@@ -162,9 +177,10 @@ export default function ProfilePage() {
                   <Input
                     id="dateOfBirth"
                     type="date"
-                    value={formData.dateOfBirth ? new Date(formData.dateOfBirth).toISOString().split('T')[0] : ''}
-                    onChange={(e) => handleInputChange("dateOfBirth", e.target.value ? new Date(e.target.value).toISOString() : '')}
+                    value={formData.dateOfBirth}
+                    onChange={(e) => handleInputChange("dateOfBirth", e.target.value)}
                     className="pl-10"
+                    data-testid="input-dateOfBirth"
                   />
                 </div>
               </div>
@@ -180,6 +196,7 @@ export default function ProfilePage() {
                     placeholder="Enter your complete address"
                     className="pl-10 resize-none"
                     rows={3}
+                    data-testid="input-address"
                   />
                 </div>
               </div>
@@ -194,6 +211,7 @@ export default function ProfilePage() {
                     onChange={(e) => handleInputChange("emergencyContact", e.target.value)}
                     placeholder="Emergency contact phone number"
                     className="pl-10"
+                    data-testid="input-emergencyContact"
                   />
                 </div>
               </div>
@@ -203,6 +221,7 @@ export default function ProfilePage() {
                   onClick={handleSaveProfile}
                   disabled={updateProfileMutation.isPending}
                   className="bg-blue-500 hover:bg-blue-600"
+                  data-testid="button-save-profile"
                 >
                   {updateProfileMutation.isPending ? "Saving..." : "Save Changes"}
                 </Button>
