@@ -172,6 +172,14 @@ export default function ClinicDashboard() {
     address: ''
   })
   
+  // Admin profile form state
+  const [adminProfileForm, setAdminProfileForm] = useState({
+    firstName: '',
+    lastName: '',
+    email: '',
+    phoneNumber: ''
+  })
+  
   // Reschedule form state
   const [rescheduleForm, setRescheduleForm] = useState({
     appointmentId: '',
@@ -652,6 +660,51 @@ export default function ClinicDashboard() {
       })
     }
   }
+  
+  // Admin profile update handler
+  const handleUpdateAdminProfile = async () => {
+    if (!currentUser) return
+    
+    try {
+      const response = await fetch(`/api/users/${currentUser.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
+        },
+        body: JSON.stringify({
+          firstName: adminProfileForm.firstName,
+          lastName: adminProfileForm.lastName,
+          email: adminProfileForm.email || null
+        })
+      })
+
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.message || 'Update failed')
+      }
+      
+      // Update current user state
+      const updatedUser = { ...currentUser, ...adminProfileForm }
+      setCurrentUser(updatedUser)
+      
+      // Force cache invalidation
+      await queryClient.invalidateQueries({ queryKey: ['/api/auth/me'] })
+      await queryClient.invalidateQueries({ queryKey: [`/api/users/${currentUser.id}`] })
+      
+      toast({
+        title: 'Profile Updated',
+        description: 'Your admin profile has been successfully updated.',
+      })
+    } catch (error: any) {
+      console.error('Admin profile update error:', error)
+      toast({
+        title: 'Update Failed',
+        description: error.message || 'Failed to update profile. Please try again.',
+        variant: 'destructive'
+      })
+    }
+  }
 
   // Patient history download handler
   const handleDownloadPatientHistory = async (patient: User) => {
@@ -812,6 +865,18 @@ export default function ClinicDashboard() {
       return failureCount < 2
     }
   })
+  
+  // Initialize admin profile form when current user data is available
+  useEffect(() => {
+    if (currentUser) {
+      setAdminProfileForm({
+        firstName: currentUser.firstName || '',
+        lastName: currentUser.lastName || '',
+        email: currentUser.email || '',
+        phoneNumber: currentUser.phoneNumber || ''
+      })
+    }
+  }, [currentUser])
 
   // Redirect if not admin
   useEffect(() => {
@@ -1669,7 +1734,8 @@ export default function ClinicDashboard() {
                               <Label htmlFor="edit-firstName">First Name</Label>
                               <Input 
                                 id="edit-firstName" 
-                                defaultValue={currentUser?.firstName || 'Admin'}
+                                value={adminProfileForm.firstName || currentUser?.firstName || ''}
+                                onChange={(e) => setAdminProfileForm({...adminProfileForm, firstName: e.target.value})}
                                 placeholder="First Name"
                               />
                             </div>
@@ -1677,7 +1743,8 @@ export default function ClinicDashboard() {
                               <Label htmlFor="edit-lastName">Last Name</Label>
                               <Input 
                                 id="edit-lastName" 
-                                defaultValue={currentUser?.lastName || 'User'}
+                                value={adminProfileForm.lastName || currentUser?.lastName || ''}
+                                onChange={(e) => setAdminProfileForm({...adminProfileForm, lastName: e.target.value})}
                                 placeholder="Last Name"
                               />
                             </div>
@@ -1686,7 +1753,8 @@ export default function ClinicDashboard() {
                               <Input 
                                 id="edit-email" 
                                 type="email"
-                                defaultValue={currentUser?.email || 'admin@smartclinic.com'}
+                                value={adminProfileForm.email || currentUser?.email || ''}
+                                onChange={(e) => setAdminProfileForm({...adminProfileForm, email: e.target.value})}
                                 placeholder="Email Address"
                               />
                             </div>
@@ -1694,13 +1762,21 @@ export default function ClinicDashboard() {
                               <Label htmlFor="edit-phone">Phone Number</Label>
                               <Input 
                                 id="edit-phone" 
-                                defaultValue={currentUser?.phoneNumber || '+1234567890'}
+                                value={currentUser?.phoneNumber || ''}
                                 placeholder="Phone Number"
                                 disabled
+                                className="bg-gray-100 dark:bg-gray-800"
                               />
+                              <p className="text-xs text-gray-500">Phone number cannot be changed</p>
                             </div>
                             <div className="flex gap-2">
-                              <Button className="flex-1">Save Changes</Button>
+                              <Button 
+                                className="flex-1" 
+                                onClick={handleUpdateAdminProfile}
+                                data-testid="button-save-profile"
+                              >
+                                Save Changes
+                              </Button>
                               <Button variant="outline" className="flex-1">Cancel</Button>
                             </div>
                           </div>
