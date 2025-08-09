@@ -852,16 +852,17 @@ export default function ClinicDashboard() {
     }
   }
 
-  // Force authentication setup on load
+  // Verify authentication on load
   useEffect(() => {
     const token = localStorage.getItem('auth_token')
-    console.log('Setting up admin authentication...')
-    // Use the fresh working token directly - updated with current valid token
-    const workingToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI5YzE4ZDNiZS01OTJhLTQ0ZjUtYjNjMi1jZmYyZGE5OTExZmIiLCJwaG9uZU51bWJlciI6IisxMjM0NTY3ODkwIiwicm9sZSI6ImFkbWluIiwiaWF0IjoxNzU0NDg4NjM2LCJleHAiOjE3NTUwOTM0MzZ9.VNn4Y1u7nS8MIkpUZs38swyQkA9RlKTwZSBGdl5VQXw'
-    localStorage.setItem('auth_token', workingToken)
-    console.log('Admin token set successfully with fresh token')
-    queryClient.invalidateQueries()
-    setForceRender(prev => prev + 1)
+    console.log('Verifying admin authentication...')
+    if (!token) {
+      console.log('No auth token found, redirecting to login')
+      window.location.href = '/login'
+      return
+    }
+    // Token validation will be handled by the API calls
+    console.log('Auth token exists, proceeding with dashboard load')
   }, [])
 
   useEffect(() => {
