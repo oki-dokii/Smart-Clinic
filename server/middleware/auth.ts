@@ -54,61 +54,29 @@ export function requireRole(roles: string[]) {
   };
 }
 
-// Platform superadmin access control - SmartClinic team only
+// Strict admin access control - only allows soham.banerjee@iiitb.ac.in
 export function requireSuperAdmin(req: Request, res: Response, next: NextFunction): void {
   if (!req.user) {
     res.status(401).json({ message: 'Authentication required' });
     return;
   }
 
-  const SMARTCLINIC_TEAM_EMAIL = 'soham.banerjee@iiitb.ac.in';
+  const AUTHORIZED_ADMIN_EMAIL = 'soham.banerjee@iiitb.ac.in';
   
-  // Check if user has super_admin role AND is SmartClinic team member AND no clinic association
-  if (req.user.role !== 'super_admin' || req.user.email !== SMARTCLINIC_TEAM_EMAIL || req.user.clinicId) {
-    console.log('🔥 PLATFORM ADMIN ACCESS DENIED:', {
+  // Check if user has admin role AND authorized email
+  if (req.user.role !== 'admin' || req.user.email !== AUTHORIZED_ADMIN_EMAIL) {
+    console.log('🔥 SUPER ADMIN ACCESS DENIED:', {
       email: req.user.email,
       role: req.user.role,
-      clinicId: req.user.clinicId,
-      smartclinicTeam: SMARTCLINIC_TEAM_EMAIL,
-      reason: req.user.role !== 'super_admin' ? 'Not super_admin role' : 
-              req.user.email !== SMARTCLINIC_TEAM_EMAIL ? 'Not SmartClinic team' : 'Has clinic association'
+      authorized: AUTHORIZED_ADMIN_EMAIL
     });
     res.status(403).json({ 
-      message: 'Access denied. SmartClinic platform admin privileges required.',
-      details: 'Only SmartClinic team members can access platform administration.'
+      message: 'Access denied. Super admin privileges required.',
+      details: 'Only authorized administrators can access this resource.'
     });
     return;
   }
 
-  console.log('🔥 PLATFORM ADMIN ACCESS GRANTED:', req.user.email);
-  next();
-}
-
-// Clinic admin access control - for individual clinic management
-export function requireClinicAdmin(req: Request, res: Response, next: NextFunction): void {
-  if (!req.user) {
-    res.status(401).json({ message: 'Authentication required' });
-    return;
-  }
-
-  // Check if user has admin role AND is associated with a clinic
-  if (req.user.role !== 'admin' || !req.user.clinicId) {
-    console.log('🔥 CLINIC ADMIN ACCESS DENIED:', {
-      email: req.user.email,
-      role: req.user.role,
-      clinicId: req.user.clinicId,
-      reason: req.user.role !== 'admin' ? 'Not admin role' : 'No clinic association'
-    });
-    res.status(403).json({ 
-      message: 'Access denied. Clinic admin privileges required.',
-      details: 'Only clinic administrators can access this resource.'
-    });
-    return;
-  }
-
-  console.log('🔥 CLINIC ADMIN ACCESS GRANTED:', {
-    email: req.user.email,
-    clinicId: req.user.clinicId
-  });
+  console.log('🔥 SUPER ADMIN ACCESS GRANTED:', req.user.email);
   next();
 }

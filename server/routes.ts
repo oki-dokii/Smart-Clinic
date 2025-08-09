@@ -8,7 +8,7 @@ import {
   insertStaffVerificationSchema, insertPatientFeedbackSchema, insertClinicSchema
 } from "@shared/schema";
 import { z } from "zod";
-import { authMiddleware, requireRole, requireSuperAdmin, requireClinicAdmin } from "./middleware/auth";
+import { authMiddleware, requireRole, requireSuperAdmin } from "./middleware/auth";
 import { gpsVerificationMiddleware } from "./middleware/gps";
 import { authService } from "./services/auth";
 import { emailService } from "./services/email";
@@ -217,53 +217,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(result);
     } catch (error: any) {
       console.error('🔥 EMAIL OTP VERIFICATION ERROR:', error);
-      res.status(400).json({ message: error.message });
-    }
-  });
-
-  // Platform admin login endpoint - for SmartClinic team
-  app.post("/api/auth/platform-login", async (req, res) => {
-    try {
-      const { email } = req.body;
-      
-      // Verify email is SmartClinic team member
-      if (email !== 'soham.banerjee@iiitb.ac.in') {
-        return res.status(403).json({ 
-          message: 'Access denied. Only SmartClinic team members can access platform administration.' 
-        });
-      }
-      
-      // Find platform admin user (super_admin role with no clinic)
-      const users = await storage.getAllUsers();
-      const platformAdmin = users.find(user => 
-        user.email === email && 
-        user.role === 'super_admin' && 
-        !user.clinicId
-      );
-      
-      if (!platformAdmin) {
-        return res.status(404).json({ 
-          message: 'Platform admin user not found or invalid configuration.' 
-        });
-      }
-      
-      // Generate JWT token
-      const token = await authService.generateToken(platformAdmin);
-      
-      console.log('🔥 PLATFORM ADMIN LOGIN:', {
-        userId: platformAdmin.id,
-        email: platformAdmin.email,
-        role: platformAdmin.role,
-        clinicId: platformAdmin.clinicId
-      });
-      
-      res.json({
-        token,
-        user: platformAdmin,
-        message: 'Platform admin login successful'
-      });
-    } catch (error: any) {
-      console.error('Platform admin login error:', error);
       res.status(400).json({ message: error.message });
     }
   });
@@ -671,7 +624,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Admin appointment routes (MUST come before general routes)
-  app.get("/api/appointments/admin", authMiddleware, requireClinicAdmin, async (req, res) => {
+  app.get("/api/appointments/admin", authMiddleware, requireSuperAdmin, async (req, res) => {
     console.log('🔥 ADMIN APPOINTMENTS ROUTE HIT - START');
     try {
 
@@ -1977,7 +1930,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Admin-specific routes
-  app.get("/api/admin/dashboard-stats", authMiddleware, requireClinicAdmin, async (req, res) => {
+  app.get("/api/admin/dashboard-stats", authMiddleware, requireSuperAdmin, async (req, res) => {
     try {
 
       // Get admin's clinic ID
@@ -2151,7 +2104,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put("/api/medicines/:medicineId", authMiddleware, requireClinicAdmin, async (req, res) => {
+  app.put("/api/medicines/:medicineId", authMiddleware, requireSuperAdmin, async (req, res) => {
     try {
 
       const { medicineId } = req.params;

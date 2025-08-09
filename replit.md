@@ -12,13 +12,12 @@ Preferred communication style: Simple, everyday language.
   - Implemented proper route-level authentication protection
   - Added role-based access control for all routes
   - Prevents unauthorized access to admin, staff, and patient pages
-- **Dual Admin System**: Implemented separation between platform and clinic administration:
-  - **Platform Admin (super_admin role)**: SmartClinic team (soham.banerjee@iiitb.ac.in) manages overall platform, clinic approvals, system-wide operations
-  - **Clinic Admin (admin role)**: Individual clinic administrators manage their specific clinic operations, staff, appointments  
-  - Added PlatformAdminRoute and ClinicAdminRoute components for proper access control
-  - Added requireSuperAdmin and requireClinicAdmin middleware for backend API protection
-  - Platform admin has no clinic association, clinic admins must have clinic association
-  - Clear separation ensures clinic admins cannot access platform management functions
+- **Super Admin Access Control**: Implemented strict admin access restriction:
+  - Only soham.banerjee@iiitb.ac.in can access admin dashboard and functions
+  - Added SuperAdminRoute component for frontend protection
+  - Added requireSuperAdmin middleware for backend API protection
+  - Protected critical routes: user management, dashboard stats, reports, medicine management
+  - Unauthorized users redirected to appropriate dashboards with clear error messages
 - **Email Notifications**: Added automatic email notifications for new clinic registrations using existing Gmail SMTP
 - **Dark Mode Enhancement**: Implemented independent dark mode toggle for admin dashboard, replacing settings icon with Moon/Sun toggle button for easy theme switching
 

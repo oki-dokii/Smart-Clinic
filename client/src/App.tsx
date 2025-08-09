@@ -19,7 +19,6 @@ import LiveQueueTracker from "@/pages/live-queue";
 import ClinicManagement from "@/pages/clinic-management";
 import ClinicAdminDashboard from "@/pages/clinic-admin-dashboard";
 import Homepage from "@/pages/homepage";
-import PlatformAdminLogin from "@/pages/platform-admin-login";
 import NotFound from "@/pages/not-found";
 
 // User interface for type safety
@@ -33,11 +32,12 @@ interface User {
   isActive: boolean;
 }
 
-// Platform Admin Protection - SmartClinic team only 
-function PlatformAdminRoute({ children }: { children: React.ReactNode }) {
+// Super Admin Protection Component - Only for soham.banerjee@iiitb.ac.in
+function SuperAdminRoute({ children }: { children: React.ReactNode }) {
   const token = localStorage.getItem('auth_token');
   const [loading, setLoading] = useState(true);
 
+  // Get current user info
   const { data: currentUser, isLoading, error } = useQuery<User>({
     queryKey: ['/api/users/me'],
     enabled: !!token,
@@ -45,6 +45,7 @@ function PlatformAdminRoute({ children }: { children: React.ReactNode }) {
   });
 
   useEffect(() => {
+    // Handle authentication errors
     if (error || (!isLoading && !currentUser && token)) {
       localStorage.removeItem('auth_token');
       localStorage.removeItem('user');
@@ -52,113 +53,27 @@ function PlatformAdminRoute({ children }: { children: React.ReactNode }) {
       return;
     }
 
+    // Update loading state
     setLoading(isLoading);
 
+    // Handle no token
     if (!token) {
       window.location.href = '/login';
       return;
     }
 
+    // Check super admin access
     if (currentUser) {
-      const SMARTCLINIC_TEAM_EMAIL = 'soham.banerjee@iiitb.ac.in';
+      const AUTHORIZED_ADMIN_EMAIL = 'soham.banerjee@iiitb.ac.in';
       
-      // Check if user is SmartClinic team member with super_admin role and no clinic association
-      if (currentUser.role !== 'super_admin' || currentUser.email !== SMARTCLINIC_TEAM_EMAIL || (currentUser as any).clinicId) {
-        console.log('🔥 UNAUTHORIZED PLATFORM ACCESS ATTEMPT:', {
+      if (currentUser.role !== 'admin' || currentUser.email !== AUTHORIZED_ADMIN_EMAIL) {
+        console.log('🔥 UNAUTHORIZED ADMIN ACCESS ATTEMPT:', {
           email: currentUser.email,
           role: currentUser.role,
-          clinicId: (currentUser as any).clinicId,
-          smartclinicTeam: SMARTCLINIC_TEAM_EMAIL
+          authorized: AUTHORIZED_ADMIN_EMAIL
         });
         
-        // Redirect to appropriate dashboard based on role
-        if (currentUser.role === 'admin') {
-          window.location.href = '/clinic-admin';
-        } else if (currentUser.role === 'staff' || currentUser.role === 'doctor') {
-          window.location.href = '/dashboard';
-        } else if (currentUser.role === 'patient') {
-          window.location.href = '/dashboard';
-        } else {
-          window.location.href = '/login';
-        }
-        return;
-      }
-      
-      localStorage.setItem('user', JSON.stringify(currentUser));
-    }
-  }, [token, currentUser, isLoading, error]);
-
-  if (!token || loading || (!currentUser && !error)) {
-    return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
-  }
-
-  if (error || !currentUser) {
-    return null;
-  }
-
-  const SMARTCLINIC_TEAM_EMAIL = 'soham.banerjee@iiitb.ac.in';
-  if (currentUser.role !== 'super_admin' || currentUser.email !== SMARTCLINIC_TEAM_EMAIL || (currentUser as any).clinicId) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold text-red-600 mb-4">Access Denied</h1>
-          <p className="text-gray-600 mb-4">You don't have permission to access platform administration.</p>
-          <button 
-            onClick={() => {
-              if (currentUser.role === 'admin') {
-                window.location.href = '/clinic-admin';
-              } else {
-                window.location.href = '/dashboard';
-              }
-            }}
-            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-          >
-            Go to Dashboard
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  return <>{children}</>;
-}
-
-// Clinic Admin Protection - for individual clinic administrators
-function ClinicAdminRoute({ children }: { children: React.ReactNode }) {
-  const token = localStorage.getItem('auth_token');
-  const [loading, setLoading] = useState(true);
-
-  const { data: currentUser, isLoading, error } = useQuery<User>({
-    queryKey: ['/api/users/me'],
-    enabled: !!token,
-    retry: false,
-  });
-
-  useEffect(() => {
-    if (error || (!isLoading && !currentUser && token)) {
-      localStorage.removeItem('auth_token');
-      localStorage.removeItem('user');
-      window.location.href = '/login';
-      return;
-    }
-
-    setLoading(isLoading);
-
-    if (!token) {
-      window.location.href = '/login';
-      return;
-    }
-
-    if (currentUser) {
-      // Check if user is clinic admin (admin role + has clinic association)
-      if (currentUser.role !== 'admin' || !(currentUser as any).clinicId) {
-        console.log('🔥 UNAUTHORIZED CLINIC ADMIN ACCESS:', {
-          email: currentUser.email,
-          role: currentUser.role,
-          clinicId: (currentUser as any).clinicId
-        });
-        
-        // Redirect based on role
+        // Redirect unauthorized users to appropriate dashboard
         if (currentUser.role === 'staff' || currentUser.role === 'doctor') {
           window.location.href = '/dashboard';
         } else if (currentUser.role === 'patient') {
@@ -173,20 +88,24 @@ function ClinicAdminRoute({ children }: { children: React.ReactNode }) {
     }
   }, [token, currentUser, isLoading, error]);
 
+  // Show loading during authentication check
   if (!token || loading || (!currentUser && !error)) {
     return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
   }
 
+  // Handle authentication errors
   if (error || !currentUser) {
     return null;
   }
 
-  if (currentUser.role !== 'admin' || !(currentUser as any).clinicId) {
+  // Check if user is authorized super admin
+  const AUTHORIZED_ADMIN_EMAIL = 'soham.banerjee@iiitb.ac.in';
+  if (currentUser.role !== 'admin' || currentUser.email !== AUTHORIZED_ADMIN_EMAIL) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
           <h1 className="text-2xl font-bold text-red-600 mb-4">Access Denied</h1>
-          <p className="text-gray-600 mb-4">You don't have permission to access clinic administration.</p>
+          <p className="text-gray-600 mb-4">You don't have permission to access this page.</p>
           <button 
             onClick={() => window.location.href = '/dashboard'}
             className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
@@ -289,19 +208,14 @@ const AppRouter = () => {
       {/* Public routes - no auth required */}
       <Route path="/login">{() => <PublicRoute><LoginPage /></PublicRoute>}</Route>
       <Route path="/patient-login">{() => <PublicRoute><PatientLogin /></PublicRoute>}</Route>
-      <Route path="/platform-login">{() => <PublicRoute><PlatformAdminLogin /></PublicRoute>}</Route>
       <Route path="/">{() => <PublicRoute><Homepage /></PublicRoute>}</Route>
       
-      {/* Platform Admin routes - SmartClinic team only */}
-      <Route path="/platform-admin">{() => <PlatformAdminRoute><AdminDashboard /></PlatformAdminRoute>}</Route>
-      <Route path="/clinic-management">{() => <PlatformAdminRoute><ClinicManagement /></PlatformAdminRoute>}</Route>
-      
-      {/* Clinic Admin routes - individual clinic administrators */}
-      <Route path="/admin">{() => <ClinicAdminRoute><AdminDashboard /></ClinicAdminRoute>}</Route>
-      <Route path="/admin-dashboard">{() => <ClinicAdminRoute><AdminDashboard /></ClinicAdminRoute>}</Route>
-      <Route path="/clinic-admin">{() => <ClinicAdminRoute><AdminDashboard /></ClinicAdminRoute>}</Route>
-      <Route path="/clinic-admin/:clinicId">{() => <ClinicAdminRoute><ClinicAdminDashboard /></ClinicAdminRoute>}</Route>
-      <Route path="/medicines">{() => <ClinicAdminRoute><MedicinesPage /></ClinicAdminRoute>}</Route>
+      {/* Super Admin-only routes (soham.banerjee@iiitb.ac.in only) */}
+      <Route path="/admin">{() => <SuperAdminRoute><AdminDashboard /></SuperAdminRoute>}</Route>
+      <Route path="/admin-dashboard">{() => <SuperAdminRoute><AdminDashboard /></SuperAdminRoute>}</Route>
+      <Route path="/clinic-management">{() => <SuperAdminRoute><ClinicManagement /></SuperAdminRoute>}</Route>
+      <Route path="/clinic-admin/:clinicId">{() => <SuperAdminRoute><ClinicAdminDashboard /></SuperAdminRoute>}</Route>
+      <Route path="/medicines">{() => <SuperAdminRoute><MedicinesPage /></SuperAdminRoute>}</Route>
       
       {/* Staff/Doctor-only routes */}
       <Route path="/staff-checkin">{() => <ProtectedRoute allowedRoles={['staff', 'doctor']}><StaffCheckinPage /></ProtectedRoute>}</Route>
