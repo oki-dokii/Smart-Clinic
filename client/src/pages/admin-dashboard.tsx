@@ -2008,7 +2008,7 @@ export default function ClinicDashboard() {
                             </div>
                             <div className="flex gap-2">
                               <Button 
-                                className="flex-1" 
+                                className="action-btn-primary flex-1" 
                                 onClick={handleUpdateAdminProfile}
                                 data-testid="button-save-profile"
                               >
@@ -2016,7 +2016,7 @@ export default function ClinicDashboard() {
                               </Button>
                               <Button 
                                 variant="outline" 
-                                className="flex-1"
+                                className="action-btn-secondary flex-1"
                                 onClick={() => setIsEditProfileOpen(false)}
                               >
                                 Cancel
@@ -2460,55 +2460,55 @@ export default function ClinicDashboard() {
       </header>
 
       {/* Navigation Tabs */}
-      <div className="bg-white border-b border-gray-200">
+      <div className="nav-tabs">
         <div className="px-6">
           <Tabs defaultValue="dashboard" className="w-full">
-            <TabsList className="grid w-full grid-cols-10 bg-transparent border-0 h-auto p-0">
+            <TabsList className="grid w-full grid-cols-8 bg-transparent border-0 h-auto p-0">
               <TabsTrigger
                 value="dashboard"
-                className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-blue-600 data-[state=active]:text-blue-600 rounded-none py-4 px-6"
+                className="nav-tab data-[state=active]:active rounded-none"
               >
                 Dashboard
               </TabsTrigger>
               <TabsTrigger
                 value="queue"
-                className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-blue-600 data-[state=active]:text-blue-600 rounded-none py-4 px-6"
+                className="nav-tab data-[state=active]:active rounded-none"
               >
                 Patient Queue
               </TabsTrigger>
               <TabsTrigger
                 value="appointments"
-                className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-blue-600 data-[state=active]:text-blue-600 rounded-none py-4 px-6"
+                className="nav-tab data-[state=active]:active rounded-none"
               >
                 Appointments
               </TabsTrigger>
               <TabsTrigger
                 value="records"
-                className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-blue-600 data-[state=active]:text-blue-600 rounded-none py-4 px-6"
+                className="nav-tab data-[state=active]:active rounded-none"
               >
                 Patient Records
               </TabsTrigger>
               <TabsTrigger
                 value="inventory"
-                className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-blue-600 data-[state=active]:text-blue-600 rounded-none py-4 px-6"
+                className="nav-tab data-[state=active]:active rounded-none"
               >
                 Inventory
               </TabsTrigger>
               <TabsTrigger
                 value="staff"
-                className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-blue-600 data-[state=active]:text-blue-600 rounded-none py-4 px-6"
+                className="nav-tab data-[state=active]:active rounded-none"
               >
                 Staff
               </TabsTrigger>
               <TabsTrigger
                 value="feedback"
-                className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-blue-600 data-[state=active]:text-blue-600 rounded-none py-4 px-6"
+                className="nav-tab data-[state=active]:active rounded-none"
               >
                 Feedback
               </TabsTrigger>
               <TabsTrigger
                 value="reports"
-                className="data-[state=active]:bg-transparent data-[state-active]:border-b-2 data-[state=active]:border-blue-600 data-[state=active]:text-blue-600 rounded-none py-4 px-6"
+                className="nav-tab data-[state=active]:active rounded-none"
               >
                 Reports
               </TabsTrigger>
@@ -2521,7 +2521,7 @@ export default function ClinicDashboard() {
                 {/* Key Metrics */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
                   {/* Patients Today */}
-                  <Card>
+                  <Card className="dashboard-card stats-card">
                     <CardHeader className="pb-3">
                       <CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-400 flex items-center gap-2">
                         <Users className="w-4 h-4 text-blue-500 dark:text-blue-400" />
@@ -2530,10 +2530,10 @@ export default function ClinicDashboard() {
                     </CardHeader>
                     <CardContent>
                       <div className="flex items-center gap-2 mb-2">
-                        <span className="text-3xl font-bold text-gray-900 dark:text-white">{statsLoading ? '...' : (stats?.patientsToday || 0)}</span>
+                        <span className="stat-number">{statsLoading ? '...' : (stats?.patientsToday || 0)}</span>
                         <Badge className={`text-xs flex items-center gap-1 ${
                           stats?.completedAppointments && stats?.patientsToday 
-                            ? (stats.completedAppointments / stats.patientsToday > 0.7 ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800')
+                            ? (stats.completedAppointments / stats.patientsToday > 0.7 ? 'stat-change-positive' : 'bg-blue-100 text-blue-800')
                             : 'bg-gray-100 text-gray-800'
                         }`}>
                           <TrendingUp className="w-3 h-3" />
@@ -2550,7 +2550,7 @@ export default function ClinicDashboard() {
                   </Card>
 
                   {/* Queue Length */}
-                  <Card className="border-orange-200 dark:border-orange-800 bg-orange-50 dark:bg-orange-950">
+                  <Card className="dashboard-card alert-card">
                     <CardHeader className="pb-3">
                       <CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-400 flex items-center gap-2">
                         <Clock className="w-4 h-4 text-orange-500 dark:text-orange-400" />
@@ -2559,7 +2559,7 @@ export default function ClinicDashboard() {
                     </CardHeader>
                     <CardContent>
                       <div className="flex items-center gap-2 mb-2">
-                        <span className="text-3xl font-bold text-gray-900 dark:text-white">{queueTokens ? queueTokens.length : 0}</span>
+                        <span className="stat-number text-orange-600">{queueTokens ? queueTokens.length : 0}</span>
                         {queueTokens && queueTokens.length > 5 && (
                           <Badge className="bg-red-500 text-white text-xs">Urgent</Badge>
                         )}
@@ -2575,7 +2575,7 @@ export default function ClinicDashboard() {
                   </Card>
 
                   {/* Medicine Inventory */}
-                  <Card>
+                  <Card className="dashboard-card info-card">
                     <CardHeader className="pb-3">
                       <CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-400 flex items-center gap-2">
                         <Pill className="w-4 h-4 text-green-500 dark:text-green-400" />
@@ -2584,7 +2584,7 @@ export default function ClinicDashboard() {
                     </CardHeader>
                     <CardContent>
                       <div className="flex items-center gap-2 mb-2">
-                        <span className="text-3xl font-bold text-gray-900 dark:text-white">{
+                        <span className="stat-number text-green-600">{
                           medicines ? medicines.reduce((total: number, med: any) => total + med.stock, 0) : '...'
                         }</span>
                         <Badge className={`text-xs flex items-center gap-1 ${
@@ -2603,7 +2603,7 @@ export default function ClinicDashboard() {
                   </Card>
 
                   {/* Staff Present */}
-                  <Card>
+                  <Card className="dashboard-card stats-card">
                     <CardHeader className="pb-3">
                       <CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-400 flex items-center gap-2">
                         <Activity className="w-4 h-4 text-purple-500 dark:text-purple-400" />
@@ -2612,7 +2612,7 @@ export default function ClinicDashboard() {
                     </CardHeader>
                     <CardContent>
                       <div className="flex items-center gap-2 mb-2">
-                        <span className="text-3xl font-bold text-gray-900 dark:text-white">
+                        <span className="stat-number text-purple-600">
                           {presentStaff}/{totalStaff}
                         </span>
                         <Badge className={`text-xs ${
@@ -2649,7 +2649,7 @@ export default function ClinicDashboard() {
                           size="sm" 
                           variant="outline" 
                           onClick={triggerTestAlerts}
-                          className="text-xs"
+                          className="action-btn-secondary text-xs"
                           data-testid="button-test-alerts"
                         >
                           Test Alerts
@@ -2723,7 +2723,7 @@ export default function ClinicDashboard() {
                         <Dialog open={isDelayModalOpen} onOpenChange={setIsDelayModalOpen}>
                           <DialogTrigger asChild>
                             <Button 
-                              className="h-20 flex-col gap-2 bg-orange-600 hover:bg-orange-700"
+                              className="action-btn-primary h-20 flex-col gap-2 bg-orange-600 hover:bg-orange-700"
                               data-testid="button-doctor-delay"
                             >
                               <Clock className="w-6 h-6" />
