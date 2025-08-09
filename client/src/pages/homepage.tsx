@@ -243,14 +243,40 @@ export default function Homepage() {
               </CardContent>
             </Card>
 
-            {/* Clinic Registration */}
-            <Card className="hover:shadow-lg transition-all duration-200 border-2 border-purple-200 hover:border-purple-300 dark:border-purple-700 dark:hover:border-purple-600 bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20" data-testid="card-clinic-registration">
+            {/* Platform Admin */}
+            <Card className="hover:shadow-lg transition-all duration-200 border-2 border-purple-200 hover:border-purple-300 dark:border-purple-700 dark:hover:border-purple-600 bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20" data-testid="card-platform-admin">
               <CardHeader className="text-center">
                 <div className="mx-auto w-12 h-12 bg-purple-100 dark:bg-purple-900/30 rounded-full flex items-center justify-center mb-4">
-                  <Building2 className="h-6 w-6 text-purple-600 dark:text-purple-400" />
+                  <Shield className="h-6 w-6 text-purple-600 dark:text-purple-400" />
                 </div>
-                <CardTitle className="text-xl">Register Your Clinic</CardTitle>
+                <CardTitle className="text-xl">Platform Admin</CardTitle>
                 <CardDescription>
+                  SmartClinic team administration and clinic management oversight
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Link href="/platform-login" data-testid="link-platform-admin">
+                  <Button 
+                    className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700" 
+                    size="lg"
+                  >
+                    Platform Access
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </Button>
+                </Link>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Clinic Registration Section */}
+          <div className="max-w-2xl mx-auto mb-16">
+            <Card className="border-2 border-purple-200 hover:border-purple-300 dark:border-purple-700 dark:hover:border-purple-600 bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20" data-testid="card-clinic-registration">
+              <CardHeader className="text-center">
+                <div className="mx-auto w-16 h-16 bg-purple-100 dark:bg-purple-900/30 rounded-full flex items-center justify-center mb-4">
+                  <Building2 className="h-8 w-8 text-purple-600 dark:text-purple-400" />
+                </div>
+                <CardTitle className="text-2xl">Register Your Clinic</CardTitle>
+                <CardDescription className="text-lg">
                   Join our platform and start managing your clinic efficiently
                 </CardDescription>
               </CardHeader>
