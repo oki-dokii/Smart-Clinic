@@ -27,7 +27,8 @@ Preferred communication style: Simple, everyday language.
   - Extended user database schema with firebaseUid and authProvider fields
   - Added backend API endpoints for Firebase authentication integration
   - Integrated Firebase auth with existing JWT token system for seamless user experience
-  - Note: Google OAuth requires domain authorization in Firebase console for production use
+  - **Setup Required**: Both Email/Password and Google authentication methods must be enabled in Firebase Console
+  - Domain authorization needed: `42638f0d-82bc-40ee-b3bd-785d53c6ac2a-00-3rsnhjlr0ddv2.sisko.replit.dev`
 
 # System Architecture
 
