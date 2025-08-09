@@ -14,6 +14,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { insertClinicSchema } from "@shared/schema";
+import { useTheme } from "@/components/ThemeProvider";
 import { z } from "zod";
 import { 
   Building2, 
@@ -27,7 +28,9 @@ import {
   CheckCircle,
   ArrowRight,
   Heart,
-  Activity
+  Activity,
+  Moon,
+  Sun
 } from "lucide-react";
 
 const clinicRegistrationSchema = insertClinicSchema.extend({
@@ -43,6 +46,7 @@ export default function Homepage() {
   const { toast } = useToast();
   const [isRegistering, setIsRegistering] = useState(false);
   const queryClient = useQueryClient();
+  const { theme, toggleTheme } = useTheme();
 
   const form = useForm<ClinicRegistrationForm>({
     resolver: zodResolver(clinicRegistrationSchema),
@@ -153,6 +157,19 @@ export default function Homepage() {
               <h1 className="text-2xl font-bold text-gray-900 dark:text-white">SmartClinic</h1>
             </div>
             <div className="flex items-center space-x-4">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={toggleTheme}
+                className="h-9 w-9 p-0"
+                data-testid="button-theme-toggle"
+              >
+                {theme === "dark" ? (
+                  <Sun className="h-4 w-4 text-yellow-500" />
+                ) : (
+                  <Moon className="h-4 w-4 text-gray-600" />
+                )}
+              </Button>
               <Badge variant="secondary" className="hidden sm:inline-flex">
                 Trusted by 500+ Clinics
               </Badge>
