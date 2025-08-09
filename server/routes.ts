@@ -329,7 +329,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           role: user.role,
           ...(user.clinicId && { clinicId: user.clinicId })
         },
-        process.env.JWT_SECRET!,
+        process.env.JWT_SECRET || 'your-super-secret-jwt-key-change-this-in-production',
         { expiresIn: '7d' }
       );
 
