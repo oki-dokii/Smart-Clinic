@@ -634,13 +634,21 @@ Lisinopril 10mg - Once daily at 9:00 PM - For blood pressure"
                   .map((medicine: CustomMedicine) => {
                   const medicineStats = missedDoses.find((md: any) => md.medicineName === medicine.name);
                   const hasOverdueOrMissed = medicineStats && (medicineStats.missedDoses > 0 || medicineStats.overdueToday > 0);
+                  console.log('🔥 MEDICINE DEBUG:', { 
+                    id: medicine.id, 
+                    name: medicine.name, 
+                    dosage: medicine.dosage, 
+                    hasData: !!medicine.name 
+                  });
                   return (
                     <Card key={medicine.id} className={`bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 ${hasOverdueOrMissed ? 'medicine-card overdue glow-urgent' : 'medicine-card'}`}>
                       <CardHeader>
                         <div className="flex items-center justify-between">
-                          <CardTitle className="flex items-center gap-2 text-gray-900 dark:text-white font-bold text-lg">
+                          <CardTitle className="flex items-center gap-2 font-bold text-lg text-black dark:text-white">
                             <Pill className="w-5 h-5 text-blue-500" />
-                            <span className="text-gray-900 dark:text-white font-semibold">{medicine.name || 'No Name'}</span>
+                            <span className="font-semibold text-black dark:text-white">
+                              {medicine.name || 'MISSING MEDICINE NAME'}
+                            </span>
                           </CardTitle>
                           <div className="flex items-center gap-2">
                             <Badge className={getStatusColor(medicine.status)}>
@@ -687,12 +695,18 @@ Lisinopril 10mg - Once daily at 9:00 PM - For blood pressure"
                       <CardContent>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           <div>
-                            <p className="text-base text-gray-800 dark:text-gray-100">Dosage: <span className="font-semibold text-gray-900 dark:text-white">{medicine.dosage}</span></p>
-                            <p className="text-base text-gray-800 dark:text-gray-100">Frequency: <span className="font-semibold text-gray-900 dark:text-white">{medicine.frequency?.replace('_', ' ') || 'Not specified'}</span></p>
-                            <p className="text-base text-gray-800 dark:text-gray-100">Instructions: <span className="font-semibold text-gray-900 dark:text-white">{medicine.instructions || 'Take as prescribed'}</span></p>
+                            <p className="text-base font-medium text-gray-800 dark:text-gray-200">
+                              Dosage: <span className="font-semibold text-black dark:text-white">{medicine.dosage || 'No dosage'}</span>
+                            </p>
+                            <p className="text-base font-medium text-gray-800 dark:text-gray-200">
+                              Frequency: <span className="font-semibold text-black dark:text-white">{medicine.frequency?.replace('_', ' ') || 'Not specified'}</span>
+                            </p>
+                            <p className="text-base font-medium text-gray-800 dark:text-gray-200">
+                              Instructions: <span className="font-semibold text-black dark:text-white">{medicine.instructions || 'Take as prescribed'}</span>
+                            </p>
                           </div>
                         <div>
-                          <p className="text-base text-gray-800 dark:text-gray-100 mb-2 font-medium">Timings:</p>
+                          <p className="text-base mb-2 font-medium text-gray-800 dark:text-gray-200">Timings:</p>
                           <div className="flex flex-wrap gap-2">
                             {(medicine.timings || []).map((time, index) => (
                               <Badge key={index} variant="outline" className="flex items-center gap-1">
