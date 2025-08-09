@@ -409,7 +409,7 @@ export default function ClinicDashboard() {
 
   // Emergency Alert Monitoring System
   const checkEmergencyConditions = useCallback(() => {
-    if (!dashboardStats.data || !appointments.data || !patients.data || !staffData.data) return
+    if (!stats || !appointments || !patients || !users) return
 
     const now = new Date()
     const currentHour = now.getHours()
@@ -439,12 +439,12 @@ export default function ClinicDashboard() {
     })
 
     // 2. Check for missing staff (no check-in today)
-    const doctorsAndStaff = staffData.data.filter((user: any) => 
+    const doctorsAndStaff = users.filter((user: any) => 
       user.role === 'doctor' || user.role === 'staff'
     )
     
     doctorsAndStaff.forEach((staffMember: any) => {
-      const hasCheckedIn = staffPresence.data?.some((presence: any) => 
+      const hasCheckedIn = staffPresence?.some((presence: any) => 
         presence.userId === staffMember.id
       )
       
@@ -457,16 +457,16 @@ export default function ClinicDashboard() {
     })
 
     // 3. Check for high patient load (more than 15 patients today)
-    if (dashboardStats.data.patientsToday > 15 && !emergencyAlerts.some(alert => alert.message.includes('High patient volume'))) {
+    if (stats.patientsToday > 15 && !emergencyAlerts.some(alert => alert.message.includes('High patient volume'))) {
       addEmergencyAlert(
-        `High patient volume: ${dashboardStats.data.patientsToday} patients scheduled today`,
+        `High patient volume: ${stats.patientsToday} patients scheduled today`,
         'info'
       )
     }
 
     // 4. Check for low medicine stock
-    if (medicines.data && medicines.data.length > 0) {
-      medicines.data.forEach((medicine: any) => {
+    if (medicines && medicines.length > 0) {
+      medicines.forEach((medicine: any) => {
         if (medicine.stock <= 5 && medicine.stock > 0 && !emergencyAlerts.some(alert => alert.id.includes(`stock-${medicine.id}`))) {
           addEmergencyAlert(
             `Low stock alert: ${medicine.name} has only ${medicine.stock} units remaining`,
@@ -490,13 +490,13 @@ export default function ClinicDashboard() {
     }
 
     setLastAlertCheck(now)
-  }, [dashboardStats.data, appointments.data, patients.data, staffData.data, staffPresence.data, medicines.data, liveQueueTokens, emergencyAlerts])
+  }, [stats, appointments, patients, users, staffPresence, medicines, liveQueueTokens, emergencyAlerts])
 
   // Test function to demonstrate alerts
   const triggerTestAlerts = () => {
     // Test critical alert for out of stock medicine
-    if (medicines.data && medicines.data.length > 0) {
-      const firstMedicine = medicines.data[0]
+    if (medicines && medicines.length > 0) {
+      const firstMedicine = medicines[0]
       if (firstMedicine.stock === 0) {
         addEmergencyAlert(
           `Out of stock: ${firstMedicine.name} is completely out of stock`,
