@@ -59,7 +59,7 @@ export interface IStorage {
   getStaffVerifications(staffId: string, date?: Date): Promise<StaffVerification[]>;
   
   // Staff Presence
-  createOrUpdateStaffPresence(staffId: string, date: Date): Promise<StaffPresence>;
+  createOrUpdateStaffPresence(staffId: string, date: Date, clinicId?: string): Promise<StaffPresence>;
   createStaffPresence(data: InsertStaffPresence): Promise<StaffPresence>;
   getStaffPresence(staffId: string, date: Date): Promise<StaffPresence | undefined>;
   getStaffPresenceForDate(date: Date): Promise<(StaffPresence & { staff: User })[]>;
@@ -1650,7 +1650,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Staff Presence Implementation
-  async createOrUpdateStaffPresence(staffId: string, date: Date): Promise<StaffPresence> {
+  async createOrUpdateStaffPresence(staffId: string, date: Date, clinicId?: string): Promise<StaffPresence> {
     const startOfDay = new Date(date);
     startOfDay.setHours(0, 0, 0, 0);
     const endOfDay = new Date(date);
@@ -1678,10 +1678,17 @@ export class DatabaseStorage implements IStorage {
         .returning();
       return updated;
     } else {
+      // Get clinicId from the staff user if not provided
+      const staffUser = await this.getUser(staffId);
+      if (!staffUser) {
+        throw new Error('Staff user not found');
+      }
+      
       // Create new presence record
       const [newPresence] = await db.insert(staffPresence)
         .values({
           staffId,
+          clinicId: clinicId || staffUser.clinicId,
           date: startOfDay,
           isPresent: true,
           checkInTime: new Date(),

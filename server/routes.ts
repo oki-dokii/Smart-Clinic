@@ -2575,6 +2575,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { userId } = req.params;
       const { isPresent, markedByAdmin } = req.body;
+      const user = req.user as any;
       
       console.log('🔥 STAFF PRESENCE UPDATE - UserId:', userId, 'IsPresent:', isPresent);
       
@@ -2588,14 +2589,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.log('🔥 STAFF PRESENCE UPDATE - Updating existing record:', userPresence.id);
         presence = await storage.updateStaffPresence(userPresence.id, {
           isPresent,
-          markedByAdmin: markedByAdmin !== undefined ? markedByAdmin : true,
-          lastUpdated: new Date()
+          markedByAdmin: markedByAdmin !== undefined ? markedByAdmin : true
         });
       } else {
         // Create new record using createOrUpdateStaffPresence
         console.log('🔥 STAFF PRESENCE UPDATE - Creating new record for userId:', userId);
         if (isPresent) {
-          presence = await storage.createOrUpdateStaffPresence(userId, new Date());
+          presence = await storage.createOrUpdateStaffPresence(userId, new Date(), user.clinicId);
           // Update the markedByAdmin flag if needed
           if (markedByAdmin !== undefined) {
             presence = await storage.updateStaffPresence(presence.id, { markedByAdmin });
@@ -2604,6 +2604,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           // Create absent record manually
           presence = await storage.createStaffPresence({
             staffId: userId,
+            clinicId: user.clinicId,
             date: new Date(),
             isPresent: false,
             markedByAdmin: markedByAdmin !== undefined ? markedByAdmin : true
