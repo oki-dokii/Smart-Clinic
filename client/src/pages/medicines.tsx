@@ -69,14 +69,18 @@ export default function MedicinesPage() {
   });
 
   // Fetch missed doses
-  const { data: missedDoses = [] } = useQuery({
+  const { data: missedDoses = [] } = useQuery<any[]>({
     queryKey: ['/api/reminders/missed'],
   });
 
   // Add custom medicine mutation
   const addMedicineMutation = useMutation({
     mutationFn: async (medicine: CustomMedicine) => {
-      const response = await apiRequest('POST', '/api/custom-medicines', medicine);
+      const medicineData = {
+        ...medicine,
+        clinicId: 'default-clinic-id' // Add required clinicId
+      };
+      const response = await apiRequest('POST', '/api/custom-medicines', medicineData);
       return response.json();
     },
     onSuccess: () => {
@@ -91,7 +95,11 @@ export default function MedicinesPage() {
   // Edit medicine mutation
   const editMedicineMutation = useMutation({
     mutationFn: async (medicine: CustomMedicine) => {
-      const response = await apiRequest('PUT', `/api/custom-medicines/${medicine.id}`, medicine);
+      const medicineData = {
+        ...medicine,
+        clinicId: 'default-clinic-id' // Add required clinicId
+      };
+      const response = await apiRequest('PUT', `/api/custom-medicines/${medicine.id}`, medicineData);
       return response.json();
     },
     onSuccess: () => {
