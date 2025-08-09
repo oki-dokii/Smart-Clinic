@@ -873,22 +873,7 @@ export default function ClinicDashboard() {
     }
   }, [currentUser])
 
-  // Emergency alert monitoring - check every 2 minutes
-  useEffect(() => {
-    const alertInterval = setInterval(() => {
-      checkEmergencyConditions()
-    }, 120000) // Check every 2 minutes
 
-    // Initial check after 5 seconds
-    const initialTimeout = setTimeout(() => {
-      checkEmergencyConditions()
-    }, 5000)
-
-    return () => {
-      clearInterval(alertInterval)
-      clearTimeout(initialTimeout)
-    }
-  }, [checkEmergencyConditions])
 
   // Update alert timestamps every minute
   useEffect(() => {
@@ -1209,6 +1194,23 @@ export default function ClinicDashboard() {
       300000 // Auto-remove after 5 minutes
     )
   }
+
+  // Emergency alert monitoring - check every 2 minutes
+  useEffect(() => {
+    const alertInterval = setInterval(() => {
+      checkEmergencyConditions()
+    }, 120000) // Check every 2 minutes
+
+    // Initial check after 5 seconds
+    const initialTimeout = setTimeout(() => {
+      checkEmergencyConditions()
+    }, 5000)
+
+    return () => {
+      clearInterval(alertInterval)
+      clearTimeout(initialTimeout)
+    }
+  }, [checkEmergencyConditions])
   
   // Debug: Log staff data
   console.log('Staff members:', staffMembers, 'Total users:', users?.length, 'Users loading:', usersLoading)
