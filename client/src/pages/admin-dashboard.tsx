@@ -326,21 +326,7 @@ export default function ClinicDashboard() {
   const [emergencyAlerts, setEmergencyAlerts] = useState<EmergencyAlert[]>([])
   const [lastAlertCheck, setLastAlertCheck] = useState<Date>(new Date())
   
-  // Settings state (separate from dashboard theme)
-  const [settingsTheme, setSettingsTheme] = useState<'light' | 'dark'>(() => {
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('smart-clinic-settings-theme')
-      return (saved as 'light' | 'dark') || 'light'
-    }
-    return 'light'
-  })
 
-  // Toggle settings theme (does NOT affect dashboard)
-  const toggleSettingsTheme = () => {
-    const newTheme = settingsTheme === 'light' ? 'dark' : 'light'
-    setSettingsTheme(newTheme)
-    localStorage.setItem('smart-clinic-settings-theme', newTheme)
-  }
 
 
 
@@ -2487,12 +2473,7 @@ export default function ClinicDashboard() {
               >
                 Reports
               </TabsTrigger>
-              <TabsTrigger
-                value="settings"
-                className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-blue-600 data-[state=active]:text-blue-600 rounded-none py-4 px-6"
-              >
-                Settings
-              </TabsTrigger>
+
 
             </TabsList>
 
@@ -4747,276 +4728,6 @@ export default function ClinicDashboard() {
               </div>
             </TabsContent>
 
-            {/* Settings Tab */}
-            <TabsContent value="settings" className="mt-0">
-              <div className={`min-h-screen p-6 transition-colors duration-300 ${
-                settingsTheme === 'dark' 
-                  ? 'bg-gray-900 text-white' 
-                  : 'bg-gray-50 text-gray-900'
-              }`}>
-                <div className="max-w-4xl mx-auto">
-                  <div className={`rounded-lg shadow-sm border p-6 ${
-                    settingsTheme === 'dark' 
-                      ? 'bg-gray-800 border-gray-700' 
-                      : 'bg-white border-gray-200'
-                  }`}>
-                    <div className="flex items-center justify-between mb-6">
-                      <h1 className={`text-2xl font-bold ${
-                        settingsTheme === 'dark' ? 'text-white' : 'text-gray-900'
-                      }`}>
-                        System Settings
-                      </h1>
-                    </div>
-
-                    {/* General Settings Section */}
-                    <div className="mb-8">
-                      <h2 className={`text-lg font-semibold mb-4 ${
-                        settingsTheme === 'dark' ? 'text-white' : 'text-gray-900'
-                      }`}>
-                        General Settings
-                      </h2>
-                      
-                      <div className="space-y-4">
-                        {/* User Management */}
-                        <div className={`flex items-center p-4 rounded-lg border cursor-pointer hover:shadow-md transition-all ${
-                          settingsTheme === 'dark' 
-                            ? 'border-gray-600 bg-gray-700 hover:bg-gray-650' 
-                            : 'border-gray-200 bg-gray-50 hover:bg-gray-100'
-                        }`}>
-                          <UserCheck className={`w-6 h-6 mr-4 ${
-                            settingsTheme === 'dark' ? 'text-blue-400' : 'text-blue-600'
-                          }`} />
-                          <div className="flex-1">
-                            <h3 className={`font-medium ${
-                              settingsTheme === 'dark' ? 'text-white' : 'text-gray-900'
-                            }`}>
-                              User Management
-                            </h3>
-                            <p className={`text-sm ${
-                              settingsTheme === 'dark' ? 'text-gray-400' : 'text-gray-600'
-                            }`}>
-                              Manage user accounts and permissions
-                            </p>
-                          </div>
-                        </div>
-
-                        {/* Appointment Settings */}
-                        <div className={`flex items-center p-4 rounded-lg border cursor-pointer hover:shadow-md transition-all ${
-                          settingsTheme === 'dark' 
-                            ? 'border-gray-600 bg-gray-700 hover:bg-gray-650' 
-                            : 'border-gray-200 bg-gray-50 hover:bg-gray-100'
-                        }`}>
-                          <Calendar className={`w-6 h-6 mr-4 ${
-                            settingsTheme === 'dark' ? 'text-blue-400' : 'text-blue-600'
-                          }`} />
-                          <div className="flex-1">
-                            <h3 className={`font-medium ${
-                              settingsTheme === 'dark' ? 'text-white' : 'text-gray-900'
-                            }`}>
-                              Appointment Settings
-                            </h3>
-                            <p className={`text-sm ${
-                              settingsTheme === 'dark' ? 'text-gray-400' : 'text-gray-600'
-                            }`}>
-                              Configure appointment scheduling options
-                            </p>
-                          </div>
-                        </div>
-
-                        {/* System Reports */}
-                        <div className={`flex items-center p-4 rounded-lg border cursor-pointer hover:shadow-md transition-all ${
-                          settingsTheme === 'dark' 
-                            ? 'border-gray-600 bg-gray-700 hover:bg-gray-650' 
-                            : 'border-gray-200 bg-gray-50 hover:bg-gray-100'
-                        }`}>
-                          <FileText className={`w-6 h-6 mr-4 ${
-                            settingsTheme === 'dark' ? 'text-blue-400' : 'text-blue-600'
-                          }`} />
-                          <div className="flex-1">
-                            <h3 className={`font-medium ${
-                              settingsTheme === 'dark' ? 'text-white' : 'text-gray-900'
-                            }`}>
-                              System Reports
-                            </h3>
-                            <p className={`text-sm ${
-                              settingsTheme === 'dark' ? 'text-gray-400' : 'text-gray-600'
-                            }`}>
-                              Generate and view system analytics
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Security Section */}
-                    <div className="mb-8">
-                      <h2 className={`text-lg font-semibold mb-4 ${
-                        settingsTheme === 'dark' ? 'text-white' : 'text-gray-900'
-                      }`}>
-                        Security
-                      </h2>
-                      
-                      <div className="space-y-4">
-                        {/* Security Settings */}
-                        <div className={`flex items-center p-4 rounded-lg border cursor-pointer hover:shadow-md transition-all ${
-                          settingsTheme === 'dark' 
-                            ? 'border-gray-600 bg-gray-700 hover:bg-gray-650' 
-                            : 'border-gray-200 bg-gray-50 hover:bg-gray-100'
-                        }`}>
-                          <Shield className={`w-6 h-6 mr-4 ${
-                            settingsTheme === 'dark' ? 'text-blue-400' : 'text-blue-600'
-                          }`} />
-                          <div className="flex-1">
-                            <h3 className={`font-medium ${
-                              settingsTheme === 'dark' ? 'text-white' : 'text-gray-900'
-                            }`}>
-                              Security Settings
-                            </h3>
-                            <p className={`text-sm ${
-                              settingsTheme === 'dark' ? 'text-gray-400' : 'text-gray-600'
-                            }`}>
-                              Configure security policies and access controls
-                            </p>
-                          </div>
-                        </div>
-
-                        {/* Audit Logs */}
-                        <div className={`flex items-center p-4 rounded-lg border cursor-pointer hover:shadow-md transition-all ${
-                          settingsTheme === 'dark' 
-                            ? 'border-gray-600 bg-gray-700 hover:bg-gray-650' 
-                            : 'border-gray-200 bg-gray-50 hover:bg-gray-100'
-                        }`}>
-                          <Eye className={`w-6 h-6 mr-4 ${
-                            settingsTheme === 'dark' ? 'text-blue-400' : 'text-blue-600'
-                          }`} />
-                          <div className="flex-1">
-                            <h3 className={`font-medium ${
-                              settingsTheme === 'dark' ? 'text-white' : 'text-gray-900'
-                            }`}>
-                              Audit Logs
-                            </h3>
-                            <p className={`text-sm ${
-                              settingsTheme === 'dark' ? 'text-gray-400' : 'text-gray-600'
-                            }`}>
-                              View system access and activity logs
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* System Section */}
-                    <div className="mb-8">
-                      <h2 className={`text-lg font-semibold mb-4 ${
-                        settingsTheme === 'dark' ? 'text-white' : 'text-gray-900'
-                      }`}>
-                        System
-                      </h2>
-                      
-                      <div className="space-y-4">
-                        {/* Database Management */}
-                        <div className={`flex items-center p-4 rounded-lg border cursor-pointer hover:shadow-md transition-all ${
-                          settingsTheme === 'dark' 
-                            ? 'border-gray-600 bg-gray-700 hover:bg-gray-650' 
-                            : 'border-gray-200 bg-gray-50 hover:bg-gray-100'
-                        }`}>
-                          <Database className={`w-6 h-6 mr-4 ${
-                            settingsTheme === 'dark' ? 'text-blue-400' : 'text-blue-600'
-                          }`} />
-                          <div className="flex-1">
-                            <h3 className={`font-medium ${
-                              settingsTheme === 'dark' ? 'text-white' : 'text-gray-900'
-                            }`}>
-                              Database Management
-                            </h3>
-                            <p className={`text-sm ${
-                              settingsTheme === 'dark' ? 'text-gray-400' : 'text-gray-600'
-                            }`}>
-                              Manage database backups and maintenance
-                            </p>
-                          </div>
-                        </div>
-
-                        {/* Backup & Restore */}
-                        <div className={`flex items-center p-4 rounded-lg border cursor-pointer hover:shadow-md transition-all ${
-                          settingsTheme === 'dark' 
-                            ? 'border-gray-600 bg-gray-700 hover:bg-gray-650' 
-                            : 'border-gray-200 bg-gray-50 hover:bg-gray-100'
-                        }`}>
-                          <Download className={`w-6 h-6 mr-4 ${
-                            settingsTheme === 'dark' ? 'text-blue-400' : 'text-blue-600'
-                          }`} />
-                          <div className="flex-1">
-                            <h3 className={`font-medium ${
-                              settingsTheme === 'dark' ? 'text-white' : 'text-gray-900'
-                            }`}>
-                              Backup & Restore
-                            </h3>
-                            <p className={`text-sm ${
-                              settingsTheme === 'dark' ? 'text-gray-400' : 'text-gray-600'
-                            }`}>
-                              Create backups and restore system data
-                            </p>
-                          </div>
-                        </div>
-
-                        {/* Theme Toggle */}
-                        <div className={`flex items-center justify-between p-4 rounded-lg border ${
-                          settingsTheme === 'dark' 
-                            ? 'border-gray-600 bg-gray-700' 
-                            : 'border-gray-200 bg-gray-50'
-                        }`}>
-                          <div className="flex items-center">
-                            <div className={`w-6 h-6 mr-4 rounded ${
-                              settingsTheme === 'dark' ? 'bg-gray-800' : 'bg-yellow-400'
-                            } flex items-center justify-center`}>
-                              {settingsTheme === 'dark' ? '🌙' : '☀️'}
-                            </div>
-                            <div>
-                              <h3 className={`font-medium ${
-                                settingsTheme === 'dark' ? 'text-white' : 'text-gray-900'
-                              }`}>
-                                Settings Theme
-                              </h3>
-                              <p className={`text-sm ${
-                                settingsTheme === 'dark' ? 'text-gray-400' : 'text-gray-600'
-                              }`}>
-                                Toggle between light and dark mode (separate from dashboard)
-                              </p>
-                            </div>
-                          </div>
-                          <Button
-                            onClick={toggleSettingsTheme}
-                            variant="outline"
-                            size="sm"
-                            className={`${
-                              settingsTheme === 'dark' 
-                                ? 'border-gray-600 text-gray-300 hover:bg-gray-600' 
-                                : 'border-gray-300 text-gray-700 hover:bg-gray-100'
-                            }`}
-                            data-testid="button-toggle-settings-theme"
-                          >
-                            {settingsTheme === 'dark' ? 'Switch to Light' : 'Switch to Dark'}
-                          </Button>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Footer Note */}
-                    <div className={`text-center pt-6 border-t ${
-                      settingsTheme === 'dark' ? 'border-gray-600' : 'border-gray-200'
-                    }`}>
-                      <p className={`text-sm ${
-                        settingsTheme === 'dark' ? 'text-gray-400' : 'text-gray-600'
-                      }`}>
-                        Settings theme is separate from dashboard theme and only affects this settings page.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </TabsContent>
-
           </Tabs>
         </div>
       </div>
@@ -5049,522 +4760,133 @@ export default function ClinicDashboard() {
                       <div className="text-sm">Routine checkup completed</div>
                     </div>
                     <div className="p-3 bg-gray-50 rounded-lg">
-                      <div className="font-medium">Follow-up</div>
+                      <div className="font-medium">Blood Test</div>
                       <div className="text-sm text-gray-600">Dr. Johnson • Dec 28, 2023</div>
-                      <div className="text-sm">Blood pressure monitoring</div>
+                      <div className="text-sm">Annual health screening</div>
                     </div>
                   </div>
                 </div>
 
                 <div>
-                  <h4 className="font-medium mb-3">Current Medications</h4>
+                  <h4 className="font-medium mb-3">Medical History</h4>
                   <div className="space-y-2">
                     <div className="p-3 bg-blue-50 rounded-lg">
-                      <div className="font-medium">Lisinopril 10mg</div>
-                      <div className="text-sm text-gray-600">Once daily • Started Dec 2023</div>
+                      <div className="font-medium text-blue-800">Hypertension</div>
+                      <div className="text-sm text-blue-600">Diagnosed 2020 • Managed with medication</div>
                     </div>
-                    <div className="p-3 bg-blue-50 rounded-lg">
-                      <div className="font-medium">Metformin 500mg</div>
-                      <div className="text-sm text-gray-600">Twice daily • Started Nov 2023</div>
+                    <div className="p-3 bg-green-50 rounded-lg">
+                      <div className="font-medium text-green-800">Allergies</div>
+                      <div className="text-sm text-green-600">Penicillin, Peanuts</div>
                     </div>
                   </div>
                 </div>
               </div>
 
               <div>
-                <h4 className="font-medium mb-3">Medical Notes</h4>
-                <div className="bg-gray-50 p-4 rounded-lg">
-                  <p className="text-sm text-gray-700">
-                    Patient has been managing diabetes well with current medication regimen. 
-                    Blood pressure readings have been stable. Recommends continued monitoring 
-                    and follow-up in 3 months.
-                  </p>
+                <h4 className="font-medium mb-3">Current Medications</h4>
+                <div className="space-y-2">
+                  <div className="flex justify-between items-center p-3 border rounded-lg">
+                    <div>
+                      <div className="font-medium">Lisinopril 10mg</div>
+                      <div className="text-sm text-gray-600">Once daily - Blood pressure</div>
+                    </div>
+                    <Badge variant="outline">Active</Badge>
+                  </div>
+                  <div className="flex justify-between items-center p-3 border rounded-lg">
+                    <div>
+                      <div className="font-medium">Metformin 500mg</div>
+                      <div className="text-sm text-gray-600">Twice daily - Diabetes</div>
+                    </div>
+                    <Badge variant="outline">Active</Badge>
+                  </div>
                 </div>
-              </div>
-
-              <div className="flex gap-3">
-                <Button 
-                  variant="outline" 
-                  onClick={() => setShowHistoryModal(false)}
-                  className="flex-1"
-                >
-                  Close
-                </Button>
-                <Button 
-                  className="flex-1"
-                  onClick={() => handleDownloadPatientHistory(selectedPatient)}
-                >
-                  <FileText className="w-4 h-4 mr-2" />
-                  Download Full History
-                </Button>
               </div>
             </div>
           )}
         </DialogContent>
       </Dialog>
 
-      {/* Edit Patient Modal */}
-      <Dialog open={showEditModal} onOpenChange={setShowEditModal}>
-        <DialogContent className="max-w-md">
+      {/* Emergency Alert Details Modal */}
+      <Dialog open={showAlertModal} onOpenChange={setShowAlertModal}>
+        <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle>Edit Patient Profile</DialogTitle>
+            <DialogTitle>Emergency Alert Details</DialogTitle>
           </DialogHeader>
-          {selectedPatient && (
+          {selectedAlert && (
             <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="editFirstName">First Name</Label>
-                  <Input
-                    id="editFirstName"
-                    value={editPatientForm.firstName}
-                    onChange={(e) => setEditPatientForm({...editPatientForm, firstName: e.target.value})}
-                    placeholder="First Name"
-                  />
+              <div className={`p-4 rounded-lg border-l-4 ${
+                selectedAlert.priority === 'high' ? 'border-red-500 bg-red-50' :
+                selectedAlert.priority === 'medium' ? 'border-yellow-500 bg-yellow-50' :
+                'border-blue-500 bg-blue-50'
+              }`}>
+                <div className="flex items-start justify-between">
+                  <div>
+                    <h3 className="font-semibold text-lg">{selectedAlert.title}</h3>
+                    <p className="text-gray-600 mt-1">{selectedAlert.message}</p>
+                    <div className="flex items-center gap-4 mt-3 text-sm text-gray-500">
+                      <span>Alert ID: {selectedAlert.id.slice(0, 8)}</span>
+                      <span>Priority: {selectedAlert.priority}</span>
+                      <span>Time: {selectedAlert.timestamp}</span>
+                    </div>
+                  </div>
+                  <Badge className={`${
+                    selectedAlert.priority === 'high' ? 'bg-red-100 text-red-800' :
+                    selectedAlert.priority === 'medium' ? 'bg-yellow-100 text-yellow-800' :
+                    'bg-blue-100 text-blue-800'
+                  }`}>
+                    {selectedAlert.priority}
+                  </Badge>
                 </div>
-                <div>
-                  <Label htmlFor="editLastName">Last Name</Label>
-                  <Input
-                    id="editLastName"
-                    value={editPatientForm.lastName}
-                    onChange={(e) => setEditPatientForm({...editPatientForm, lastName: e.target.value})}
-                    placeholder="Last Name"
-                  />
-                </div>
               </div>
-              <div>
-                <Label htmlFor="editPhone">Phone Number</Label>
-                <Input
-                  id="editPhone"
-                  value={editPatientForm.phoneNumber}
-                  onChange={(e) => setEditPatientForm({...editPatientForm, phoneNumber: e.target.value})}
-                  placeholder="Phone Number"
-                />
-              </div>
-              <div>
-                <Label htmlFor="editEmail">Email</Label>
-                <Input
-                  id="editEmail"
-                  type="email"
-                  value={editPatientForm.email}
-                  onChange={(e) => setEditPatientForm({...editPatientForm, email: e.target.value})}
-                  placeholder="Email Address"
-                />
-              </div>
-              <div>
-                <Label htmlFor="editAddress">Address</Label>
-                <Textarea
-                  id="editAddress"
-                  value={editPatientForm.address}
-                  onChange={(e) => setEditPatientForm({...editPatientForm, address: e.target.value})}
-                  placeholder="Home Address"
-                />
-              </div>
-              <div>
-                <Label htmlFor="editDOB">Date of Birth</Label>
-                <Input
-                  id="editDOB"
-                  type="date"
-                  value={editPatientForm.dateOfBirth}
-                  onChange={(e) => setEditPatientForm({...editPatientForm, dateOfBirth: e.target.value})}
-                />
-              </div>
-              <div className="flex gap-3 pt-4">
-                <Button 
-                  variant="outline" 
-                  onClick={() => setShowEditModal(false)}
-                  className="flex-1"
-                >
-                  Cancel
-                </Button>
-                <Button onClick={handleUpdatePatient} className="flex-1">
-                  <User className="w-4 h-4 mr-2" />
-                  Update Profile
-                </Button>
-              </div>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
-
-      {/* Add Medicine Modal */}
-      <Dialog open={isAddMedicineOpen} onOpenChange={setIsAddMedicineOpen}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>Add New Medicine</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div>
-              <Label htmlFor="medicine-name">Medicine Name *</Label>
-              <Input
-                id="medicine-name"
-                value={newMedicine.name}
-                onChange={(e) => setNewMedicine({ ...newMedicine, name: e.target.value })}
-                placeholder="Enter medicine name"
-                data-testid="input-medicine-name"
-              />
-            </div>
-            <div>
-              <Label htmlFor="medicine-strength">Strength *</Label>
-              <Input
-                id="medicine-strength"
-                value={newMedicine.strength}
-                onChange={(e) => setNewMedicine({ ...newMedicine, strength: e.target.value })}
-                placeholder="e.g., 250mg, 500ml"
-                data-testid="input-medicine-strength"
-              />
-            </div>
-            <div>
-              <Label htmlFor="medicine-form">Dosage Form *</Label>
-              <Select value={newMedicine.dosageForm} onValueChange={(value) => setNewMedicine({ ...newMedicine, dosageForm: value })}>
-                <SelectTrigger data-testid="select-medicine-form">
-                  <SelectValue placeholder="Select dosage form" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="tablet">Tablet</SelectItem>
-                  <SelectItem value="capsule">Capsule</SelectItem>
-                  <SelectItem value="syrup">Syrup</SelectItem>
-                  <SelectItem value="injection">Injection</SelectItem>
-                  <SelectItem value="cream">Cream</SelectItem>
-                  <SelectItem value="drops">Drops</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label htmlFor="medicine-manufacturer">Manufacturer *</Label>
-              <Input
-                id="medicine-manufacturer"
-                value={newMedicine.manufacturer}
-                onChange={(e) => setNewMedicine({ ...newMedicine, manufacturer: e.target.value })}
-                placeholder="Enter manufacturer name"
-                data-testid="input-medicine-manufacturer"
-              />
-            </div>
-            <div>
-              <Label htmlFor="medicine-stock">Initial Stock</Label>
-              <Input
-                id="medicine-stock"
-                type="number"
-                value={newMedicine.stock}
-                onChange={(e) => setNewMedicine({ ...newMedicine, stock: parseInt(e.target.value) || 0 })}
-                placeholder="0"
-                data-testid="input-medicine-stock"
-              />
-            </div>
-            <div>
-              <Label htmlFor="medicine-description">Description</Label>
-              <Textarea
-                id="medicine-description"
-                value={newMedicine.description}
-                onChange={(e) => setNewMedicine({ ...newMedicine, description: e.target.value })}
-                placeholder="Optional description"
-                data-testid="textarea-medicine-description"
-              />
-            </div>
-            <div className="flex gap-2 pt-4">
-              <Button
-                onClick={handleAddMedicine}
-                disabled={addMedicineMutation.isPending}
-                className="flex-1"
-                data-testid="button-save-medicine"
-              >
-                {addMedicineMutation.isPending ? 'Adding...' : 'Add Medicine'}
-              </Button>
-              <Button
-                variant="outline"
-                onClick={() => setIsAddMedicineOpen(false)}
-                data-testid="button-cancel-add-medicine"
-              >
-                Cancel
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      {/* Edit Medicine Modal */}
-      <Dialog open={isEditMedicineOpen} onOpenChange={setIsEditMedicineOpen}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>Edit Medicine</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div>
-              <Label htmlFor="edit-medicine-name">Medicine Name *</Label>
-              <Input
-                id="edit-medicine-name"
-                value={newMedicine.name}
-                onChange={(e) => setNewMedicine({ ...newMedicine, name: e.target.value })}
-                placeholder="Enter medicine name"
-                data-testid="input-edit-medicine-name"
-              />
-            </div>
-            <div>
-              <Label htmlFor="edit-medicine-strength">Strength *</Label>
-              <Input
-                id="edit-medicine-strength"
-                value={newMedicine.strength}
-                onChange={(e) => setNewMedicine({ ...newMedicine, strength: e.target.value })}
-                placeholder="e.g., 250mg, 500ml"
-                data-testid="input-edit-medicine-strength"
-              />
-            </div>
-            <div>
-              <Label htmlFor="edit-medicine-form">Dosage Form *</Label>
-              <Select value={newMedicine.dosageForm} onValueChange={(value) => setNewMedicine({ ...newMedicine, dosageForm: value })}>
-                <SelectTrigger data-testid="select-edit-medicine-form">
-                  <SelectValue placeholder="Select dosage form" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="tablet">Tablet</SelectItem>
-                  <SelectItem value="capsule">Capsule</SelectItem>
-                  <SelectItem value="syrup">Syrup</SelectItem>
-                  <SelectItem value="injection">Injection</SelectItem>
-                  <SelectItem value="cream">Cream</SelectItem>
-                  <SelectItem value="drops">Drops</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label htmlFor="edit-medicine-manufacturer">Manufacturer *</Label>
-              <Input
-                id="edit-medicine-manufacturer"
-                value={newMedicine.manufacturer}
-                onChange={(e) => setNewMedicine({ ...newMedicine, manufacturer: e.target.value })}
-                placeholder="Enter manufacturer name"
-                data-testid="input-edit-medicine-manufacturer"
-              />
-            </div>
-            <div>
-              <Label htmlFor="edit-medicine-stock">Stock</Label>
-              <Input
-                id="edit-medicine-stock"
-                type="number"
-                value={newMedicine.stock}
-                onChange={(e) => setNewMedicine({ ...newMedicine, stock: parseInt(e.target.value) || 0 })}
-                placeholder="0"
-                data-testid="input-edit-medicine-stock"
-              />
-            </div>
-            <div>
-              <Label htmlFor="edit-medicine-description">Description</Label>
-              <Textarea
-                id="edit-medicine-description"
-                value={newMedicine.description}
-                onChange={(e) => setNewMedicine({ ...newMedicine, description: e.target.value })}
-                placeholder="Optional description"
-                data-testid="textarea-edit-medicine-description"
-              />
-            </div>
-            <div className="flex gap-2 pt-4">
-              <Button
-                onClick={handleUpdateMedicine}
-                disabled={updateMedicineMutation.isPending}
-                className="flex-1"
-                data-testid="button-update-medicine"
-              >
-                {updateMedicineMutation.isPending ? 'Updating...' : 'Update Medicine'}
-              </Button>
-              <Button
-                variant="outline"
-                onClick={() => setIsEditMedicineOpen(false)}
-                data-testid="button-cancel-edit-medicine"
-              >
-                Cancel
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      {/* Restock Medicine Modal */}
-      <Dialog open={isRestockOpen} onOpenChange={setIsRestockOpen}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>Restock Medicine</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            {selectedMedicine && (
-              <div className="p-4 bg-gray-50 rounded-lg">
-                <h3 className="font-semibold">{selectedMedicine.name}</h3>
-                <p className="text-sm text-gray-600">{selectedMedicine.strength} - {selectedMedicine.dosageForm}</p>
-                <p className="text-sm text-gray-500">Current Stock: {selectedMedicine.stock || 0} units</p>
-              </div>
-            )}
-            <div>
-              <Label htmlFor="restock-amount">Restock Amount *</Label>
-              <Input
-                id="restock-amount"
-                type="number"
-                value={restockAmount}
-                onChange={(e) => setRestockAmount(parseInt(e.target.value) || 0)}
-                placeholder="Enter amount to add"
-                min="1"
-                data-testid="input-restock-amount"
-              />
-            </div>
-            <div className="flex gap-2 pt-4">
-              <Button
-                onClick={handleRestock}
-                disabled={restockMedicineMutation.isPending}
-                className="flex-1"
-                data-testid="button-confirm-restock"
-              >
-                {restockMedicineMutation.isPending ? 'Restocking...' : 'Restock Medicine'}
-              </Button>
-              <Button
-                variant="outline"
-                onClick={() => setIsRestockOpen(false)}
-                data-testid="button-cancel-restock"
-              >
-                Cancel
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      {/* New Appointment Modal */}
-      <Dialog open={showAppointmentModal} onOpenChange={setShowAppointmentModal}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>Schedule New Appointment</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div>
-              <Label htmlFor="patient-select">Patient *</Label>
-              <Select value={appointmentForm.patientId} onValueChange={(value) => setAppointmentForm({ ...appointmentForm, patientId: value })}>
-                <SelectTrigger data-testid="select-appointment-patient">
-                  <SelectValue placeholder="Select patient" />
-                </SelectTrigger>
-                <SelectContent>
-                  {patients?.filter(p => p.role === 'patient' && p.id && p.id.trim() !== '').map((patient) => (
-                    <SelectItem key={patient.id} value={patient.id}>
-                      {patient.firstName} {patient.lastName}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label htmlFor="doctor-select">Doctor *</Label>
-              <Select value={appointmentForm.doctorId} onValueChange={(value) => setAppointmentForm({ ...appointmentForm, doctorId: value })}>
-                <SelectTrigger data-testid="select-appointment-doctor">
-                  <SelectValue placeholder="Select doctor" />
-                </SelectTrigger>
-                <SelectContent>
-                  {users?.filter(u => u.role === 'doctor' && u.id && u.id.trim() !== '').map((doctor) => (
-                    <SelectItem key={doctor.id} value={doctor.id}>
-                      Dr. {doctor.firstName} {doctor.lastName}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label htmlFor="appointment-date">Date *</Label>
-              <Input
-                id="appointment-date"
-                type="date"
-                value={appointmentForm.appointmentDate}
-                onChange={(e) => setAppointmentForm({ ...appointmentForm, appointmentDate: e.target.value })}
-                data-testid="input-appointment-date"
-              />
-            </div>
-            <div>
-              <Label htmlFor="appointment-time">Time *</Label>
-              <Input
-                id="appointment-time"
-                type="time"
-                value={appointmentForm.appointmentTime}
-                onChange={(e) => setAppointmentForm({ ...appointmentForm, appointmentTime: e.target.value })}
-                data-testid="input-appointment-time"
-              />
-            </div>
-            <div>
-              <Label htmlFor="consultation-type">Consultation Type</Label>
-              <Select value={appointmentForm.consultationType} onValueChange={(value) => setAppointmentForm({ ...appointmentForm, consultationType: value })}>
-                <SelectTrigger data-testid="select-consultation-type">
-                  <SelectValue placeholder="Select consultation type" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="regular">Regular Consultation</SelectItem>
-                  <SelectItem value="follow-up">Follow-up</SelectItem>
-                  <SelectItem value="emergency">Emergency</SelectItem>
-                  <SelectItem value="video-call">Video Call</SelectItem>
-                  <SelectItem value="home-visit">Home Visit</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label htmlFor="symptoms">Symptoms/Notes</Label>
-              <Textarea
-                id="symptoms"
-                value={appointmentForm.symptoms}
-                onChange={(e) => setAppointmentForm({ ...appointmentForm, symptoms: e.target.value })}
-                placeholder="Enter symptoms or additional notes"
-                data-testid="textarea-appointment-symptoms"
-              />
-            </div>
-            <div className="flex gap-2 pt-4">
-              <Button
-                onClick={handleAppointmentSubmit}
-                className="flex-1"
-                data-testid="button-schedule-appointment"
-              >
-                Schedule Appointment
-              </Button>
-              <Button
-                variant="outline"
-                onClick={() => setShowAppointmentModal(false)}
-                data-testid="button-cancel-appointment"
-              >
-                Cancel
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      {/* Contact Patient Modal */}
-      <Dialog open={isContactModalOpen} onOpenChange={setIsContactModalOpen}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>Contact Patient</DialogTitle>
-          </DialogHeader>
-          {selectedFeedback && (
-            <div className="space-y-4">
-              <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
-                <h4 className="font-medium mb-2">Patient Information:</h4>
-                <div className="space-y-1 text-sm">
-                  <p><span className="font-medium">Name:</span> {selectedFeedback.patient?.firstName} {selectedFeedback.patient?.lastName}</p>
-                  <p><span className="font-medium">Phone:</span> {selectedFeedback.patient?.phoneNumber}</p>
-                  {selectedFeedback.patient?.email && (
-                    <p><span className="font-medium">Email:</span> {selectedFeedback.patient.email}</p>
+              
+              <div className="space-y-3">
+                <h4 className="font-medium">Recommended Actions:</h4>
+                <ul className="list-disc list-inside space-y-1 text-sm text-gray-600">
+                  {selectedAlert.type === 'appointment_delay' && (
+                    <>
+                      <li>Contact affected patients to inform about delays</li>
+                      <li>Adjust appointment schedule if possible</li>
+                      <li>Consider additional staff if pattern continues</li>
+                    </>
                   )}
-                </div>
+                  {selectedAlert.type === 'staff_missing' && (
+                    <>
+                      <li>Contact missing staff member immediately</li>
+                      <li>Arrange coverage if needed</li>
+                      <li>Update patient schedules if necessary</li>
+                    </>
+                  )}
+                  {selectedAlert.type === 'medicine_low' && (
+                    <>
+                      <li>Order additional stock immediately</li>
+                      <li>Check with other suppliers if primary is unavailable</li>
+                      <li>Inform doctors about current stock levels</li>
+                    </>
+                  )}
+                  {selectedAlert.type === 'high_volume' && (
+                    <>
+                      <li>Add extra staff if available</li>
+                      <li>Extend clinic hours if possible</li>
+                      <li>Set up additional waiting areas</li>
+                    </>
+                  )}
+                  {selectedAlert.type === 'queue_overload' && (
+                    <>
+                      <li>Reduce appointment duration if safe</li>
+                      <li>Add emergency consultation slots</li>
+                      <li>Consider referring non-urgent cases</li>
+                    </>
+                  )}
+                </ul>
               </div>
               
-              <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg">
-                <h4 className="font-medium mb-2">Feedback Details:</h4>
-                <div className="space-y-1 text-sm">
-                  <p><span className="font-medium">Rating:</span> {selectedFeedback.rating}/5 stars</p>
-                  <p><span className="font-medium">Category:</span> {selectedFeedback.category}</p>
-                  <p><span className="font-medium">Comment:</span> "{selectedFeedback.comment}"</p>
-                  <p><span className="font-medium">Submitted:</span> {new Date(selectedFeedback.createdAt).toLocaleDateString()}</p>
-                </div>
-              </div>
-              
-              <div className="text-sm text-gray-600 dark:text-gray-400">
-                You can now contact this patient using their phone number or email address to follow up on their feedback.
-              </div>
-              
-              <div className="flex gap-2 pt-4">
+              <div className="pt-4 border-t">
                 <Button
-                  onClick={() => setIsContactModalOpen(false)}
-                  className="flex-1"
-                  data-testid="button-close-contact-modal"
+                  onClick={() => resolveAlert(selectedAlert.id)}
+                  className="w-full"
+                  data-testid={`button-resolve-alert-${selectedAlert.id}`}
                 >
-                  Close
+                  Mark as Resolved
                 </Button>
               </div>
             </div>
@@ -5572,5 +4894,5 @@ export default function ClinicDashboard() {
         </DialogContent>
       </Dialog>
     </div>
-  )
-}
+  );
+};
