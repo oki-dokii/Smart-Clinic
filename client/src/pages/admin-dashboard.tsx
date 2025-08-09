@@ -2203,14 +2203,14 @@ export default function ClinicDashboard() {
                   {/* Patients Today */}
                   <Card>
                     <CardHeader className="pb-3">
-                      <CardTitle className="text-sm font-medium text-gray-600 flex items-center gap-2">
-                        <Users className="w-4 h-4 text-blue-500" />
+                      <CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-400 flex items-center gap-2">
+                        <Users className="w-4 h-4 text-blue-500 dark:text-blue-400" />
                         Patients Today
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
                       <div className="flex items-center gap-2 mb-2">
-                        <span className="text-3xl font-bold">{statsLoading ? '...' : (stats?.patientsToday || 0)}</span>
+                        <span className="text-3xl font-bold text-gray-900 dark:text-white">{statsLoading ? '...' : (stats?.patientsToday || 0)}</span>
                         <Badge className={`text-xs flex items-center gap-1 ${
                           stats?.completedAppointments && stats?.patientsToday 
                             ? (stats.completedAppointments / stats.patientsToday > 0.7 ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800')
@@ -2223,23 +2223,23 @@ export default function ClinicDashboard() {
                           }
                         </Badge>
                       </div>
-                      <p className="text-sm text-gray-600">
+                      <p className="text-sm text-gray-600 dark:text-gray-400">
                         {stats?.completedAppointments || 0} completed, {(stats?.patientsToday || 0) - (stats?.completedAppointments || 0)} pending
                       </p>
                     </CardContent>
                   </Card>
 
                   {/* Queue Length */}
-                  <Card className="border-orange-200 bg-orange-50">
+                  <Card className="border-orange-200 dark:border-orange-800 bg-orange-50 dark:bg-orange-950">
                     <CardHeader className="pb-3">
-                      <CardTitle className="text-sm font-medium text-gray-600 flex items-center gap-2">
-                        <Clock className="w-4 h-4 text-orange-500" />
+                      <CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-400 flex items-center gap-2">
+                        <Clock className="w-4 h-4 text-orange-500 dark:text-orange-400" />
                         Queue Length
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
                       <div className="flex items-center gap-2 mb-2">
-                        <span className="text-3xl font-bold">{queueTokens ? queueTokens.length : 0}</span>
+                        <span className="text-3xl font-bold text-gray-900 dark:text-white">{queueTokens ? queueTokens.length : 0}</span>
                         {queueTokens && queueTokens.length > 5 && (
                           <Badge className="bg-red-500 text-white text-xs">Urgent</Badge>
                         )}
@@ -2250,21 +2250,21 @@ export default function ClinicDashboard() {
                           <Badge className="bg-green-500 text-white text-xs">Light</Badge>
                         )}
                       </div>
-                      <p className="text-sm text-gray-600">Current waiting patients</p>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">Current waiting patients</p>
                     </CardContent>
                   </Card>
 
                   {/* Medicine Inventory */}
                   <Card>
                     <CardHeader className="pb-3">
-                      <CardTitle className="text-sm font-medium text-gray-600 flex items-center gap-2">
-                        <Pill className="w-4 h-4 text-green-500" />
+                      <CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-400 flex items-center gap-2">
+                        <Pill className="w-4 h-4 text-green-500 dark:text-green-400" />
                         Medicine Inventory
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
                       <div className="flex items-center gap-2 mb-2">
-                        <span className="text-3xl font-bold">{
+                        <span className="text-3xl font-bold text-gray-900 dark:text-white">{
                           medicines ? medicines.reduce((total: number, med: any) => total + med.stock, 0) : '...'
                         }</span>
                         <Badge className={`text-xs flex items-center gap-1 ${
@@ -2276,7 +2276,7 @@ export default function ClinicDashboard() {
                           {medicines ? medicines.filter((med: any) => med.stock <= 5).length : 0} Low Stock
                         </Badge>
                       </div>
-                      <p className="text-sm text-gray-600">
+                      <p className="text-sm text-gray-600 dark:text-gray-400">
                         {medicines ? medicines.length : 0} types available
                       </p>
                     </CardContent>
@@ -2285,14 +2285,14 @@ export default function ClinicDashboard() {
                   {/* Staff Present */}
                   <Card>
                     <CardHeader className="pb-3">
-                      <CardTitle className="text-sm font-medium text-gray-600 flex items-center gap-2">
-                        <Activity className="w-4 h-4 text-purple-500" />
+                      <CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-400 flex items-center gap-2">
+                        <Activity className="w-4 h-4 text-purple-500 dark:text-purple-400" />
                         Staff Present
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
                       <div className="flex items-center gap-2 mb-2">
-                        <span className="text-3xl font-bold">
+                        <span className="text-3xl font-bold text-gray-900 dark:text-white">
                           {presentStaff}/{totalStaff}
                         </span>
                         <Badge className={`text-xs ${
@@ -2306,7 +2306,7 @@ export default function ClinicDashboard() {
                           }
                         </Badge>
                       </div>
-                      <p className="text-sm text-gray-600">
+                      <p className="text-sm text-gray-600 dark:text-gray-400">
                         {staffPresence.filter(p => p.isPresent && p.staff.role === 'doctor').length} doctors, {' '}
                         {staffPresence.filter(p => p.isPresent && ['staff', 'nurse'].includes(p.staff.role)).length} staff, {' '}
                         {staffPresence.filter(p => p.isPresent && p.staff.role === 'admin').length} admin
