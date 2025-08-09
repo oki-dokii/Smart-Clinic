@@ -6,6 +6,9 @@ SmartClinic is a comprehensive healthcare management system built as a full-stac
 
 Preferred communication style: Simple, everyday language.
 
+## Recent Changes (August 2025)
+- **Dark Mode Enhancement**: Implemented independent dark mode toggle for admin dashboard, replacing settings icon with Moon/Sun toggle button for easy theme switching
+
 # System Architecture
 
 ## Frontend Architecture

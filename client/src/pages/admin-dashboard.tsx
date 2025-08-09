@@ -28,7 +28,9 @@ import {
   Eye,
   Mail,
   PhoneCall,
-  Pill
+  Pill,
+  Moon,
+  Sun
 } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -44,6 +46,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { apiRequest } from "@/lib/queryClient"
 import { useToast } from "@/hooks/use-toast"
 import { useQueueSocket } from "@/hooks/useQueueSocket"
+import { useTheme } from "@/components/ThemeProvider"
 
 import jsPDF from 'jspdf'
 
@@ -209,6 +212,7 @@ export default function ClinicDashboard() {
   
   const { toast } = useToast()
   const queryClient = useQueryClient()
+  const { theme, toggleTheme } = useTheme()
 
   // Appointment approval mutation
   const appointmentApproval = useMutation({
@@ -2100,6 +2104,21 @@ export default function ClinicDashboard() {
                   </div>
                 </DialogContent>
               </Dialog>
+
+              {/* Dark Mode Toggle */}
+              <Button 
+                variant="ghost" 
+                size="sm"
+                onClick={toggleTheme}
+                data-testid="button-dark-mode-toggle"
+                className="hover:bg-gray-100 dark:hover:bg-gray-800"
+              >
+                {theme === 'light' ? (
+                  <Moon className="w-5 h-5" />
+                ) : (
+                  <Sun className="w-5 h-5" />
+                )}
+              </Button>
 
               {/* Settings Dropdown */}
               <Dialog>
