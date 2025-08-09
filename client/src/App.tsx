@@ -146,16 +146,30 @@ function ProtectedRoute({
     if (error || (!isLoading && !currentUser && token)) {
       localStorage.removeItem('auth_token');
       localStorage.removeItem('user');
-      window.location.href = redirectTo;
+      // Redirect patients to Firebase login instead of old OTP login
+      if (window.location.pathname.includes('book-appointment') || 
+          window.location.pathname.includes('patient') ||
+          window.location.pathname === '/dashboard') {
+        window.location.href = '/patient-login';
+      } else {
+        window.location.href = redirectTo;
+      }
       return;
     }
 
     // Update loading state
     setLoading(isLoading);
 
-    // Handle no token
+    // Handle no token - redirect patients to Firebase login
     if (!token) {
-      window.location.href = redirectTo;
+      // Check if this is a patient-specific route
+      if (window.location.pathname.includes('book-appointment') || 
+          window.location.pathname.includes('patient') ||
+          window.location.pathname === '/dashboard') {
+        window.location.href = '/patient-login';
+      } else {
+        window.location.href = redirectTo;
+      }
       return;
     }
 
