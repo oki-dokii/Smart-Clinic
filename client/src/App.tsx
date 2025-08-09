@@ -25,7 +25,7 @@ function AuthWrapper({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
-function Router(): JSX.Element {
+const AppRouter = () => {
   return (
     <Switch>
       <Route path="/login" component={LoginPage} />
@@ -45,7 +45,7 @@ function Router(): JSX.Element {
       <Route component={NotFound} />
     </Switch>
   );
-}
+};
 
 function App() {
   return (
@@ -54,7 +54,7 @@ function App() {
         <TooltipProvider>
           <AuthWrapper>
             <Toaster />
-            <Router />
+            <AppRouter />
           </AuthWrapper>
         </TooltipProvider>
       </ThemeProvider>
