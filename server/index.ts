@@ -63,22 +63,40 @@ app.use((req, res, next) => {
   // this serves both the API and the client.
   // It is the only port that is not firewalled.
   const port = parseInt(process.env.PORT || '5000', 10);
-  const host = process.env.NODE_ENV === 'development' ? '127.0.0.1' : '0.0.0.0';
-  server.listen({
-    port,
-    host,
-    reusePort: true,
-  }, () => {
-    log(`serving on port ${port}`);
-    
-    // Start automatic queue wait time updates every 60 seconds
-    setInterval(async () => {
-      try {
-        console.log('🔥 Running automatic queue wait time update...');
-        await queueService.broadcastWebSocketUpdate();
-      } catch (error) {
-        console.error('Error updating queue wait times:', error);
-      }
-    }, 60000); // 60 seconds
-  });
+  
+  if (process.env.NODE_ENV === 'development') {
+    // Simplified configuration for local development on macOS
+    server.listen(port, () => {
+      log(`serving on port ${port}`);
+      
+      // Start automatic queue wait time updates every 60 seconds
+      setInterval(async () => {
+        try {
+          console.log('🔥 Running automatic queue wait time update...');
+          await queueService.broadcastWebSocketUpdate();
+        } catch (error) {
+          console.error('Error updating queue wait times:', error);
+        }
+      }, 60000); // 60 seconds
+    });
+  } else {
+    // Production configuration with full options
+    server.listen({
+      port,
+      host: "0.0.0.0",
+      reusePort: true,
+    }, () => {
+      log(`serving on port ${port}`);
+      
+      // Start automatic queue wait time updates every 60 seconds
+      setInterval(async () => {
+        try {
+          console.log('🔥 Running automatic queue wait time update...');
+          await queueService.broadcastWebSocketUpdate();
+        } catch (error) {
+          console.error('Error updating queue wait times:', error);
+        }
+      }, 60000); // 60 seconds
+    });
+  }
 })();
