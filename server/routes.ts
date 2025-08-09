@@ -1448,51 +1448,86 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Medicine list text is required" });
       }
 
-      // Parse the medicine list (expecting format like "Medicine Name - Dosage - Frequency")
+      // Parse the medicine list (expecting format like "Medicine Name - Dosage - Frequency - Instructions")
       const lines = medicineList.split('\n').filter(line => line.trim());
       const createdMedicines = [];
 
+      // Helper function to normalize frequency text to valid enum values
+      const normalizeFrequency = (freq: string): "once_daily" | "twice_daily" | "three_times_daily" | "four_times_daily" | "as_needed" | "weekly" | "monthly" => {
+        const normalized = freq.toLowerCase().replace(/[^a-z0-9]/g, '');
+        
+        if (normalized.includes('once') || normalized.includes('1') || normalized.includes('daily') || normalized === '') {
+          return 'once_daily';
+        } else if (normalized.includes('twice') || normalized.includes('2') || normalized.includes('bid')) {
+          return 'twice_daily';
+        } else if (normalized.includes('three') || normalized.includes('3') || normalized.includes('tid')) {
+          return 'three_times_daily';
+        } else if (normalized.includes('four') || normalized.includes('4') || normalized.includes('qid')) {
+          return 'four_times_daily';
+        } else if (normalized.includes('needed') || normalized.includes('prn')) {
+          return 'as_needed';
+        } else if (normalized.includes('week')) {
+          return 'weekly';
+        } else if (normalized.includes('month')) {
+          return 'monthly';
+        } else {
+          return 'once_daily'; // default fallback
+        }
+      };
+
+      console.log('🔥 BULK UPLOAD - Processing lines:', lines);
+      
       for (const line of lines) {
         const parts = line.split('-').map(part => part.trim());
-        if (parts.length >= 2) {
+        if (parts.length >= 1 && parts[0]) { // Only require medicine name
           const name = parts[0];
           const dosage = parts[1] || '1 tablet';
-          const frequency = parts[2] || 'once_daily';
+          const rawFrequency = parts[2] || 'once daily';
+          const frequency = normalizeFrequency(rawFrequency);
           const instructions = parts[3] || 'Take as prescribed';
 
-          // Create medicine
-          const medicine = await storage.createMedicine({
-            name,
-            description: `Uploaded medicine by patient`,
-            dosageForm: 'tablet',
-            strength: dosage,
-            manufacturer: 'Patient Added',
-            clinicId: req.user!.clinicId || 'default-clinic-id'
-          });
+          console.log(`🔥 BULK UPLOAD - Processing: ${name} | ${dosage} | ${rawFrequency} -> ${frequency} | ${instructions}`);
 
-          // Create prescription
-          const prescription = await storage.createPrescription({
-            patientId: req.user!.id,
-            doctorId: req.user!.id,
-            medicineId: medicine.id,
-            dosage,
-            frequency: frequency as "once_daily" | "twice_daily" | "three_times_daily" | "four_times_daily" | "as_needed" | "weekly" | "monthly",
-            instructions,
-            startDate: new Date(),
-            totalDoses: 30,
-            status: 'active'
-          });
+          try {
+            // Create medicine
+            const medicine = await storage.createMedicine({
+              name,
+              description: `Uploaded medicine by patient`,
+              dosageForm: 'tablet',
+              strength: dosage,
+              manufacturer: 'Patient Added',
+              clinicId: req.user!.clinicId || 'default-clinic-id'
+            });
 
-          // Create reminders for this prescription
-          if (schedulerService) {
-            try {
-              await schedulerService.createMedicineReminders(prescription.id);
-            } catch (error) {
-              console.error('Failed to create reminders for uploaded medicine:', error);
+            // Create prescription
+            const prescription = await storage.createPrescription({
+              patientId: req.user!.id,
+              doctorId: req.user!.id,
+              medicineId: medicine.id,
+              dosage,
+              frequency: frequency,
+              instructions,
+              startDate: new Date(),
+              totalDoses: 30,
+              status: 'active'
+            });
+
+            // Create reminders for this prescription
+            if (schedulerService) {
+              try {
+                await schedulerService.createMedicineReminders(prescription.id);
+              } catch (error) {
+                console.error('Failed to create reminders for uploaded medicine:', error);
+              }
             }
-          }
 
-          createdMedicines.push({ medicine, prescription });
+            createdMedicines.push({ medicine, prescription });
+            console.log(`🔥 BULK UPLOAD - Successfully added: ${name}`);
+          } catch (error) {
+            console.error(`🔥 BULK UPLOAD - Failed to add ${name}:`, error);
+          }
+        } else {
+          console.log(`🔥 BULK UPLOAD - Skipping invalid line: "${line}"`);
         }
       }
 
