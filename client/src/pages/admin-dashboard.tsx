@@ -325,6 +325,22 @@ export default function ClinicDashboard() {
   // Emergency alerts state (for other non-feedback alerts)
   const [emergencyAlerts, setEmergencyAlerts] = useState<EmergencyAlert[]>([])
   const [lastAlertCheck, setLastAlertCheck] = useState<Date>(new Date())
+  
+  // Settings state (separate from dashboard theme)
+  const [settingsTheme, setSettingsTheme] = useState<'light' | 'dark'>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('smart-clinic-settings-theme')
+      return (saved as 'light' | 'dark') || 'light'
+    }
+    return 'light'
+  })
+
+  // Toggle settings theme (does NOT affect dashboard)
+  const toggleSettingsTheme = () => {
+    const newTheme = settingsTheme === 'light' ? 'dark' : 'light'
+    setSettingsTheme(newTheme)
+    localStorage.setItem('smart-clinic-settings-theme', newTheme)
+  }
 
 
 
@@ -2422,7 +2438,7 @@ export default function ClinicDashboard() {
       <div className="bg-white border-b border-gray-200">
         <div className="px-6">
           <Tabs defaultValue="dashboard" className="w-full">
-            <TabsList className="grid w-full grid-cols-9 bg-transparent border-0 h-auto p-0">
+            <TabsList className="grid w-full grid-cols-10 bg-transparent border-0 h-auto p-0">
               <TabsTrigger
                 value="dashboard"
                 className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-blue-600 data-[state=active]:text-blue-600 rounded-none py-4 px-6"
@@ -2470,6 +2486,12 @@ export default function ClinicDashboard() {
                 className="data-[state=active]:bg-transparent data-[state-active]:border-b-2 data-[state=active]:border-blue-600 data-[state=active]:text-blue-600 rounded-none py-4 px-6"
               >
                 Reports
+              </TabsTrigger>
+              <TabsTrigger
+                value="settings"
+                className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-blue-600 data-[state=active]:text-blue-600 rounded-none py-4 px-6"
+              >
+                Settings
               </TabsTrigger>
 
             </TabsList>
@@ -4725,6 +4747,275 @@ export default function ClinicDashboard() {
               </div>
             </TabsContent>
 
+            {/* Settings Tab */}
+            <TabsContent value="settings" className="mt-0">
+              <div className={`min-h-screen p-6 transition-colors duration-300 ${
+                settingsTheme === 'dark' 
+                  ? 'bg-gray-900 text-white' 
+                  : 'bg-gray-50 text-gray-900'
+              }`}>
+                <div className="max-w-4xl mx-auto">
+                  <div className={`rounded-lg shadow-sm border p-6 ${
+                    settingsTheme === 'dark' 
+                      ? 'bg-gray-800 border-gray-700' 
+                      : 'bg-white border-gray-200'
+                  }`}>
+                    <div className="flex items-center justify-between mb-6">
+                      <h1 className={`text-2xl font-bold ${
+                        settingsTheme === 'dark' ? 'text-white' : 'text-gray-900'
+                      }`}>
+                        System Settings
+                      </h1>
+                    </div>
+
+                    {/* General Settings Section */}
+                    <div className="mb-8">
+                      <h2 className={`text-lg font-semibold mb-4 ${
+                        settingsTheme === 'dark' ? 'text-white' : 'text-gray-900'
+                      }`}>
+                        General Settings
+                      </h2>
+                      
+                      <div className="space-y-4">
+                        {/* User Management */}
+                        <div className={`flex items-center p-4 rounded-lg border cursor-pointer hover:shadow-md transition-all ${
+                          settingsTheme === 'dark' 
+                            ? 'border-gray-600 bg-gray-700 hover:bg-gray-650' 
+                            : 'border-gray-200 bg-gray-50 hover:bg-gray-100'
+                        }`}>
+                          <UserCheck className={`w-6 h-6 mr-4 ${
+                            settingsTheme === 'dark' ? 'text-blue-400' : 'text-blue-600'
+                          }`} />
+                          <div className="flex-1">
+                            <h3 className={`font-medium ${
+                              settingsTheme === 'dark' ? 'text-white' : 'text-gray-900'
+                            }`}>
+                              User Management
+                            </h3>
+                            <p className={`text-sm ${
+                              settingsTheme === 'dark' ? 'text-gray-400' : 'text-gray-600'
+                            }`}>
+                              Manage user accounts and permissions
+                            </p>
+                          </div>
+                        </div>
+
+                        {/* Appointment Settings */}
+                        <div className={`flex items-center p-4 rounded-lg border cursor-pointer hover:shadow-md transition-all ${
+                          settingsTheme === 'dark' 
+                            ? 'border-gray-600 bg-gray-700 hover:bg-gray-650' 
+                            : 'border-gray-200 bg-gray-50 hover:bg-gray-100'
+                        }`}>
+                          <Calendar className={`w-6 h-6 mr-4 ${
+                            settingsTheme === 'dark' ? 'text-blue-400' : 'text-blue-600'
+                          }`} />
+                          <div className="flex-1">
+                            <h3 className={`font-medium ${
+                              settingsTheme === 'dark' ? 'text-white' : 'text-gray-900'
+                            }`}>
+                              Appointment Settings
+                            </h3>
+                            <p className={`text-sm ${
+                              settingsTheme === 'dark' ? 'text-gray-400' : 'text-gray-600'
+                            }`}>
+                              Configure appointment scheduling options
+                            </p>
+                          </div>
+                        </div>
+
+                        {/* System Reports */}
+                        <div className={`flex items-center p-4 rounded-lg border cursor-pointer hover:shadow-md transition-all ${
+                          settingsTheme === 'dark' 
+                            ? 'border-gray-600 bg-gray-700 hover:bg-gray-650' 
+                            : 'border-gray-200 bg-gray-50 hover:bg-gray-100'
+                        }`}>
+                          <FileText className={`w-6 h-6 mr-4 ${
+                            settingsTheme === 'dark' ? 'text-blue-400' : 'text-blue-600'
+                          }`} />
+                          <div className="flex-1">
+                            <h3 className={`font-medium ${
+                              settingsTheme === 'dark' ? 'text-white' : 'text-gray-900'
+                            }`}>
+                              System Reports
+                            </h3>
+                            <p className={`text-sm ${
+                              settingsTheme === 'dark' ? 'text-gray-400' : 'text-gray-600'
+                            }`}>
+                              Generate and view system analytics
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Security Section */}
+                    <div className="mb-8">
+                      <h2 className={`text-lg font-semibold mb-4 ${
+                        settingsTheme === 'dark' ? 'text-white' : 'text-gray-900'
+                      }`}>
+                        Security
+                      </h2>
+                      
+                      <div className="space-y-4">
+                        {/* Security Settings */}
+                        <div className={`flex items-center p-4 rounded-lg border cursor-pointer hover:shadow-md transition-all ${
+                          settingsTheme === 'dark' 
+                            ? 'border-gray-600 bg-gray-700 hover:bg-gray-650' 
+                            : 'border-gray-200 bg-gray-50 hover:bg-gray-100'
+                        }`}>
+                          <Shield className={`w-6 h-6 mr-4 ${
+                            settingsTheme === 'dark' ? 'text-blue-400' : 'text-blue-600'
+                          }`} />
+                          <div className="flex-1">
+                            <h3 className={`font-medium ${
+                              settingsTheme === 'dark' ? 'text-white' : 'text-gray-900'
+                            }`}>
+                              Security Settings
+                            </h3>
+                            <p className={`text-sm ${
+                              settingsTheme === 'dark' ? 'text-gray-400' : 'text-gray-600'
+                            }`}>
+                              Configure security policies and access controls
+                            </p>
+                          </div>
+                        </div>
+
+                        {/* Audit Logs */}
+                        <div className={`flex items-center p-4 rounded-lg border cursor-pointer hover:shadow-md transition-all ${
+                          settingsTheme === 'dark' 
+                            ? 'border-gray-600 bg-gray-700 hover:bg-gray-650' 
+                            : 'border-gray-200 bg-gray-50 hover:bg-gray-100'
+                        }`}>
+                          <Eye className={`w-6 h-6 mr-4 ${
+                            settingsTheme === 'dark' ? 'text-blue-400' : 'text-blue-600'
+                          }`} />
+                          <div className="flex-1">
+                            <h3 className={`font-medium ${
+                              settingsTheme === 'dark' ? 'text-white' : 'text-gray-900'
+                            }`}>
+                              Audit Logs
+                            </h3>
+                            <p className={`text-sm ${
+                              settingsTheme === 'dark' ? 'text-gray-400' : 'text-gray-600'
+                            }`}>
+                              View system access and activity logs
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* System Section */}
+                    <div className="mb-8">
+                      <h2 className={`text-lg font-semibold mb-4 ${
+                        settingsTheme === 'dark' ? 'text-white' : 'text-gray-900'
+                      }`}>
+                        System
+                      </h2>
+                      
+                      <div className="space-y-4">
+                        {/* Database Management */}
+                        <div className={`flex items-center p-4 rounded-lg border cursor-pointer hover:shadow-md transition-all ${
+                          settingsTheme === 'dark' 
+                            ? 'border-gray-600 bg-gray-700 hover:bg-gray-650' 
+                            : 'border-gray-200 bg-gray-50 hover:bg-gray-100'
+                        }`}>
+                          <Database className={`w-6 h-6 mr-4 ${
+                            settingsTheme === 'dark' ? 'text-blue-400' : 'text-blue-600'
+                          }`} />
+                          <div className="flex-1">
+                            <h3 className={`font-medium ${
+                              settingsTheme === 'dark' ? 'text-white' : 'text-gray-900'
+                            }`}>
+                              Database Management
+                            </h3>
+                            <p className={`text-sm ${
+                              settingsTheme === 'dark' ? 'text-gray-400' : 'text-gray-600'
+                            }`}>
+                              Manage database backups and maintenance
+                            </p>
+                          </div>
+                        </div>
+
+                        {/* Backup & Restore */}
+                        <div className={`flex items-center p-4 rounded-lg border cursor-pointer hover:shadow-md transition-all ${
+                          settingsTheme === 'dark' 
+                            ? 'border-gray-600 bg-gray-700 hover:bg-gray-650' 
+                            : 'border-gray-200 bg-gray-50 hover:bg-gray-100'
+                        }`}>
+                          <Download className={`w-6 h-6 mr-4 ${
+                            settingsTheme === 'dark' ? 'text-blue-400' : 'text-blue-600'
+                          }`} />
+                          <div className="flex-1">
+                            <h3 className={`font-medium ${
+                              settingsTheme === 'dark' ? 'text-white' : 'text-gray-900'
+                            }`}>
+                              Backup & Restore
+                            </h3>
+                            <p className={`text-sm ${
+                              settingsTheme === 'dark' ? 'text-gray-400' : 'text-gray-600'
+                            }`}>
+                              Create backups and restore system data
+                            </p>
+                          </div>
+                        </div>
+
+                        {/* Theme Toggle */}
+                        <div className={`flex items-center justify-between p-4 rounded-lg border ${
+                          settingsTheme === 'dark' 
+                            ? 'border-gray-600 bg-gray-700' 
+                            : 'border-gray-200 bg-gray-50'
+                        }`}>
+                          <div className="flex items-center">
+                            <div className={`w-6 h-6 mr-4 rounded ${
+                              settingsTheme === 'dark' ? 'bg-gray-800' : 'bg-yellow-400'
+                            } flex items-center justify-center`}>
+                              {settingsTheme === 'dark' ? '🌙' : '☀️'}
+                            </div>
+                            <div>
+                              <h3 className={`font-medium ${
+                                settingsTheme === 'dark' ? 'text-white' : 'text-gray-900'
+                              }`}>
+                                Settings Theme
+                              </h3>
+                              <p className={`text-sm ${
+                                settingsTheme === 'dark' ? 'text-gray-400' : 'text-gray-600'
+                              }`}>
+                                Toggle between light and dark mode (separate from dashboard)
+                              </p>
+                            </div>
+                          </div>
+                          <Button
+                            onClick={toggleSettingsTheme}
+                            variant="outline"
+                            size="sm"
+                            className={`${
+                              settingsTheme === 'dark' 
+                                ? 'border-gray-600 text-gray-300 hover:bg-gray-600' 
+                                : 'border-gray-300 text-gray-700 hover:bg-gray-100'
+                            }`}
+                            data-testid="button-toggle-settings-theme"
+                          >
+                            {settingsTheme === 'dark' ? 'Switch to Light' : 'Switch to Dark'}
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Footer Note */}
+                    <div className={`text-center pt-6 border-t ${
+                      settingsTheme === 'dark' ? 'border-gray-600' : 'border-gray-200'
+                    }`}>
+                      <p className={`text-sm ${
+                        settingsTheme === 'dark' ? 'text-gray-400' : 'text-gray-600'
+                      }`}>
+                        Settings theme is separate from dashboard theme and only affects this settings page.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </TabsContent>
 
           </Tabs>
         </div>
