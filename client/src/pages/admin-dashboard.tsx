@@ -4737,7 +4737,7 @@ export default function ClinicDashboard() {
                   <SelectValue placeholder="Select patient" />
                 </SelectTrigger>
                 <SelectContent>
-                  {patients?.filter(p => p.role === 'patient').map((patient) => (
+                  {patients?.filter(p => p.role === 'patient' && p.id && p.id.trim() !== '').map((patient) => (
                     <SelectItem key={patient.id} value={patient.id}>
                       {patient.firstName} {patient.lastName}
                     </SelectItem>
@@ -4752,7 +4752,7 @@ export default function ClinicDashboard() {
                   <SelectValue placeholder="Select doctor" />
                 </SelectTrigger>
                 <SelectContent>
-                  {users?.filter(u => u.role === 'doctor').map((doctor) => (
+                  {users?.filter(u => u.role === 'doctor' && u.id && u.id.trim() !== '').map((doctor) => (
                     <SelectItem key={doctor.id} value={doctor.id}>
                       Dr. {doctor.firstName} {doctor.lastName}
                     </SelectItem>
