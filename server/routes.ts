@@ -321,8 +321,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "Account is not active" });
       }
 
-      // Generate JWT token
-      const token = await authService.generateToken(user.id, req.ip, req.get('User-Agent'));
+      // Generate JWT token with auth session
+      const token = jwt.sign(
+        { 
+          userId: user.id, 
+          role: user.role,
+          ...(user.clinicId && { clinicId: user.clinicId })
+        },
+        process.env.JWT_SECRET!,
+        { expiresIn: '7d' }
+      );
+
+      // Create auth session in database
+      const expiresAt = new Date();
+      expiresAt.setDate(expiresAt.getDate() + 7); // 7 days
+
+      await storage.createAuthSession({
+        token,
+        userId: user.id,
+        ipAddress: req.ip || 'unknown',
+        userAgent: req.get('User-Agent') || 'unknown',
+        expiresAt,
+        lastActivity: new Date()
+      });
 
       console.log(`🔥 FIREBASE LOGIN - Login successful for: ${user.email}`);
 
