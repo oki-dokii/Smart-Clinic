@@ -14,6 +14,7 @@ import { authService } from "./services/auth";
 import { emailService } from "./services/email";
 import { queueService } from "./services/queue";
 import { schedulerService } from "./services/scheduler";
+import { smsService } from "./services/sms";
 import { WebSocketServer, WebSocket } from 'ws';
 
 // Helper function to generate timings from frequency
@@ -473,11 +474,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Send SMS notification to patient
       try {
         const doctor = await storage.getUser(appointmentDetails.doctorId);
-        await smsService.sendAppointmentRequest(patientInfo.phoneNumber, {
-          doctorName: `Dr. ${doctor?.firstName} ${doctor?.lastName}`,
-          preferredDate: new Date(appointmentDetails.preferredDate).toLocaleDateString(),
-          appointmentId: appointment.id
-        });
+        await smsService.send(patientInfo.phoneNumber, `Your appointment request with Dr. ${doctor?.firstName} ${doctor?.lastName} for ${new Date(appointmentDetails.preferredDate).toLocaleDateString()} has been submitted. Appointment ID: ${appointment.id}`);
         console.log('🔥 SMS notification sent to patient');
       } catch (smsError) {
         console.error('SMS notification failed:', smsError);
@@ -718,7 +715,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           // Send SMS notification (keeping existing SMS functionality)
           try {
             const message = `Good news! Your appointment with Dr. ${doctor.firstName} ${doctor.lastName} on ${appointmentDate.toLocaleDateString()} at ${appointmentDate.toLocaleTimeString()} has been approved. Please arrive 15 minutes early.`;
-            await smsService.sendSMS(patient.phoneNumber, message);
+            await smsService.send(patient.phoneNumber, message);
             console.log('🔥 APPROVAL - SMS sent to:', patient.phoneNumber);
           } catch (smsError) {
             console.error('🔥 APPROVAL - SMS failed:', smsError);
@@ -1477,7 +1474,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             doctorId: req.user!.id,
             medicineId: medicine.id,
             dosage,
-            frequency,
+            frequency: frequency as "once_daily" | "twice_daily" | "three_times_daily" | "four_times_daily" | "as_needed" | "weekly" | "monthly",
             instructions,
             startDate: new Date(),
             totalDoses: 30,
