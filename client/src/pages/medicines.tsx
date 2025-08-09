@@ -709,9 +709,9 @@ Lisinopril 10mg - Once daily at 9:00 PM - For blood pressure"
                           <p className="text-base mb-2 font-medium text-gray-700 dark:text-gray-200">Timings:</p>
                           <div className="flex flex-wrap gap-2">
                             {(medicine.timings || []).map((time, index) => (
-                              <Badge key={index} variant="outline" className="flex items-center gap-1">
+                              <Badge key={index} variant="outline" className="flex items-center gap-1 text-gray-700 dark:text-gray-200 border-gray-300 dark:border-gray-600">
                                 <Clock className="w-3 h-3" />
-                                {formatTime(time)}
+                                <span className="text-gray-700 dark:text-gray-200">{formatTime(time)}</span>
                               </Badge>
                             ))}
                           </div>
