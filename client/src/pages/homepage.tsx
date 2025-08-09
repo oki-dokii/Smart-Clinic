@@ -30,7 +30,8 @@ import {
   Heart,
   Activity,
   Moon,
-  Sun
+  Sun,
+  Stethoscope
 } from "lucide-react";
 
 const clinicRegistrationSchema = insertClinicSchema.extend({
@@ -152,7 +153,7 @@ export default function Homepage() {
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
               <div className="p-2 bg-blue-600 rounded-xl">
-                <Heart className="h-6 w-6 text-white" />
+                <Stethoscope className="h-6 w-6 text-white" />
               </div>
               <h1 className="text-2xl font-bold text-gray-900 dark:text-white">SmartClinic</h1>
             </div>
