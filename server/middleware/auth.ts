@@ -53,3 +53,30 @@ export function requireRole(roles: string[]) {
     next();
   };
 }
+
+// Strict admin access control - only allows soham.banerjee@iiitb.ac.in
+export function requireSuperAdmin(req: Request, res: Response, next: NextFunction): void {
+  if (!req.user) {
+    res.status(401).json({ message: 'Authentication required' });
+    return;
+  }
+
+  const AUTHORIZED_ADMIN_EMAIL = 'soham.banerjee@iiitb.ac.in';
+  
+  // Check if user has admin role AND authorized email
+  if (req.user.role !== 'admin' || req.user.email !== AUTHORIZED_ADMIN_EMAIL) {
+    console.log('🔥 SUPER ADMIN ACCESS DENIED:', {
+      email: req.user.email,
+      role: req.user.role,
+      authorized: AUTHORIZED_ADMIN_EMAIL
+    });
+    res.status(403).json({ 
+      message: 'Access denied. Super admin privileges required.',
+      details: 'Only authorized administrators can access this resource.'
+    });
+    return;
+  }
+
+  console.log('🔥 SUPER ADMIN ACCESS GRANTED:', req.user.email);
+  next();
+}

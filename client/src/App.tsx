@@ -32,6 +32,94 @@ interface User {
   isActive: boolean;
 }
 
+// Super Admin Protection Component - Only for soham.banerjee@iiitb.ac.in
+function SuperAdminRoute({ children }: { children: React.ReactNode }) {
+  const token = localStorage.getItem('auth_token');
+  const [loading, setLoading] = useState(true);
+
+  // Get current user info
+  const { data: currentUser, isLoading, error } = useQuery<User>({
+    queryKey: ['/api/users/me'],
+    enabled: !!token,
+    retry: false,
+  });
+
+  useEffect(() => {
+    // Handle authentication errors
+    if (error || (!isLoading && !currentUser && token)) {
+      localStorage.removeItem('auth_token');
+      localStorage.removeItem('user');
+      window.location.href = '/login';
+      return;
+    }
+
+    // Update loading state
+    setLoading(isLoading);
+
+    // Handle no token
+    if (!token) {
+      window.location.href = '/login';
+      return;
+    }
+
+    // Check super admin access
+    if (currentUser) {
+      const AUTHORIZED_ADMIN_EMAIL = 'soham.banerjee@iiitb.ac.in';
+      
+      if (currentUser.role !== 'admin' || currentUser.email !== AUTHORIZED_ADMIN_EMAIL) {
+        console.log('🔥 UNAUTHORIZED ADMIN ACCESS ATTEMPT:', {
+          email: currentUser.email,
+          role: currentUser.role,
+          authorized: AUTHORIZED_ADMIN_EMAIL
+        });
+        
+        // Redirect unauthorized users to appropriate dashboard
+        if (currentUser.role === 'staff' || currentUser.role === 'doctor') {
+          window.location.href = '/dashboard';
+        } else if (currentUser.role === 'patient') {
+          window.location.href = '/dashboard';
+        } else {
+          window.location.href = '/login';
+        }
+        return;
+      }
+      
+      localStorage.setItem('user', JSON.stringify(currentUser));
+    }
+  }, [token, currentUser, isLoading, error]);
+
+  // Show loading during authentication check
+  if (!token || loading || (!currentUser && !error)) {
+    return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
+  }
+
+  // Handle authentication errors
+  if (error || !currentUser) {
+    return null;
+  }
+
+  // Check if user is authorized super admin
+  const AUTHORIZED_ADMIN_EMAIL = 'soham.banerjee@iiitb.ac.in';
+  if (currentUser.role !== 'admin' || currentUser.email !== AUTHORIZED_ADMIN_EMAIL) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-red-600 mb-4">Access Denied</h1>
+          <p className="text-gray-600 mb-4">You don't have permission to access this page.</p>
+          <button 
+            onClick={() => window.location.href = '/dashboard'}
+            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+          >
+            Go to Dashboard
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return <>{children}</>;
+}
+
 // Route protection component
 function ProtectedRoute({ 
   children, 
@@ -122,12 +210,12 @@ const AppRouter = () => {
       <Route path="/patient-login">{() => <PublicRoute><PatientLogin /></PublicRoute>}</Route>
       <Route path="/">{() => <PublicRoute><Homepage /></PublicRoute>}</Route>
       
-      {/* Admin-only routes */}
-      <Route path="/admin">{() => <ProtectedRoute allowedRoles={['admin']}><AdminDashboard /></ProtectedRoute>}</Route>
-      <Route path="/admin-dashboard">{() => <ProtectedRoute allowedRoles={['admin']}><AdminDashboard /></ProtectedRoute>}</Route>
-      <Route path="/clinic-management">{() => <ProtectedRoute allowedRoles={['admin']}><ClinicManagement /></ProtectedRoute>}</Route>
-      <Route path="/clinic-admin/:clinicId">{() => <ProtectedRoute allowedRoles={['admin']}><ClinicAdminDashboard /></ProtectedRoute>}</Route>
-      <Route path="/medicines">{() => <ProtectedRoute allowedRoles={['admin']}><MedicinesPage /></ProtectedRoute>}</Route>
+      {/* Super Admin-only routes (soham.banerjee@iiitb.ac.in only) */}
+      <Route path="/admin">{() => <SuperAdminRoute><AdminDashboard /></SuperAdminRoute>}</Route>
+      <Route path="/admin-dashboard">{() => <SuperAdminRoute><AdminDashboard /></SuperAdminRoute>}</Route>
+      <Route path="/clinic-management">{() => <SuperAdminRoute><ClinicManagement /></SuperAdminRoute>}</Route>
+      <Route path="/clinic-admin/:clinicId">{() => <SuperAdminRoute><ClinicAdminDashboard /></SuperAdminRoute>}</Route>
+      <Route path="/medicines">{() => <SuperAdminRoute><MedicinesPage /></SuperAdminRoute>}</Route>
       
       {/* Staff/Doctor-only routes */}
       <Route path="/staff-checkin">{() => <ProtectedRoute allowedRoles={['staff', 'doctor']}><StaffCheckinPage /></ProtectedRoute>}</Route>

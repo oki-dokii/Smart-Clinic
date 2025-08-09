@@ -8,7 +8,7 @@ import {
   insertStaffVerificationSchema, insertPatientFeedbackSchema, insertClinicSchema
 } from "@shared/schema";
 import { z } from "zod";
-import { authMiddleware, requireRole } from "./middleware/auth";
+import { authMiddleware, requireRole, requireSuperAdmin } from "./middleware/auth";
 import { gpsVerificationMiddleware } from "./middleware/gps";
 import { authService } from "./services/auth";
 import { emailService } from "./services/email";
@@ -233,7 +233,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/auth/register", authMiddleware, requireRole(['admin']), async (req, res) => {
+  app.post("/api/auth/register", authMiddleware, requireSuperAdmin, async (req, res) => {
     try {
       const validatedData = insertUserSchema.parse(req.body);
       const user = await storage.createUser(validatedData);
@@ -345,7 +345,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put("/api/users/:id/approve", authMiddleware, requireRole(['admin']), async (req, res) => {
+  app.put("/api/users/:id/approve", authMiddleware, requireSuperAdmin, async (req, res) => {
     try {
       const { id } = req.params;
       const user = await storage.approveUser(id);
@@ -358,7 +358,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put("/api/users/:id/deactivate", authMiddleware, requireRole(['admin']), async (req, res) => {
+  app.put("/api/users/:id/deactivate", authMiddleware, requireSuperAdmin, async (req, res) => {
     try {
       const { id } = req.params;
       const user = await storage.deactivateUser(id);
@@ -624,19 +624,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Admin appointment routes (MUST come before general routes)
-  app.get("/api/appointments/admin", (req, res, next) => {
-    console.log('🔥🔥🔥 RAW ROUTE HIT - BEFORE AUTH MIDDLEWARE');
-    console.log('🔥🔥🔥 Request method:', req.method);
-    console.log('🔥🔥🔥 Request path:', req.path);
-    console.log('🔥🔥🔥 Request headers:', req.headers.authorization ? 'Authorization header present' : 'No auth header');
-    next();
-  }, authMiddleware, async (req, res) => {
+  app.get("/api/appointments/admin", authMiddleware, requireSuperAdmin, async (req, res) => {
     console.log('🔥 ADMIN APPOINTMENTS ROUTE HIT - START');
     try {
-      if (req.user!.role !== 'admin') {
-        console.log('🔥 Admin role check failed:', req.user!.role);
-        return res.status(403).json({ message: "Admin access required" });
-      }
 
       // Get admin's clinic ID from user data  
       const adminClinicId = req.user!.clinicId;
@@ -1940,11 +1930,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Admin-specific routes
-  app.get("/api/admin/dashboard-stats", authMiddleware, async (req, res) => {
+  app.get("/api/admin/dashboard-stats", authMiddleware, requireSuperAdmin, async (req, res) => {
     try {
-      if (req.user!.role !== 'admin') {
-        return res.status(403).json({ message: "Admin access required" });
-      }
 
       // Get admin's clinic ID
       const adminClinicId = req.user!.clinicId;
@@ -1998,7 +1985,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Reports endpoint
-  app.get("/api/reports/daily", authMiddleware, requireRole(['admin']), async (req, res) => {
+  app.get("/api/reports/daily", authMiddleware, requireSuperAdmin, async (req, res) => {
     try {
       // Get today's date for filtering
       const today = new Date();
@@ -2117,11 +2104,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put("/api/medicines/:medicineId", authMiddleware, async (req, res) => {
+  app.put("/api/medicines/:medicineId", authMiddleware, requireSuperAdmin, async (req, res) => {
     try {
-      if (req.user!.role !== 'admin') {
-        return res.status(403).json({ message: "Admin access required" });
-      }
 
       const { medicineId } = req.params;
       const { name, strength, dosageForm, manufacturer, stock, description } = req.body;
