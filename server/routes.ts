@@ -1374,7 +1374,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         description: `Custom medicine added by patient`,
         dosageForm: 'custom',
         strength: dosage,
-        manufacturer: 'Patient Added'
+        manufacturer: 'Patient Added',
+        clinicId: req.user!.clinicId || 'default-clinic-id'
       });
 
       // Then create a prescription for this custom medicine
@@ -1465,7 +1466,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
             description: `Uploaded medicine by patient`,
             dosageForm: 'tablet',
             strength: dosage,
-            manufacturer: 'Patient Added'
+            manufacturer: 'Patient Added',
+            clinicId: req.user!.clinicId || 'default-clinic-id'
           });
 
           // Create prescription
