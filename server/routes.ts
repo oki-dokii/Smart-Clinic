@@ -290,7 +290,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const loginData = z.object({
         firebaseUid: z.string().min(1),
         email: z.string().email(),
-        name: z.string().optional()
+        name: z.string().min(1)
       }).parse(req.body);
 
       console.log(`🔥 FIREBASE LOGIN - Attempting login for: ${loginData.email}`);

@@ -55,8 +55,8 @@ export default function PatientSignup() {
       
       // Create patient account with Google data
       await createPatientMutation.mutateAsync({
-        firstName: user.displayName?.split(' ')[0] || '',
-        lastName: user.displayName?.split(' ').slice(1).join(' ') || '',
+        firstName: user.displayName?.split(' ')[0] || user.email?.split('@')[0] || 'Patient',
+        lastName: user.displayName?.split(' ').slice(1).join(' ') || 'User',
         email: user.email,
         phoneNumber: user.phoneNumber || '',
         firebaseUid: user.uid,

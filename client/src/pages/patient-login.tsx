@@ -20,7 +20,7 @@ export default function PatientLogin() {
       const response = await apiRequest('POST', '/api/auth/firebase-login', {
         firebaseUid: firebaseUser.uid,
         email: firebaseUser.email,
-        name: firebaseUser.displayName
+        name: firebaseUser.displayName || firebaseUser.email?.split('@')[0] || 'Patient'
       });
       return await response.json();
     },
