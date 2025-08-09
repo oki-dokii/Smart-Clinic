@@ -646,7 +646,7 @@ Lisinopril 10mg - Once daily at 9:00 PM - For blood pressure"
                         <div className="flex items-center justify-between">
                           <CardTitle className="flex items-center gap-2 font-bold text-lg">
                             <Pill className="w-5 h-5 text-blue-500" />
-                            <span className="font-semibold text-gray-900 dark:text-white">
+                            <span className="font-semibold">
                               {medicine.name || 'MISSING MEDICINE NAME'}
                             </span>
                           </CardTitle>
@@ -695,23 +695,23 @@ Lisinopril 10mg - Once daily at 9:00 PM - For blood pressure"
                       <CardContent>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           <div>
-                            <p className="text-base font-medium text-gray-700 dark:text-gray-300">
-                              Dosage: <span className="font-semibold text-gray-900 dark:text-white">{medicine.dosage || 'No dosage'}</span>
+                            <p className="text-base font-medium">
+                              Dosage: <span className="font-semibold">{medicine.dosage || 'No dosage'}</span>
                             </p>
-                            <p className="text-base font-medium text-gray-700 dark:text-gray-300">
-                              Frequency: <span className="font-semibold text-gray-900 dark:text-white">{medicine.frequency?.replace('_', ' ') || 'Not specified'}</span>
+                            <p className="text-base font-medium">
+                              Frequency: <span className="font-semibold">{medicine.frequency?.replace('_', ' ') || 'Not specified'}</span>
                             </p>
-                            <p className="text-base font-medium text-gray-700 dark:text-gray-300">
-                              Instructions: <span className="font-semibold text-gray-900 dark:text-white">{medicine.instructions || 'Take as prescribed'}</span>
+                            <p className="text-base font-medium">
+                              Instructions: <span className="font-semibold">{medicine.instructions || 'Take as prescribed'}</span>
                             </p>
                           </div>
                         <div>
-                          <p className="text-base mb-2 font-medium text-gray-700 dark:text-gray-300">Timings:</p>
+                          <p className="text-base mb-2 font-medium">Timings:</p>
                           <div className="flex flex-wrap gap-2">
                             {(medicine.timings || []).map((time, index) => (
-                              <Badge key={index} variant="outline" className="flex items-center gap-1 text-gray-700 dark:text-gray-200 border-gray-300 dark:border-gray-600">
+                              <Badge key={index} variant="outline" className="flex items-center gap-1">
                                 <Clock className="w-3 h-3" />
-                                <span className="text-gray-700 dark:text-gray-200">{formatTime(time)}</span>
+                                <span>{formatTime(time)}</span>
                               </Badge>
                             ))}
                           </div>
