@@ -25,7 +25,7 @@ function AuthWrapper({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
-function Router() {
+function Router(): JSX.Element {
   return (
     <Switch>
       <Route path="/login" component={LoginPage} />
