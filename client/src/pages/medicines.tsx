@@ -260,13 +260,13 @@ export default function MedicinesPage() {
   };
 
   if (loadingCustom || loadingReminders) {
-    return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
+    return <div className="flex items-center justify-center min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white">Loading...</div>;
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       {/* Header */}
-      <header className="bg-white border-b border-gray-200 px-4 sm:px-6 py-4">
+      <header className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-4 sm:px-6 py-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <Button variant="ghost" onClick={() => setLocation("/dashboard")}>
@@ -274,7 +274,7 @@ export default function MedicinesPage() {
             </Button>
             <div className="flex items-center gap-2">
               <Pill className="w-6 h-6 text-blue-500" />
-              <h1 className="text-xl font-semibold">Medicine Manager</h1>
+              <h1 className="text-xl font-semibold text-gray-900 dark:text-white">Medicine Manager</h1>
             </div>
           </div>
           
@@ -576,7 +576,7 @@ Lisinopril 10mg - Once daily at 9:00 PM - For blood pressure"
         </div>
         
         {/* Search Bar for Medicines */}
-        <div className="px-4 sm:px-6 py-4 bg-white border-b border-gray-200">
+        <div className="px-4 sm:px-6 py-4 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
           <div className="relative">
             <Input
               placeholder="Search medicines by name, dosage, frequency, or instructions..."
@@ -599,11 +599,11 @@ Lisinopril 10mg - Once daily at 9:00 PM - For blood pressure"
           <TabsContent value="medicines">
             <div className="grid gap-4">
               {customMedicines.length === 0 ? (
-                <Card>
+                <Card className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
                   <CardContent className="p-8 text-center">
-                    <Pill className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                    <h3 className="text-lg font-medium text-gray-900 mb-2">No medicines added yet</h3>
-                    <p className="text-gray-500 mb-4">Add your first medicine or upload a list to get started</p>
+                    <Pill className="w-12 h-12 text-gray-400 dark:text-gray-500 mx-auto mb-4" />
+                    <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">No medicines added yet</h3>
+                    <p className="text-gray-500 dark:text-gray-400 mb-4">Add your first medicine or upload a list to get started</p>
                     <div className="flex gap-2 justify-center">
                       <Button onClick={() => setIsAddDialogOpen(true)}>
                         <Plus className="w-4 h-4 mr-2" />
@@ -635,10 +635,10 @@ Lisinopril 10mg - Once daily at 9:00 PM - For blood pressure"
                   const medicineStats = missedDoses.find((md: any) => md.medicineName === medicine.name);
                   const hasOverdueOrMissed = medicineStats && (medicineStats.missedDoses > 0 || medicineStats.overdueToday > 0);
                   return (
-                    <Card key={medicine.id} className={hasOverdueOrMissed ? 'medicine-card overdue glow-urgent' : 'medicine-card'}>
+                    <Card key={medicine.id} className={`bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 ${hasOverdueOrMissed ? 'medicine-card overdue glow-urgent' : 'medicine-card'}`}>
                       <CardHeader>
                         <div className="flex items-center justify-between">
-                          <CardTitle className="flex items-center gap-2">
+                          <CardTitle className="flex items-center gap-2 text-gray-900 dark:text-white">
                             <Pill className="w-5 h-5 text-blue-500" />
                             {medicine.name}
                           </CardTitle>
@@ -661,7 +661,7 @@ Lisinopril 10mg - Once daily at 9:00 PM - For blood pressure"
                                 variant="ghost"
                                 onClick={() => handleDeleteMedicine(medicine.id!, medicine.name)}
                                 disabled={deleteMedicineMutation.isPending}
-                                className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                                className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:text-red-400 dark:hover:text-red-300 dark:hover:bg-red-900/20"
                                 data-testid={`button-delete-medicine-${medicine.id}`}
                               >
                                 <Trash2 className="w-4 h-4" />
@@ -687,12 +687,12 @@ Lisinopril 10mg - Once daily at 9:00 PM - For blood pressure"
                       <CardContent>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           <div>
-                            <p className="text-sm text-gray-600">Dosage: <span className="font-medium">{medicine.dosage}</span></p>
-                            <p className="text-sm text-gray-600">Frequency: <span className="font-medium">{medicine.frequency?.replace('_', ' ') || 'Not specified'}</span></p>
-                            <p className="text-sm text-gray-600">Instructions: <span className="font-medium">{medicine.instructions || 'Take as prescribed'}</span></p>
+                            <p className="text-sm text-gray-600 dark:text-gray-300">Dosage: <span className="font-medium">{medicine.dosage}</span></p>
+                            <p className="text-sm text-gray-600 dark:text-gray-300">Frequency: <span className="font-medium">{medicine.frequency?.replace('_', ' ') || 'Not specified'}</span></p>
+                            <p className="text-sm text-gray-600 dark:text-gray-300">Instructions: <span className="font-medium">{medicine.instructions || 'Take as prescribed'}</span></p>
                           </div>
                         <div>
-                          <p className="text-sm text-gray-600 mb-2">Timings:</p>
+                          <p className="text-sm text-gray-600 dark:text-gray-300 mb-2">Timings:</p>
                           <div className="flex flex-wrap gap-2">
                             {(medicine.timings || []).map((time, index) => (
                               <Badge key={index} variant="outline" className="flex items-center gap-1">
@@ -714,16 +714,16 @@ Lisinopril 10mg - Once daily at 9:00 PM - For blood pressure"
           <TabsContent value="reminders">
             <div className="grid gap-4">
               {reminders.length === 0 ? (
-                <Card>
+                <Card className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
                   <CardContent className="p-8 text-center">
-                    <Clock className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                    <h3 className="text-lg font-medium text-gray-900 mb-2">No reminders for today</h3>
-                    <p className="text-gray-500">Add some medicines to see reminders here</p>
+                    <Clock className="w-12 h-12 text-gray-400 dark:text-gray-500 mx-auto mb-4" />
+                    <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">No reminders for today</h3>
+                    <p className="text-gray-500 dark:text-gray-400">Add some medicines to see reminders here</p>
                   </CardContent>
                 </Card>
               ) : (
                 reminders.map((reminder: any) => (
-                  <Card key={reminder.id}>
+                  <Card key={reminder.id} className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
                     <CardContent className="p-4">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
@@ -733,8 +733,8 @@ Lisinopril 10mg - Once daily at 9:00 PM - For blood pressure"
                             new Date(reminder.scheduledAt) < new Date() ? 'bg-orange-500' : 'bg-yellow-500'
                           }`} />
                           <div>
-                            <h4 className="font-medium">{reminder.prescription?.medicine?.name}</h4>
-                            <p className="text-sm text-gray-600">
+                            <h4 className="font-medium text-gray-900 dark:text-white">{reminder.prescription?.medicine?.name}</h4>
+                            <p className="text-sm text-gray-600 dark:text-gray-300">
                               {reminder.prescription?.dosage} - {reminder.prescription?.timings && reminder.prescription.timings.length > 0 
                                 ? formatTime(reminder.prescription.timings[0]) 
                                 : formatTime(reminder.scheduledAt)}
