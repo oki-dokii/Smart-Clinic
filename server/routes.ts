@@ -256,7 +256,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         role: 'patient' as const,
         isActive: true,
         isApproved: true, // Auto-approve patients
-        dateOfBirth: signupData.dateOfBirth ? new Date(signupData.dateOfBirth) : undefined
+        dateOfBirth: signupData.dateOfBirth ? new Date(signupData.dateOfBirth) : undefined,
+        // Generate unique phone number for Firebase users if not provided
+        phoneNumber: signupData.phoneNumber || `firebase-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
       };
 
       const user = await storage.createUser(userData);

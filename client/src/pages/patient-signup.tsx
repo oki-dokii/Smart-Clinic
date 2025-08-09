@@ -116,9 +116,21 @@ export default function PatientSignup() {
         authProvider: 'email'
       });
     } catch (error: any) {
+      let errorMessage = "Failed to create account. Please try again.";
+      
+      if (error.code === 'auth/email-already-in-use') {
+        errorMessage = "An account with this email already exists. Please try logging in instead.";
+      } else if (error.code === 'auth/weak-password') {
+        errorMessage = "Password is too weak. Please use at least 6 characters.";
+      } else if (error.code === 'auth/invalid-email') {
+        errorMessage = "Please enter a valid email address.";
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
       toast({
         title: "Signup Failed",
-        description: error.message || "Failed to create account. Please try again.",
+        description: errorMessage,
         variant: "destructive"
       });
     } finally {
