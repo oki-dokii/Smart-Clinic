@@ -139,8 +139,11 @@ interface StaffPresence {
 // Emergency Alert Interface
 interface EmergencyAlert {
   id: string;
+  title: string;
   message: string;
-  type: 'critical' | 'warning' | 'info';
+  type: 'appointment_delay' | 'staff_missing' | 'medicine_low' | 'high_volume' | 'queue_overload';
+  priority: 'high' | 'medium' | 'low';
+  timestamp: string;
   timeAgo: string;
   color: string;
 }
@@ -312,6 +315,17 @@ export default function ClinicDashboard() {
     setSelectedFeedback(feedbackItem)
     setIsContactModalOpen(true)
   }
+
+  // Alert management functions
+  const resolveAlert = (alertId: string) => {
+    setEmergencyAlerts(prev => prev.filter(alert => alert.id !== alertId))
+    setShowAlertModal(false)
+    setSelectedAlert(null)
+    toast({
+      title: 'Alert Resolved',
+      description: 'The emergency alert has been marked as resolved.'
+    })
+  }
   
   // Get real feedback data for notifications
   const { data: feedbackData = [] } = useQuery({
@@ -325,6 +339,10 @@ export default function ClinicDashboard() {
   // Emergency alerts state (for other non-feedback alerts)
   const [emergencyAlerts, setEmergencyAlerts] = useState<EmergencyAlert[]>([])
   const [lastAlertCheck, setLastAlertCheck] = useState<Date>(new Date())
+  
+  // Alert modal states
+  const [showAlertModal, setShowAlertModal] = useState(false)
+  const [selectedAlert, setSelectedAlert] = useState<EmergencyAlert | null>(null)
   
 
 
@@ -1059,20 +1077,23 @@ export default function ClinicDashboard() {
   }
 
   // Function to add emergency alert
-  const addEmergencyAlert = (message: string, type: 'critical' | 'warning' | 'info', duration?: number) => {
+  const addEmergencyAlert = (title: string, message: string, type: EmergencyAlert['type'], priority: EmergencyAlert['priority'] = 'medium', duration?: number) => {
     const alertId = `alert-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
     const newAlert: EmergencyAlert = {
       id: alertId,
+      title,
       message,
       type,
+      priority,
+      timestamp: new Date().toISOString(),
       timeAgo: 'Just now',
-      color: type === 'critical' ? 'red' : type === 'warning' ? 'yellow' : 'blue'
+      color: priority === 'high' ? 'red' : priority === 'medium' ? 'yellow' : 'blue'
     }
     
     setEmergencyAlerts(prev => [newAlert, ...prev].slice(0, 5)) // Limit to 5 alerts
     
-    // Auto-remove info alerts after specified duration (default 5 minutes)
-    if (type === 'info' && duration) {
+    // Auto-remove low priority alerts after specified duration (default 5 minutes)
+    if (priority === 'low' && duration) {
       setTimeout(() => {
         setEmergencyAlerts(prev => prev.filter(alert => alert.id !== alertId))
       }, duration)
@@ -1104,8 +1125,10 @@ export default function ClinicDashboard() {
         const patientName = apt.patient ? `${apt.patient.firstName} ${apt.patient.lastName}` : 'Unknown Patient'
         
         addEmergencyAlert(
-          `Appointment delayed: ${patientName} with ${doctorName} is ${Math.round(delayMinutes)} minutes overdue`,
-          'warning'
+          'Appointment Delay',
+          `${patientName} with ${doctorName} is ${Math.round(delayMinutes)} minutes overdue`,
+          'appointment_delay',
+          'high'
         )
       }
     })
@@ -1122,8 +1145,10 @@ export default function ClinicDashboard() {
       
       if (!hasCheckedIn && currentHour > 9 && !emergencyAlerts.some(alert => alert.id.includes(`staff-${staffMember.id}`))) {
         addEmergencyAlert(
-          `Staff Alert: ${staffMember.firstName} ${staffMember.lastName} has not checked in today`,
-          'warning'
+          'Staff Missing',
+          `${staffMember.firstName} ${staffMember.lastName} has not checked in today`,
+          'staff_missing',
+          'high'
         )
       }
     })
@@ -1131,8 +1156,10 @@ export default function ClinicDashboard() {
     // 3. Check for high patient load (more than 15 patients today)
     if (stats.patientsToday > 15 && !emergencyAlerts.some(alert => alert.message.includes('High patient volume'))) {
       addEmergencyAlert(
-        `High patient volume: ${stats.patientsToday} patients scheduled today`,
-        'info'
+        'High Patient Volume',
+        `${stats.patientsToday} patients scheduled today`,
+        'high_volume',
+        'medium'
       )
     }
 
@@ -1141,13 +1168,17 @@ export default function ClinicDashboard() {
       medicines.forEach((medicine: any) => {
         if (medicine.stock <= 5 && medicine.stock > 0 && !emergencyAlerts.some(alert => alert.id.includes(`stock-${medicine.id}`))) {
           addEmergencyAlert(
-            `Low stock alert: ${medicine.name} has only ${medicine.stock} units remaining`,
-            'warning'
+            'Low Medicine Stock',
+            `${medicine.name} has only ${medicine.stock} units remaining`,
+            'medicine_low',
+            'medium'
           )
         } else if (medicine.stock === 0 && !emergencyAlerts.some(alert => alert.id.includes(`outstock-${medicine.id}`))) {
           addEmergencyAlert(
-            `Out of stock: ${medicine.name} is completely out of stock`,
-            'critical'
+            'Medicine Out of Stock',
+            `${medicine.name} is completely out of stock`,
+            'medicine_low',
+            'high'
           )
         }
       })
@@ -1160,8 +1191,10 @@ export default function ClinicDashboard() {
     
     if (waitingInQueue > 8 && !emergencyAlerts.some(alert => alert.message.includes('Queue overload'))) {
       addEmergencyAlert(
-        `Queue overload: ${waitingInQueue} patients currently waiting`,
-        'warning'
+        'Queue Overload',
+        `${waitingInQueue} patients currently waiting`,
+        'queue_overload',
+        'high'
       )
     }
 
@@ -1175,8 +1208,10 @@ export default function ClinicDashboard() {
       const firstMedicine = medicines[0]
       if (firstMedicine.stock === 0) {
         addEmergencyAlert(
-          `Out of stock: ${firstMedicine.name} is completely out of stock`,
-          'critical'
+          'Test Medicine Alert',
+          `${firstMedicine.name} is completely out of stock`,
+          'medicine_low',
+          'high'
         )
       }
     }
@@ -1184,15 +1219,19 @@ export default function ClinicDashboard() {
     // Test warning alert for high queue
     if (liveQueueTokens && liveQueueTokens.length > 0) {
       addEmergencyAlert(
-        `Queue monitoring: ${liveQueueTokens.length} patients currently in queue`,
-        'warning'
+        'Test Queue Alert',
+        `${liveQueueTokens.length} patients currently in queue`,
+        'queue_overload',
+        'medium'
       )
     }
 
     // Test info alert
     addEmergencyAlert(
-      `System check: Emergency alert system is functioning normally`,
-      'info',
+      'System Check',
+      'Emergency alert system is functioning normally',
+      'system_status',
+      'low',
       300000 // Auto-remove after 5 minutes
     )
   }
