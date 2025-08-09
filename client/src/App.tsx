@@ -28,21 +28,21 @@ function AuthWrapper({ children }: { children: React.ReactNode }) {
 const AppRouter = () => {
   return (
     <Switch>
-      <Route path="/login" component={LoginPage} />
-      <Route path="/dashboard" component={Dashboard} />
-      <Route path="/admin" component={AdminDashboard} />
-      <Route path="/admin-dashboard" component={AdminDashboard} />
-      <Route path="/staff-checkin" component={StaffCheckinPage} />
-      <Route path="/profile" component={ProfilePage} />
-      <Route path="/settings" component={SettingsPage} />
-      <Route path="/medicines" component={MedicinesPage} />
-      <Route path="/book-appointment" component={PatientBooking} />
-      <Route path="/patient-login" component={PatientLogin} />
-      <Route path="/live-queue" component={LiveQueueTracker} />
-      <Route path="/clinic-management" component={ClinicManagement} />
-      <Route path="/clinic-admin/:clinicId" component={ClinicAdminDashboard} />
-      <Route path="/" component={Homepage} />
-      <Route component={NotFound} />
+      <Route path="/login">{() => <LoginPage />}</Route>
+      <Route path="/dashboard">{() => <Dashboard />}</Route>
+      <Route path="/admin">{() => <AdminDashboard />}</Route>
+      <Route path="/admin-dashboard">{() => <AdminDashboard />}</Route>
+      <Route path="/staff-checkin">{() => <StaffCheckinPage />}</Route>
+      <Route path="/profile">{() => <ProfilePage />}</Route>
+      <Route path="/settings">{() => <SettingsPage />}</Route>
+      <Route path="/medicines">{() => <MedicinesPage />}</Route>
+      <Route path="/book-appointment">{() => <PatientBooking />}</Route>
+      <Route path="/patient-login">{() => <PatientLogin />}</Route>
+      <Route path="/live-queue">{() => <LiveQueueTracker />}</Route>
+      <Route path="/clinic-management">{() => <ClinicManagement />}</Route>
+      <Route path="/clinic-admin/:clinicId">{() => <ClinicAdminDashboard />}</Route>
+      <Route path="/">{() => <Homepage />}</Route>
+      <Route>{() => <NotFound />}</Route>
     </Switch>
   );
 };
