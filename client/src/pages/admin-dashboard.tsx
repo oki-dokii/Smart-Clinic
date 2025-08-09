@@ -2722,7 +2722,7 @@ export default function ClinicDashboard() {
                         <h4 className="font-semibold text-gray-800 dark:text-gray-200">Today's Patient Flow</h4>
                         <div className="space-y-2">
                           {(() => {
-                            const todayAppts = adminAppointments?.filter(appt => {
+                            const todayAppts = appointments?.filter(appt => {
                               const apptDate = new Date(appt.appointmentDate);
                               const today = new Date();
                               return apptDate.toDateString() === today.toDateString();
@@ -2795,7 +2795,7 @@ export default function ClinicDashboard() {
                         <div className="space-y-2">
                           {(() => {
                             const doctors = staffMembers?.filter(staff => staff.role === 'doctor') || [];
-                            const todayCompletedAppts = adminAppointments?.filter(appt => {
+                            const todayCompletedAppts = appointments?.filter(appt => {
                               const apptDate = new Date(appt.appointmentDate);
                               const today = new Date();
                               return apptDate.toDateString() === today.toDateString() && appt.status === 'completed';
@@ -4309,7 +4309,7 @@ export default function ClinicDashboard() {
                         <div className="flex justify-between items-center">
                           <span className="text-sm text-gray-600 dark:text-gray-400">Cancelled Appointments</span>
                           <span className="font-semibold dark:text-gray-200">
-                            {adminAppointments?.filter(appt => {
+                            {appointments?.filter(appt => {
                               const today = new Date();
                               const apptDate = new Date(appt.appointmentDate);
                               return apptDate.toDateString() === today.toDateString() && appt.status === 'cancelled';
@@ -4319,7 +4319,7 @@ export default function ClinicDashboard() {
                         <div className="flex justify-between items-center">
                           <span className="text-sm text-gray-600 dark:text-gray-400">No-Shows</span>
                           <span className="font-semibold dark:text-gray-200">
-                            {adminAppointments?.filter(appt => {
+                            {appointments?.filter(appt => {
                               const today = new Date();
                               const apptDate = new Date(appt.appointmentDate);
                               return apptDate.toDateString() === today.toDateString() && appt.status === 'no-show';
@@ -4341,7 +4341,7 @@ export default function ClinicDashboard() {
                     <CardContent>
                       <div className="space-y-3">
                         {(() => {
-                          const todayAppts = adminAppointments?.filter(appt => {
+                          const todayAppts = appointments?.filter(appt => {
                             const today = new Date();
                             const apptDate = new Date(appt.appointmentDate);
                             return apptDate.toDateString() === today.toDateString();
@@ -4386,10 +4386,10 @@ export default function ClinicDashboard() {
                         <div className="flex justify-between items-center">
                           <span className="text-sm text-gray-600 dark:text-gray-400">Database</span>
                           <Badge className={`${
-                            adminAppointments ? 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-300' : 
+                            appointments ? 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-300' : 
                             'bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-300'
                           }`}>
-                            {adminAppointments ? 'Online' : 'Offline'}
+                            {appointments ? 'Online' : 'Offline'}
                           </Badge>
                         </div>
                         <div className="flex justify-between items-center">
