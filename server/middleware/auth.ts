@@ -54,25 +54,28 @@ export function requireRole(roles: string[]) {
   };
 }
 
-// Strict admin access control - only allows soham.banerjee@iiitb.ac.in
+// Strict superadmin access control - only allows soham.banerjee@iiitb.ac.in with superadmin role
 export function requireSuperAdmin(req: Request, res: Response, next: NextFunction): void {
   if (!req.user) {
     res.status(401).json({ message: 'Authentication required' });
     return;
   }
 
-  const AUTHORIZED_ADMIN_EMAIL = 'soham.banerjee@iiitb.ac.in';
+  const AUTHORIZED_SUPERADMIN_EMAIL = 'soham.banerjee@iiitb.ac.in';
   
-  // Check if user has admin role AND authorized email
-  if (req.user.role !== 'admin' || req.user.email !== AUTHORIZED_ADMIN_EMAIL) {
+  // Check if user has superadmin role AND authorized email AND no clinic association
+  if (req.user.role !== 'super_admin' || req.user.email !== AUTHORIZED_SUPERADMIN_EMAIL || req.user.clinicId) {
     console.log('🔥 SUPER ADMIN ACCESS DENIED:', {
       email: req.user.email,
       role: req.user.role,
-      authorized: AUTHORIZED_ADMIN_EMAIL
+      clinicId: req.user.clinicId,
+      authorized: AUTHORIZED_SUPERADMIN_EMAIL,
+      reason: req.user.role !== 'super_admin' ? 'Wrong role' : 
+              req.user.email !== AUTHORIZED_SUPERADMIN_EMAIL ? 'Wrong email' : 'Has clinic association'
     });
     res.status(403).json({ 
       message: 'Access denied. Super admin privileges required.',
-      details: 'Only authorized administrators can access this resource.'
+      details: 'Only the platform superadmin can access this resource.'
     });
     return;
   }
