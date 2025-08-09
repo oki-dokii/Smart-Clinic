@@ -15,6 +15,7 @@ import SettingsPage from "@/pages/settings";
 import MedicinesPage from "@/pages/medicines";
 import PatientBooking from "@/pages/patient-booking-new";
 import PatientLogin from "@/pages/patient-login";
+import PatientSignup from "@/pages/patient-signup";
 import LiveQueueTracker from "@/pages/live-queue";
 import ClinicManagement from "@/pages/clinic-management";
 import ClinicAdminDashboard from "@/pages/clinic-admin-dashboard";
@@ -208,6 +209,7 @@ const AppRouter = () => {
       {/* Public routes - no auth required */}
       <Route path="/login">{() => <PublicRoute><LoginPage /></PublicRoute>}</Route>
       <Route path="/patient-login">{() => <PublicRoute><PatientLogin /></PublicRoute>}</Route>
+      <Route path="/patient-signup">{() => <PublicRoute><PatientSignup /></PublicRoute>}</Route>
       <Route path="/">{() => <PublicRoute><Homepage /></PublicRoute>}</Route>
       
       {/* Super Admin-only routes (soham.banerjee@iiitb.ac.in only) */}

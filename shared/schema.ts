@@ -41,6 +41,8 @@ export const users = pgTable("users", {
   firstName: text("first_name").notNull(),
   lastName: text("last_name").notNull(),
   email: varchar("email", { length: 255 }),
+  firebaseUid: varchar("firebase_uid", { length: 255 }).unique(), // Firebase authentication UID
+  authProvider: varchar("auth_provider", { length: 50 }).default("phone"), // 'phone', 'email', 'google'
   dateOfBirth: timestamp("date_of_birth"),
   address: text("address"),
   emergencyContact: text("emergency_contact"),

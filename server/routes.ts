@@ -221,6 +221,126 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Firebase Authentication routes
+  app.post("/api/auth/patient-signup", async (req, res) => {
+    try {
+      const signupData = z.object({
+        firstName: z.string().min(1),
+        lastName: z.string().min(1),
+        email: z.string().email(),
+        phoneNumber: z.string().optional(),
+        dateOfBirth: z.string().optional(),
+        address: z.string().optional(),
+        emergencyContact: z.string().optional(),
+        firebaseUid: z.string().min(1),
+        authProvider: z.enum(['email', 'google']).default('email')
+      }).parse(req.body);
+
+      console.log(`🔥 FIREBASE SIGNUP - Creating patient account for: ${signupData.email}`);
+
+      // Check if user already exists with this Firebase UID
+      const existingUser = await storage.getUserByFirebaseUid(signupData.firebaseUid);
+      if (existingUser) {
+        return res.status(400).json({ message: "Account already exists with this authentication method" });
+      }
+
+      // Check if user exists with this email
+      const existingEmailUser = await storage.getUserByEmail(signupData.email);
+      if (existingEmailUser) {
+        return res.status(400).json({ message: "Account already exists with this email address" });
+      }
+
+      // Create new patient user
+      const userData = {
+        ...signupData,
+        role: 'patient' as const,
+        isActive: true,
+        isApproved: true, // Auto-approve patients
+        dateOfBirth: signupData.dateOfBirth ? new Date(signupData.dateOfBirth) : undefined
+      };
+
+      const user = await storage.createUser(userData);
+      
+      // Generate JWT token for immediate login
+      const token = await authService.generateToken(user.id, req.ip, req.get('User-Agent'));
+
+      console.log(`🔥 FIREBASE SIGNUP - Account created successfully for: ${user.email}`);
+
+      res.json({
+        token,
+        user: {
+          id: user.id,
+          role: user.role,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          email: user.email,
+          isActive: user.isActive
+        }
+      });
+    } catch (error: any) {
+      console.error('🔥 FIREBASE SIGNUP ERROR:', error);
+      res.status(400).json({ message: error.message });
+    }
+  });
+
+  app.post("/api/auth/firebase-login", async (req, res) => {
+    try {
+      const loginData = z.object({
+        firebaseUid: z.string().min(1),
+        email: z.string().email(),
+        name: z.string().optional()
+      }).parse(req.body);
+
+      console.log(`🔥 FIREBASE LOGIN - Attempting login for: ${loginData.email}`);
+
+      // Find user by Firebase UID first, then by email
+      let user = await storage.getUserByFirebaseUid(loginData.firebaseUid);
+      
+      if (!user) {
+        // If no user found by Firebase UID, try to find by email
+        user = await storage.getUserByEmail(loginData.email);
+        
+        if (user) {
+          // Update existing user with Firebase UID
+          const updatedUser = await storage.updateUser(user.id, {
+            firebaseUid: loginData.firebaseUid,
+            authProvider: 'google'
+          });
+          if (updatedUser) {
+            user = updatedUser;
+            console.log(`🔥 FIREBASE LOGIN - Updated existing user with Firebase UID: ${user.email}`);
+          }
+        } else {
+          return res.status(404).json({ message: "No account found. Please sign up first." });
+        }
+      }
+
+      if (!user.isActive) {
+        return res.status(403).json({ message: "Account is not active" });
+      }
+
+      // Generate JWT token
+      const token = await authService.generateToken(user.id, req.ip, req.get('User-Agent'));
+
+      console.log(`🔥 FIREBASE LOGIN - Login successful for: ${user.email}`);
+
+      res.json({
+        token,
+        user: {
+          id: user.id,
+          role: user.role,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          email: user.email,
+          isActive: user.isActive
+        }
+      });
+    } catch (error: any) {
+      console.error('🔥 FIREBASE LOGIN ERROR:', error);
+      res.status(400).json({ message: error.message });
+    }
+  });
+
   app.post("/api/auth/logout", authMiddleware, async (req, res) => {
     try {
       const token = req.get('Authorization')?.replace('Bearer ', '');
