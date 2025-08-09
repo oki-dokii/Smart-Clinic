@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { User, Phone, Mail, Calendar, MapPin, Heart, ArrowLeft } from "lucide-react";
+import { User, Phone, Mail, Calendar, MapPin, Heart, ArrowLeft, Stethoscope } from "lucide-react";
 
 export default function ProfilePage() {
   const [, setLocation] = useLocation();
@@ -214,7 +214,7 @@ export default function ProfilePage() {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Heart className="w-5 h-5 text-red-500" />
+                <Stethoscope className="w-5 h-5 text-blue-500" />
                 Medical History
               </CardTitle>
             </CardHeader>

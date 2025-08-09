@@ -451,7 +451,7 @@ export default function Homepage() {
           <div className="text-center">
             <div className="flex items-center justify-center space-x-3 mb-4">
               <div className="p-2 bg-blue-600 rounded-xl">
-                <Heart className="h-6 w-6 text-white" />
+                <Stethoscope className="h-6 w-6 text-white" />
               </div>
               <h3 className="text-2xl font-bold text-gray-900 dark:text-white">SmartClinic</h3>
             </div>
