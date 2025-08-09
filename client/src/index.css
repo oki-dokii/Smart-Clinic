@@ -70,11 +70,21 @@
 
 /* Dark background with light text for medicine cards */
 .dark .medicine-card {
+  background-color: #111827 !important;
   color: #d1d5db !important;
+  border-color: #374151 !important;
 }
 
 .dark .medicine-card .font-semibold {
   color: #f3f4f6 !important;
+}
+
+.dark .medicine-card * {
+  color: #d1d5db !important;
+}
+
+.dark .medicine-card .font-bold {
+  color: #f9fafb !important;
 }
 
 .dark .text-blue-100 {
