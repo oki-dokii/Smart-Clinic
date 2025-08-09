@@ -23,7 +23,7 @@
   --destructive-foreground: hsl(60, 9.1%, 97.8%);
   --ring: hsl(20, 14.3%, 4.1%);
   --radius: 0.5rem;
-  
+
   /* Healthcare theme colors */
   --healthcare-blue: hsl(207, 90%, 54%);
   --healthcare-green: hsl(142, 71%, 45%);
@@ -55,194 +55,57 @@
   --radius: 0.5rem;
 }
 
-/* Enhanced dark mode visibility fixes */
+/* Fix dark mode visibility issues */
 .dark .bg-gray-50,
 .dark .bg-blue-50 {
-  background-color: hsl(var(--muted)) !important;
+  background-color: hsl(var(--muted));
 }
 
 .dark .text-gray-600,
 .dark .text-gray-700,
 .dark .text-gray-800,
 .dark .text-gray-900 {
-  color: hsl(var(--muted-foreground)) !important;
+  color: hsl(var(--muted-foreground));
 }
 
-/* Medicine card styling - Enhanced for dark mode */
+/* Dark background with light text for medicine cards */
 .medicine-card {
   background-color: white;
-  border: 1px solid #e5e7eb;
-  color: #374151;
 }
 
 .dark .medicine-card {
-  background-color: hsl(240, 10%, 8%) !important;
-  border-color: hsl(240, 3.7%, 20%) !important;
-  color: hsl(0, 0%, 95%) !important;
+  background-color: #111827 !important;
+  border-color: #374151 !important;
 }
 
-/* All text elements within medicine cards */
-.dark .medicine-card *,
-.dark .medicine-card h1,
-.dark .medicine-card h2,
+.dark .medicine-card,
 .dark .medicine-card h3,
-.dark .medicine-card h4,
-.dark .medicine-card h5,
-.dark .medicine-card h6,
 .dark .medicine-card p,
 .dark .medicine-card span,
-.dark .medicine-card div,
-.dark .medicine-card label {
-  color: hsl(0, 0%, 90%) !important;
+.dark .medicine-card div {
+  color: #d1d5db !important;
 }
 
-/* Emphasized text in medicine cards */
 .dark .medicine-card .font-bold,
-.dark .medicine-card .font-semibold,
-.dark .medicine-card .font-medium {
-  color: hsl(0, 0%, 98%) !important;
-}
-
-/* Input fields in dark mode */
-.dark input,
-.dark textarea,
-.dark select {
-  background-color: hsl(240, 3.7%, 15.9%) !important;
-  border-color: hsl(240, 3.7%, 25%) !important;
-  color: hsl(0, 0%, 98%) !important;
-}
-
-.dark input:focus,
-.dark textarea:focus,
-.dark select:focus {
-  border-color: hsl(var(--primary)) !important;
-  box-shadow: 0 0 0 2px hsl(var(--primary) / 0.2) !important;
-}
-
-/* Placeholder text */
-.dark input::placeholder,
-.dark textarea::placeholder {
-  color: hsl(var(--muted-foreground)) !important;
-}
-
-/* Button styling in dark mode */
-.dark button {
-  color: inherit;
-}
-
-.dark .btn-primary {
-  background: linear-gradient(135deg, hsl(var(--primary)), hsl(207, 90%, 64%)) !important;
-  color: white !important;
-}
-
-.dark .btn-secondary {
-  background-color: hsl(240, 3.7%, 15.9%) !important;
-  border-color: hsl(240, 3.7%, 25%) !important;
-  color: hsl(0, 0%, 90%) !important;
-}
-
-/* Status badges in dark mode */
-.dark .status-active,
-.dark .queue-completed,
-.dark .appointment-confirmed {
-  background-color: hsl(142, 71%, 35%) !important;
-  color: white !important;
-}
-
-.dark .status-pending,
-.dark .queue-waiting {
-  background-color: hsl(25, 95%, 43%) !important;
-  color: white !important;
-}
-
-.dark .status-urgent,
-.dark .appointment-cancelled {
-  background-color: hsl(0, 84%, 50%) !important;
-  color: white !important;
-}
-
-.dark .status-info,
-.dark .queue-called,
-.dark .appointment-scheduled {
-  background-color: hsl(207, 90%, 44%) !important;
-  color: white !important;
-}
-
-/* Missed doses badge */
-.dark .bg-red-500,
-.dark .bg-red-600 {
-  background-color: hsl(0, 84%, 50%) !important;
-  color: white !important;
-}
-
-/* Search input styling */
-.dark .search-input,
-.dark input[type="search"] {
-  background-color: hsl(240, 3.7%, 15.9%) !important;
-  border-color: hsl(240, 3.7%, 25%) !important;
-  color: hsl(0, 0%, 98%) !important;
-}
-
-/* Tab navigation */
-.dark .nav-tabs {
-  background: linear-gradient(135deg, hsl(var(--background)) 0%, hsl(var(--muted)) 100%);
-  border-color: hsl(240, 3.7%, 20%) !important;
-}
-
-.dark .nav-tab {
-  color: hsl(var(--muted-foreground)) !important;
-}
-
-.dark .nav-tab.active {
-  color: hsl(var(--primary)) !important;
-  background-color: hsl(var(--accent)) !important;
-}
-
-/* General text visibility fixes */
-.dark .text-black {
-  color: hsl(var(--card-foreground)) !important;
+.dark .medicine-card .font-semibold {
+  color: #f9fafb !important;
 }
 
 .dark .text-blue-100 {
-  color: hsl(var(--accent-foreground)) !important;
+  color: hsl(var(--accent-foreground));
 }
 
 .dark .border-gray-200,
 .dark .border-gray-300 {
-  border-color: hsl(var(--border)) !important;
+  border-color: hsl(var(--border));
 }
 
 .dark .bg-white {
-  background-color: hsl(var(--card)) !important;
+  background-color: hsl(var(--card));
 }
 
-/* Specific fixes for medicine manager interface */
-.dark .medicine-manager-container {
-  background-color: hsl(var(--background)) !important;
-  color: hsl(var(--foreground)) !important;
-}
-
-.dark .medicine-card-header {
-  color: hsl(0, 0%, 98%) !important;
-}
-
-.dark .medicine-card-content {
-  color: hsl(0, 0%, 90%) !important;
-}
-
-.dark .dosage-info,
-.dark .timing-info,
-.dark .frequency-info,
-.dark .instructions-info {
-  color: hsl(0, 0%, 85%) !important;
-}
-
-/* Time display styling */
-.dark .time-display,
-.dark .timing-badge {
-  background-color: hsl(240, 3.7%, 20%) !important;
-  border-color: hsl(240, 3.7%, 30%) !important;
-  color: hsl(0, 0%, 90%) !important;
+.dark .text-black {
+  color: hsl(var(--card-foreground));
 }
 
 @layer base {
@@ -437,11 +300,11 @@
   .nav-tab {
     @apply px-3 py-2 text-xs;
   }
-  
+
   .dashboard-card {
     @apply p-4;
   }
-  
+
   .stat-number {
     @apply text-2xl;
   }
@@ -498,169 +361,180 @@
 
 /* Queue token styling */
 .queue-token {
-  @apply bg-white dark:bg-gray-800 border-2 border-blue-200 dark:border-blue-800
-         rounded-xl p-4 shadow-sm hover:shadow-md transition-all duration-300
-         relative overflow-hidden;
+  background: linear-gradient(135deg, hsl(var(--healthcare-blue)), hsl(207, 90%, 64%));
+  color: white;
+  border-radius: 12px;
+  padding: 1.5rem;
+  text-align: center;
+  box-shadow: 0 4px 12px hsla(207, 90%, 54%, 0.3);
 }
 
-.queue-token::before {
-  content: '';
-  @apply absolute top-0 left-0 w-1 h-full bg-blue-500;
+/* Medicine reminder card */
+.medicine-card {
+  border-left: 4px solid hsl(var(--healthcare-orange));
+  background: linear-gradient(to right, hsl(25, 95%, 98%), white);
 }
 
-.queue-token.priority-high::before {
-  @apply bg-red-500;
+.medicine-card.overdue {
+  border-left-color: hsl(var(--healthcare-red));
+  background: linear-gradient(to right, hsl(0, 84%, 98%), white);
+  animation: flash-red 2s infinite;
 }
 
-.queue-token.priority-medium::before {
-  @apply bg-yellow-500;
+/* Optimized flash animations for better performance */
+@keyframes flash-blink {
+  0%, 100% { 
+    opacity: 1;
+    background-color: hsl(0, 84%, 60%);
+  }
+  50% { 
+    opacity: 0.7;
+    background-color: hsl(0, 100%, 50%);
+  }
 }
 
-.queue-token.priority-low::before {
-  @apply bg-green-500;
+@keyframes flash-orange-blink {
+  0%, 100% { 
+    opacity: 1;
+    background-color: hsl(24, 95%, 53%);
+  }
+  50% { 
+    opacity: 0.7;
+    background-color: hsl(24, 100%, 45%);
+  }
 }
 
-/* Medicine reminder styling */
-.medicine-reminder {
-  @apply bg-gradient-to-r from-green-50 to-blue-50 dark:from-green-950/30 dark:to-blue-950/30
-         border border-green-200 dark:border-green-800 rounded-lg p-4 shadow-sm;
-}
-
-.medicine-reminder.overdue {
-  @apply from-red-50 to-orange-50 dark:from-red-950/30 dark:to-orange-950/30
-         border-red-200 dark:border-red-800;
-}
-
-.medicine-reminder.missed {
-  @apply from-yellow-50 to-red-50 dark:from-yellow-950/30 dark:to-red-950/30
-         border-yellow-200 dark:border-yellow-800;
-}
-
-/* Emergency alert pulses */
-@keyframes urgentPulse {
+@keyframes gentle-pulse {
   0%, 100% {
-    box-shadow: 0 0 5px hsl(var(--healthcare-red) / 0.5);
+    background-color: hsl(0, 84%, 60%);
   }
   50% {
-    box-shadow: 0 0 20px hsl(var(--healthcare-red) / 0.8), 0 0 30px hsl(var(--healthcare-red) / 0.4);
+    background-color: hsl(0, 100%, 50%);
   }
+}
+
+@keyframes gentle-orange-pulse {
+  0%, 100% {
+    background-color: hsl(24, 95%, 53%);
+  }
+  50% {
+    background-color: hsl(24, 100%, 45%);
+  }
+}
+
+/* Lightweight flash animation classes */
+.flash-urgent {
+  animation: flash-blink 2s infinite;
+  border-radius: 6px;
+  padding: 4px 8px;
+  font-weight: 600;
+  color: white !important;
+  will-change: opacity, background-color;
+}
+
+.flash-delay {
+  animation: flash-orange-blink 2s infinite;
+  border-radius: 6px;
+  padding: 4px 8px;
+  font-weight: 600;
+  color: white !important;
+  will-change: opacity, background-color;
 }
 
 .pulse-urgent {
-  animation: urgentPulse 2s infinite;
-}
-
-@keyframes delayPulse {
-  0%, 100% {
-    box-shadow: 0 0 5px hsl(var(--healthcare-orange) / 0.5);
-  }
-  50% {
-    box-shadow: 0 0 15px hsl(var(--healthcare-orange) / 0.8);
-  }
+  animation: gentle-pulse 2.5s infinite;
+  color: white !important;
+  font-weight: 600;
+  will-change: background-color;
 }
 
 .pulse-delay {
-  animation: delayPulse 3s infinite;
+  animation: gentle-orange-pulse 2.5s infinite;
+  color: white !important;
+  font-weight: 600;
+  will-change: background-color;
 }
 
-/* Staff presence indicators */
-.staff-present {
-  @apply relative;
+/* Simple border flash for cards */
+.flash-border-urgent {
+  border: 2px solid hsl(0, 84%, 60%);
+  animation: flash-blink 2s infinite;
+  will-change: opacity;
 }
 
-.staff-present::after {
-  content: '';
-  @apply absolute -top-1 -right-1 w-3 h-3 bg-green-500 border-2 border-white dark:border-gray-800
-         rounded-full;
+.flash-border-delay {
+  border: 2px solid hsl(24, 95%, 53%);
+  animation: flash-orange-blink 2s infinite;
+  will-change: opacity;
 }
 
-.staff-absent::after {
-  content: '';
-  @apply absolute -top-1 -right-1 w-3 h-3 bg-gray-400 border-2 border-white dark:border-gray-800
-         rounded-full;
+/* Appointment card */
+.appointment-card {
+  border-left: 4px solid hsl(var(--healthcare-green));
+  background: linear-gradient(to right, hsl(142, 71%, 98%), white);
 }
 
-/* Form enhancements */
-.form-field {
-  @apply space-y-2;
-}
-
-.form-label {
-  @apply text-sm font-medium text-gray-700 dark:text-gray-300;
-}
-
-.form-input {
-  @apply w-full px-3 py-2 border border-gray-300 dark:border-gray-600 
-         rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500
-         dark:bg-gray-800 dark:text-white transition-colors;
-}
-
-.form-error {
-  @apply text-red-600 dark:text-red-400 text-sm font-medium;
-}
-
-.form-success {
-  @apply text-green-600 dark:text-green-400 text-sm font-medium;
-}
-
-/* Tooltip styling */
-.tooltip {
-  @apply absolute z-50 bg-gray-900 dark:bg-gray-700 text-white text-sm 
-         px-2 py-1 rounded shadow-lg pointer-events-none opacity-0 transition-opacity;
-}
-
-.tooltip.visible {
-  @apply opacity-100;
-}
-
-/* Medical chart styling */
-.chart-container {
-  @apply bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700
-         rounded-lg p-4 shadow-sm;
-}
-
-/* Notification styling */
-.notification {
-  @apply fixed top-4 right-4 z-50 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700
-         rounded-lg shadow-lg p-4 max-w-sm transform transition-all duration-300;
-}
-
-.notification.success {
-  @apply border-green-500 bg-green-50 dark:bg-green-950/30;
-}
-
-.notification.error {
-  @apply border-red-500 bg-red-50 dark:bg-red-950/30;
-}
-
-.notification.warning {
-  @apply border-yellow-500 bg-yellow-50 dark:bg-yellow-950/30;
-}
-
-.notification.info {
-  @apply border-blue-500 bg-blue-50 dark:bg-blue-950/30;
-}
-
-/* Overdue and urgent styles for medicine cards */
-.medicine-card.overdue {
-  @apply border-red-500 dark:border-red-400;
-}
-
-.medicine-card.glow-urgent {
-  animation: urgentPulse 2s infinite;
-}
-
-/* Print styles */
-@media print {
-  .no-print {
-    display: none !important;
+/* Responsive text sizes */
+@media (max-width: 640px) {
+  .text-responsive-lg {
+    font-size: 1.5rem;
+    line-height: 2rem;
   }
-  
-  body {
-    @apply text-black bg-white;
+
+  .text-responsive-xl {
+    font-size: 1.875rem;
+    line-height: 2.25rem;
   }
-  
-  .medicine-card {
-    @apply border border-gray-300 break-inside-avoid;
+}
+
+@media (min-width: 641px) {
+  .text-responsive-lg {
+    font-size: 1.875rem;
+    line-height: 2.25rem;
   }
+
+  .text-responsive-xl {
+    font-size: 2.25rem;
+    line-height: 2.5rem;
+  }
+}
+
+/* Healthcare gradient backgrounds */
+.gradient-healthcare {
+  background: linear-gradient(135deg, hsl(var(--healthcare-blue)), hsl(var(--healthcare-green)));
+}
+
+.gradient-healthcare-secondary {
+  background: linear-gradient(135deg, hsl(var(--healthcare-purple)), hsl(var(--healthcare-blue)));
+}
+
+/* Card hover effects */
+.card-hover {
+  transition: all 0.2s ease-in-out;
+}
+
+.card-hover:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px hsla(0, 0%, 0%, 0.1);
+}
+
+/* Button loading state */
+.btn-loading {
+  position: relative;
+  color: transparent;
+}
+
+.btn-loading::after {
+  content: "";
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  top: 50%;
+  left: 50%;
+  margin-left: -8px;
+  margin-top: -8px;
+  border: 2px solid transparent;
+  border-top-color: currentColor;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
 }
