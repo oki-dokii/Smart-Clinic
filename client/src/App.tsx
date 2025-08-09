@@ -14,7 +14,6 @@ import SettingsPage from "@/pages/settings";
 import MedicinesPage from "@/pages/medicines";
 import PatientBooking from "@/pages/patient-booking-new";
 import PatientLogin from "@/pages/patient-login";
-import PatientPortal from "@/pages/patient-portal";
 import LiveQueueTracker from "@/pages/live-queue";
 import ClinicManagement from "@/pages/clinic-management";
 import ClinicAdminDashboard from "@/pages/clinic-admin-dashboard";
@@ -39,7 +38,6 @@ function Router() {
       <Route path="/medicines" component={MedicinesPage} />
       <Route path="/book-appointment" component={PatientBooking} />
       <Route path="/patient-login" component={PatientLogin} />
-      <Route path="/patient-portal" component={PatientPortal} />
       <Route path="/live-queue" component={LiveQueueTracker} />
       <Route path="/clinic-management" component={ClinicManagement} />
       <Route path="/clinic-admin/:clinicId" component={ClinicAdminDashboard} />

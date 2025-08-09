@@ -36,13 +36,11 @@ export const clinics = pgTable("clinics", {
 // Users table
 export const users = pgTable("users", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  phoneNumber: varchar("phone_number", { length: 20 }),
+  phoneNumber: varchar("phone_number", { length: 20 }).unique(),
   role: userRoleEnum("role").notNull().default("patient"),
   firstName: text("first_name").notNull(),
   lastName: text("last_name").notNull(),
   email: varchar("email", { length: 255 }),
-  googleId: varchar("google_id", { length: 255 }).unique(), // For Google authentication
-  profilePicture: text("profile_picture"), // Google profile picture URL
   dateOfBirth: timestamp("date_of_birth"),
   address: text("address"),
   emergencyContact: text("emergency_contact"),

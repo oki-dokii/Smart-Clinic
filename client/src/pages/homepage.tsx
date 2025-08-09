@@ -195,7 +195,7 @@ export default function Homepage() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <Link href="/patient-portal" data-testid="link-patient-portal">
+                <Link href="/patient-login" data-testid="link-patient-login">
                   <Button className="w-full" size="lg">
                     Patient Portal
                     <ArrowRight className="ml-2 h-4 w-4" />
