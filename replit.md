@@ -20,6 +20,14 @@ Preferred communication style: Simple, everyday language.
   - Unauthorized users redirected to appropriate dashboards with clear error messages
 - **Email Notifications**: Added automatic email notifications for new clinic registrations sent to 44441100sf@gmail.com using existing Gmail SMTP
 - **Dark Mode Enhancement**: Implemented independent dark mode toggle for admin dashboard, replacing settings icon with Moon/Sun toggle button for easy theme switching
+- **Firebase Patient Authentication**: Implemented comprehensive Firebase authentication for patients:
+  - Added Firebase configuration with environment variables
+  - Created patient signup page with Google OAuth and email/password options
+  - Created patient login page with same authentication methods
+  - Extended user database schema with firebaseUid and authProvider fields
+  - Added backend API endpoints for Firebase authentication integration
+  - Integrated Firebase auth with existing JWT token system for seamless user experience
+  - Note: Google OAuth requires domain authorization in Firebase console for production use
 
 # System Architecture
 

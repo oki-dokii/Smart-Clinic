@@ -20,11 +20,24 @@ googleProvider.addScope('profile');
 // Auth helper functions
 export const signInWithGoogle = async () => {
   try {
+    // Try popup first, fallback to redirect if popup is blocked
     const result = await signInWithPopup(auth, googleProvider);
     return result.user;
   } catch (error: any) {
     console.error('Google sign-in error:', error);
-    throw error;
+    
+    // If popup is blocked, provide helpful error message
+    if (error.code === 'auth/popup-blocked' || error.code === 'auth/popup-closed-by-user') {
+      throw new Error('Popup was blocked. Please allow popups for this site or try again.');
+    }
+    
+    // If domain not authorized, provide helpful message
+    if (error.code === 'auth/unauthorized-domain') {
+      throw new Error('This domain is not authorized for Google sign-in. Please contact support.');
+    }
+    
+    // Generic error with user-friendly message
+    throw new Error(`Google sign-in failed: ${error.message || 'Please try again or use email login instead.'}`);
   }
 };
 

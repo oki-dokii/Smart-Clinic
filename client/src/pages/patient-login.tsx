@@ -49,9 +49,19 @@ export default function PatientLogin() {
       const user = await signInWithGoogle();
       await loginWithFirebaseMutation.mutateAsync(user);
     } catch (error: any) {
+      let errorMessage = "Failed to login with Google. Please try again.";
+      
+      if (error.message?.includes('domain')) {
+        errorMessage = "Google sign-in is not configured for this domain. Please use email login instead.";
+      } else if (error.message?.includes('popup')) {
+        errorMessage = "Popup was blocked. Please allow popups or use email login.";
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
       toast({
         title: "Google Login Failed",
-        description: error.message || "Failed to login with Google. Please try again.",
+        description: errorMessage,
         variant: "destructive"
       });
     } finally {

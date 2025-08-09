@@ -63,9 +63,19 @@ export default function PatientSignup() {
         authProvider: 'google'
       });
     } catch (error: any) {
+      let errorMessage = "Failed to sign up with Google. Please try again.";
+      
+      if (error.message?.includes('domain')) {
+        errorMessage = "Google sign-in is not configured for this domain. Please use email signup instead.";
+      } else if (error.message?.includes('popup')) {
+        errorMessage = "Popup was blocked. Please allow popups or use email signup.";
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
       toast({
         title: "Google Signup Failed",
-        description: error.message || "Failed to sign up with Google. Please try again.",
+        description: errorMessage,
         variant: "destructive"
       });
     } finally {
