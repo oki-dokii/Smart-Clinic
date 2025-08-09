@@ -684,13 +684,10 @@ export default function ClinicDashboard() {
         throw new Error(error.message || 'Update failed')
       }
       
-      // Update current user state
-      const updatedUser = { ...currentUser, ...adminProfileForm }
-      setCurrentUser(updatedUser)
-      
-      // Force cache invalidation
-      await queryClient.invalidateQueries({ queryKey: ['/api/auth/me'] })
+      // Force cache invalidation to refresh user data
+      await queryClient.invalidateQueries({ queryKey: ['/api/users/me'] })
       await queryClient.invalidateQueries({ queryKey: [`/api/users/${currentUser.id}`] })
+      await queryClient.refetchQueries({ queryKey: ['/api/users/me'] })
       
       toast({
         title: 'Profile Updated',
