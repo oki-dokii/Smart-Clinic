@@ -14,7 +14,9 @@ Both Google and Email authentication need to be enabled in Firebase Console. Her
 ## 2. Add Authorized Domains
 
 1. Still in **Authentication** → **Settings** → **Authorized domains**
-2. Add this exact domain: `42638f0d-82bc-40ee-b3bd-785d53c6ac2a-00-3rsnhjlr0ddv2.sisko.replit.dev`
+2. Add this exact domain: `workspace.littledash15.replit.dev`
+
+**Current Replit Domain:** `workspace.littledash15.replit.dev`
 
 ## 3. Current Issues
 
