@@ -111,6 +111,28 @@ export default function BookingModal({ isOpen, onClose, selectedAppointment, sel
       });
     },
     onError: (error: any) => {
+      console.error('Appointment booking error:', error);
+      
+      // Check for authentication errors
+      if (error.message?.includes('401') || error.message?.includes('Invalid or expired token')) {
+        toast({
+          title: "Authentication Required",
+          description: "Please log in to book an appointment.",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      // Check for validation errors
+      if (error.message?.includes('400')) {
+        toast({
+          title: "Invalid Information",
+          description: "Please check all required fields and try again.",
+          variant: "destructive",
+        });
+        return;
+      }
+      
       toast({
         title: "Booking Failed",
         description: error.message || "Failed to book appointment. Please try again.",
