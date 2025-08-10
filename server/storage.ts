@@ -2046,7 +2046,7 @@ export class DatabaseStorage implements IStorage {
       .where(and(
         eq(users.clinicId, clinicId),
         eq(users.isActive, true),
-        sql`${users.role} IN ('staff', 'doctor')`
+        sql`${users.role} IN ('staff', 'doctor', 'admin')`
       ));
     return result.count;
   }
