@@ -39,11 +39,13 @@ function SuperAdminRoute({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   // Get current user info
-  const { data: currentUser, isLoading, error } = useQuery<User>({
-    queryKey: ['/api/users/me'],
+  const { data: authResponse, isLoading, error } = useQuery<{ user: User }>({
+    queryKey: ['/api/auth/me'],
     enabled: !!token,
     retry: false,
   });
+  
+  const currentUser = authResponse?.user;
 
   useEffect(() => {
     // Handle authentication errors
@@ -135,23 +137,44 @@ function ProtectedRoute({
   const [loading, setLoading] = useState(true);
 
   // Get current user info
-  const { data: currentUser, isLoading, error } = useQuery<User>({
-    queryKey: ['/api/users/me'],
+  const { data: authResponse, isLoading, error } = useQuery<{ user: User }>({
+    queryKey: ['/api/auth/me'],
     enabled: !!token,
     retry: false,
   });
+  
+  const currentUser = authResponse?.user;
 
   useEffect(() => {
     // Handle authentication errors
     if (error || (!isLoading && !currentUser && token)) {
       localStorage.removeItem('auth_token');
       localStorage.removeItem('user');
-      // Redirect patients to Firebase login instead of old OTP login
+      
+      // Check if user data exists in localStorage to determine redirect
+      const storedUser = localStorage.getItem('user');
+      let userRole = null;
+      
+      try {
+        if (storedUser) {
+          userRole = JSON.parse(storedUser).role;
+        }
+      } catch (e) {
+        // Invalid user data, clear it
+        localStorage.removeItem('user');
+      }
+      
+      // Redirect based on last known role or route
       if (window.location.pathname.includes('book-appointment') || 
           window.location.pathname.includes('patient') ||
-          window.location.pathname === '/dashboard') {
+          (window.location.pathname === '/dashboard' && userRole === 'patient')) {
         window.location.href = '/patient-login';
+      } else if (window.location.pathname.includes('admin') || userRole === 'admin') {
+        window.location.href = '/login';
+      } else if (userRole === 'staff' || userRole === 'doctor') {
+        window.location.href = '/login';
       } else {
+        // Default redirect - try to be smart about it
         window.location.href = redirectTo;
       }
       return;
@@ -160,13 +183,17 @@ function ProtectedRoute({
     // Update loading state
     setLoading(isLoading);
 
-    // Handle no token - redirect patients to Firebase login
+    // Handle no token - be smart about redirects
     if (!token) {
       // Check if this is a patient-specific route
       if (window.location.pathname.includes('book-appointment') || 
-          window.location.pathname.includes('patient') ||
-          window.location.pathname === '/dashboard') {
+          window.location.pathname.includes('patient')) {
         window.location.href = '/patient-login';
+      } else if (window.location.pathname.includes('admin')) {
+        window.location.href = '/login';
+      } else if (window.location.pathname === '/dashboard') {
+        // For generic dashboard access, redirect to login selection
+        window.location.href = '/';
       } else {
         window.location.href = redirectTo;
       }

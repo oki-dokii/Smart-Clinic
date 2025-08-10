@@ -25,13 +25,22 @@ export default function PatientLogin() {
       return await response.json();
     },
     onSuccess: (data: any) => {
-      if (data.token) {
+      if (data.token && data.user) {
         localStorage.setItem('auth_token', data.token);
+        localStorage.setItem('user', JSON.stringify(data.user));
         toast({
           title: "Login Successful!",
           description: "Welcome back to SmartClinic.",
         });
-        window.location.href = '/dashboard';
+        
+        // Redirect based on user role
+        if (data.user.role === 'admin') {
+          window.location.href = '/admin-dashboard';
+        } else if (data.user.role === 'staff' || data.user.role === 'doctor') {
+          window.location.href = '/dashboard';
+        } else {
+          window.location.href = '/dashboard';
+        }
       }
     },
     onError: (error: any) => {
