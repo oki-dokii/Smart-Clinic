@@ -936,7 +936,11 @@ export default function SmartClinicDashboard() {
         </div>
 
         {/* Main Content Grid */}
-        <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 sm:gap-8">
+        <div className={`grid gap-6 sm:gap-8 ${
+          hasAppointmentToday(appointmentsArray) 
+            ? 'grid-cols-1 xl:grid-cols-3' 
+            : 'grid-cols-1 md:grid-cols-2'
+        }`}>
           {/* Live Queue Tracker - Only show if patient has appointment today */}
           {hasAppointmentToday(appointmentsArray) ? (
             <Card>
