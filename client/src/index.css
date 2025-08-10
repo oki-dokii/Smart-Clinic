@@ -106,33 +106,7 @@
 
 /* Removed problematic dark mode text-black override */
 
-/* Force SmartClinic header to be black with high specificity */
-header .smartclinic-header,
-.smartclinic-header {
-  color: #000000 !important;
-  opacity: 1 !important;
-  visibility: visible !important;
-  text-shadow: none !important;
-}
-
-header .smartclinic-subtitle,
-.smartclinic-subtitle {
-  color: #666666 !important;
-  opacity: 1 !important;
-  visibility: visible !important;
-  text-shadow: none !important;
-}
-
-/* Ensure dark mode doesn't override */
-.dark header .smartclinic-header,
-.dark .smartclinic-header {
-  color: #000000 !important;
-}
-
-.dark header .smartclinic-subtitle,
-.dark .smartclinic-subtitle {
-  color: #666666 !important;
-}
+/* Clean styling for SmartClinic header */
 
 @layer base {
   * {
