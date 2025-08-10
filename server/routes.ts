@@ -703,10 +703,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { doctorId, type, symptoms, preferredDate, urgency, notes } = req.body;
       const patientId = req.user!.id;
 
+      // Get user's clinic ID
+      const user = await storage.getUser(patientId);
+      const doctor = await storage.getUser(doctorId);
+      const clinicId = doctor?.clinicId || user?.clinicId || '84e1b3c6-3b25-4446-96e8-a227d9e92d76'; // fallback to default clinic
+
       // Create appointment request
       const appointmentData = {
         patientId,
         doctorId,
+        clinicId,
         appointmentDate: new Date(preferredDate),
         duration: 30, // Default duration
         type,
@@ -766,10 +772,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(500).json({ error: 'Failed to process patient information' });
       }
       
+      // Get doctor's clinic ID
+      const doctor = await storage.getUser(appointmentDetails.doctorId);
+      const clinicId = doctor?.clinicId || '84e1b3c6-3b25-4446-96e8-a227d9e92d76'; // fallback to default clinic
+
       // Create appointment request
       const appointmentData = {
         patientId,
         doctorId: appointmentDetails.doctorId,
+        clinicId,
         appointmentDate: new Date(appointmentDetails.preferredDate),
         duration: 30, // Default duration
         type: appointmentDetails.type,
@@ -1314,10 +1325,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }).parse(req.body);
 
       const tokenNumber = await storage.getNextTokenNumber(doctorId, appointmentId);
+      // Get clinic ID from user or doctor
+      const user = await storage.getUser(req.user!.id);
+      const doctor = await storage.getUser(doctorId);
+      const clinicId = user?.clinicId || doctor?.clinicId || '84e1b3c6-3b25-4446-96e8-a227d9e92d76';
+
       const queueToken = await storage.createQueueToken({
         tokenNumber,
         patientId: req.user!.id,
         doctorId,
+        clinicId,
         appointmentId,
         priority
       });

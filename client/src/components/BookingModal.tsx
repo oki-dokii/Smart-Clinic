@@ -520,6 +520,18 @@ export default function BookingModal({ isOpen, onClose, selectedAppointment, sel
             <Button 
               onClick={() => {
                 console.log('Booking data:', bookingData);
+                
+                // Check if user is authenticated first
+                const token = localStorage.getItem("auth_token");
+                if (!token) {
+                  toast({
+                    title: "Login Required",
+                    description: "Please log in to book an appointment. Use phone/OTP or Google authentication.",
+                    variant: "destructive",
+                  });
+                  return;
+                }
+                
                 if (canSubmit) {
                   bookAppointmentMutation.mutate(bookingData);
                 } else {
