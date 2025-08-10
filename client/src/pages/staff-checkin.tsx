@@ -25,7 +25,8 @@ interface StaffVerification {
 const CLINIC_LOCATIONS = [
   { name: 'Bangalore Central Clinic', description: 'Primary Bangalore healthcare facility' },
   { name: 'Whitefield Branch', description: 'Eastern Bangalore location' },
-  { name: 'Koramangala Clinic', description: 'South Bangalore branch' }
+  { name: 'Koramangala Clinic', description: 'South Bangalore branch' },
+  { name: 'Electronic City Clinic', description: 'IT hub location in South Bangalore' }
 ]
 
 export default function StaffCheckinPage() {

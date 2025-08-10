@@ -5,6 +5,7 @@ const CLINIC_LOCATIONS = [
   { name: 'Bangalore Central Clinic', lat: 12.9716, lng: 77.5946, radius: 200 }, // Bangalore Main Clinic
   { name: 'Whitefield Branch', lat: 12.9698, lng: 77.7500, radius: 150 }, // Bangalore Whitefield Branch
   { name: 'Koramangala Clinic', lat: 12.9279, lng: 77.6271, radius: 150 }, // Bangalore Koramangala Branch
+  { name: 'Electronic City Clinic', lat: 12.8456, lng: 77.6603, radius: 150 }, // Electronic City IT hub location
   // Add more clinic locations as needed
 ];
 
