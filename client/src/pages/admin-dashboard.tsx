@@ -1022,7 +1022,7 @@ export default function ClinicDashboard() {
 
   // Fetch today's staff presence data
   const { data: staffPresence = [], isLoading: presenceLoading, refetch: refetchPresence } = useQuery<StaffPresence[]>({
-    queryKey: ['/api/staff-presence/today'],
+    queryKey: ['/api/staff-presence/today', forceRender],
     queryFn: () => fetch('/api/staff-presence/today', {
       headers: {
         'Authorization': `Bearer ${localStorage.getItem('auth_token')}`,
@@ -1048,7 +1048,18 @@ export default function ClinicDashboard() {
   const totalStaff = staffMembers.length
   
   // Calculate present staff from presence data
-  const presentStaff = staffPresence.filter(presence => presence.isPresent).length
+  const presentFromRecords = staffPresence.filter(presence => presence.isPresent).length
+  
+  // Check if current admin user has a presence record
+  const currentUserPresenceRecord = staffPresence.find(presence => presence.staffId === currentUser?.id)
+  const isCurrentUserInPresenceRecords = !!currentUserPresenceRecord
+  
+  // If current user is staff/admin and not in presence records, count them as present (since they're logged in and active)
+  const shouldCountCurrentUserAsPresent = currentUser && 
+    ['admin', 'staff', 'doctor', 'nurse'].includes(currentUser.role) && 
+    !isCurrentUserInPresenceRecords
+  
+  const presentStaff = presentFromRecords + (shouldCountCurrentUserAsPresent ? 1 : 0)
   const onDutyStaff = presentStaff
 
   // Medicines/Inventory data
@@ -1071,6 +1082,21 @@ export default function ClinicDashboard() {
   // Debug: Log medicines data
   console.log('Medicines data:', medicines, 'Loading:', medicinesLoading, 'Force render:', forceRender)
   console.log('First medicine stock:', medicines[0]?.stock)
+  
+  // Debug: Log staff presence data
+  console.log('🔥 FRONTEND - Staff presence data:', staffPresence)
+  console.log('🔥 FRONTEND - Staff presence loading:', presenceLoading)
+  console.log('🔥 FRONTEND - Present count calculation:', presentStaff)
+  console.log('🔥 FRONTEND - Present from records:', presentFromRecords)
+  console.log('🔥 FRONTEND - Current user in records:', isCurrentUserInPresenceRecords)
+  console.log('🔥 FRONTEND - Should count current user:', shouldCountCurrentUserAsPresent)
+  console.log('🔥 FRONTEND - Individual presence status:', staffPresence.map(p => ({ 
+    id: p.id, 
+    staffId: p.staffId, 
+    isPresent: p.isPresent, 
+    staffRole: p.staff?.role,
+    staffEmail: p.staff?.email 
+  })))
 
   // Function to remove emergency alert
   const removeAlert = (alertId: string) => {

@@ -947,6 +947,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/staff-presence/today", authMiddleware, requireRole(['admin', 'staff', 'super_admin']), async (req, res) => {
     try {
       const staffPresence = await storage.getTodayStaffPresence();
+      console.log('🔥 STAFF PRESENCE DEBUG - Raw data:', JSON.stringify(staffPresence, null, 2));
+      console.log('🔥 STAFF PRESENCE DEBUG - Count:', staffPresence.length);
+      console.log('🔥 STAFF PRESENCE DEBUG - Present count:', staffPresence.filter(p => p.isPresent).length);
       res.json(staffPresence);
     } catch (error: any) {
       res.status(400).json({ message: error.message });
