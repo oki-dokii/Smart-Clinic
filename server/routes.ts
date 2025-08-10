@@ -12,7 +12,6 @@ import { z } from "zod";
 import { authMiddleware, requireRole, requireSuperAdmin } from "./middleware/auth";
 import { gpsVerificationMiddleware } from "./middleware/gps";
 import { authService } from "./services/auth";
-import jwt from 'jsonwebtoken';
 import bcrypt from 'bcrypt';
 import { emailService } from "./services/email";
 import { queueService } from "./services/queue";
@@ -2416,16 +2415,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Medicine management routes
   app.get("/api/medicines", authMiddleware, async (req, res) => {
     try {
+      console.log('🔥 MEDICINES GET - User:', req.user!.email, 'Role:', req.user!.role, 'Clinic ID:', req.user!.clinicId);
+      
       // For admin users, filter by clinic ID
       if (req.user!.role === 'admin' && req.user!.clinicId) {
         const medicines = await storage.getMedicinesByClinic(req.user!.clinicId);
         console.log('🔥 MEDICINES - Admin fetching for clinic:', req.user!.clinicId, 'Count:', medicines.length);
+        console.log('🔥 MEDICINES - Raw data:', medicines);
         res.json(medicines);
       } else {
         const medicines = await storage.getAllMedicines();
+        console.log('🔥 MEDICINES - All medicines count:', medicines.length);
         res.json(medicines);
       }
     } catch (error: any) {
+      console.error('🔥 MEDICINES - Error:', error);
       res.status(500).json({ message: error.message });
     }
   });
@@ -2443,12 +2447,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         strength,
         dosageForm,
         manufacturer,
+        clinicId: req.user!.clinicId, // Add the required clinicId
         stock: parseInt(stock) || 0,
         description
       });
       
+      console.log('🔥 MEDICINE ADDED - Admin:', req.user!.email, 'Clinic:', req.user!.clinicId, 'Medicine:', name);
       res.json(medicine);
     } catch (error: any) {
+      console.error('🔥 MEDICINE ADD ERROR:', error);
       res.status(400).json({ message: error.message });
     }
   });
