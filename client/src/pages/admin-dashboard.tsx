@@ -1044,7 +1044,7 @@ export default function ClinicDashboard() {
   // Calculate real staff metrics
   const doctorCount = staffMembers.filter(staff => staff.role === 'doctor').length
   const nurseCount = staffMembers.filter(staff => staff.role === 'nurse').length  
-  const staffCount = staffMembers.filter(staff => staff.role === 'staff').length
+  const staffCount = staffMembers.filter(staff => staff.role === 'staff' || staff.role === 'admin').length
   const totalStaff = staffMembers.length
   
   // Calculate present staff from presence data
