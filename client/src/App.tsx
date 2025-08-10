@@ -284,7 +284,6 @@ const AppRouter = () => {
       <Route path="/admin-dashboard">{() => <SuperAdminRoute><AdminDashboard /></SuperAdminRoute>}</Route>
       <Route path="/clinic-management">{() => <SuperAdminRoute><ClinicManagement /></SuperAdminRoute>}</Route>
       <Route path="/clinic-admin/:clinicId">{() => <SuperAdminRoute><ClinicAdminDashboard /></SuperAdminRoute>}</Route>
-      <Route path="/medicines">{() => <SuperAdminRoute><MedicinesPage /></SuperAdminRoute>}</Route>
       
       {/* Staff/Doctor-only routes */}
       <Route path="/staff-checkin">{() => <ProtectedRoute allowedRoles={['staff', 'doctor']}><StaffCheckinPage /></ProtectedRoute>}</Route>
@@ -293,6 +292,7 @@ const AppRouter = () => {
       <Route path="/dashboard">{() => <ProtectedRoute><Dashboard /></ProtectedRoute>}</Route>
       <Route path="/profile">{() => <ProtectedRoute><ProfilePage /></ProtectedRoute>}</Route>
       <Route path="/settings">{() => <ProtectedRoute><SettingsPage /></ProtectedRoute>}</Route>
+      <Route path="/medicines">{() => <ProtectedRoute allowedRoles={['patient']}><MedicinesPage /></ProtectedRoute>}</Route>
       <Route path="/book-appointment">{() => <ProtectedRoute allowedRoles={['patient']}><PatientBooking /></ProtectedRoute>}</Route>
       <Route path="/live-queue">{() => <ProtectedRoute><LiveQueueTracker /></ProtectedRoute>}</Route>
       
