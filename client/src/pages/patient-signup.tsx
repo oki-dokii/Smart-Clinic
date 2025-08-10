@@ -77,7 +77,10 @@ export default function PatientSignup() {
           title: "Welcome to SmartClinic!",
           description: `Account created successfully for ${data.user.firstName}. Welcome to your healthcare dashboard.`,
         })
-        window.location.href = '/dashboard'
+        // Add small delay to ensure localStorage is written before redirect
+        setTimeout(() => {
+          window.location.href = '/dashboard'
+        }, 100)
       }
     },
     onError: (error: any) => {
@@ -96,13 +99,17 @@ export default function PatientSignup() {
       return await response.json()
     },
     onSuccess: (data: any) => {
-      if (data.token) {
+      if (data.token && data.user) {
         localStorage.setItem('auth_token', data.token)
+        localStorage.setItem('user', JSON.stringify(data.user))
         toast({
           title: "Account Created!",
           description: "Welcome to SmartClinic. Your patient account has been created successfully.",
         })
-        window.location.href = '/dashboard'
+        // Add small delay to ensure localStorage is written before redirect
+        setTimeout(() => {
+          window.location.href = '/dashboard'
+        }, 100)
       }
     },
     onError: (error: any) => {

@@ -323,13 +323,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const user = await storage.createUser(userData);
       
-      // Generate JWT token for immediate login
+      // Generate JWT token for immediate login (use same secret as auth service)
       const token = jwt.sign(
         { 
           userId: user.id,
           role: user.role 
         },
-        process.env.SESSION_SECRET || 'your-super-secret-jwt-key-change-this-in-production',
+        process.env.JWT_SECRET || process.env.SESSION_SECRET || 'your-super-secret-jwt-key-change-this-in-production',
         { expiresIn: '7d' }
       );
 

@@ -48,11 +48,37 @@ function SuperAdminRoute({ children }: { children: React.ReactNode }) {
   const currentUser = authResponse?.user;
 
   useEffect(() => {
-    // Handle authentication errors
+    // Handle authentication errors - be smart about redirects based on user context
     if (error || (!isLoading && !currentUser && token)) {
       localStorage.removeItem('auth_token');
       localStorage.removeItem('user');
-      window.location.href = '/login';
+      
+      // Check if this might be a patient trying to access their dashboard
+      const storedUser = localStorage.getItem('user');
+      let userRole = null;
+      
+      try {
+        if (storedUser) {
+          userRole = JSON.parse(storedUser).role;
+        }
+      } catch (e) {
+        // Invalid user data, clear it
+        localStorage.removeItem('user');
+      }
+      
+      // Redirect based on last known role or route
+      if (window.location.pathname.includes('book-appointment') || 
+          window.location.pathname.includes('patient') ||
+          (window.location.pathname === '/dashboard' && userRole === 'patient')) {
+        window.location.href = '/patient-login';
+      } else if (window.location.pathname.includes('admin') || userRole === 'admin') {
+        window.location.href = '/login';
+      } else if (userRole === 'staff' || userRole === 'doctor') {
+        window.location.href = '/login';
+      } else {
+        // Default redirect - try to be smart about it
+        window.location.href = redirectTo;
+      }
       return;
     }
 
