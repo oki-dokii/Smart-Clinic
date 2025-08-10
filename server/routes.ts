@@ -258,8 +258,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         isActive: true,
         isApproved: true, // Auto-approve patients
         dateOfBirth: signupData.dateOfBirth ? new Date(signupData.dateOfBirth) : undefined,
-        // Generate unique phone number for Firebase users if not provided
-        phoneNumber: signupData.phoneNumber || `firebase-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+        // Generate unique phone number for Firebase users if not provided (max 20 chars)
+        phoneNumber: signupData.phoneNumber || `fb${Date.now().toString().slice(-8)}${Math.random().toString(36).substr(2, 5)}`
       };
 
       const user = await storage.createUser(userData);
