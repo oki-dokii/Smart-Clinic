@@ -13,6 +13,7 @@ import { authMiddleware, requireRole, requireSuperAdmin } from "./middleware/aut
 import { gpsVerificationMiddleware } from "./middleware/gps";
 import { authService } from "./services/auth";
 import jwt from 'jsonwebtoken';
+import bcrypt from 'bcrypt';
 import { emailService } from "./services/email";
 import { queueService } from "./services/queue";
 import { schedulerService } from "./services/scheduler";
@@ -255,8 +256,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         phoneNumber: signupData.phoneNumber || `temp${Date.now().toString().slice(-8)}${Math.random().toString(36).substr(2, 4)}`
       };
 
+      // Generate 6-digit OTP
+      const otp = Math.floor(100000 + Math.random() * 900000).toString();
+      console.log(`🔥 EMAIL SIGNUP - Generated 6-digit OTP: ${otp} for ${signupData.email}`);
+      
       // Generate and send OTP via email
-      const otpResult = await emailService.sendOtp(signupData.email, 'SIGNUP_VERIFICATION');
+      const otpResult = await emailService.sendOtp(signupData.email, otp);
       
       if (!otpResult.success) {
         // Fallback for development
@@ -272,8 +277,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(500).json({ message: "Failed to send verification email. Please try again." });
       }
 
-      // Store temp signup data for verification
-      await storage.storeTempSignupData(signupData.email, tempData);
+      // Store temp signup data for verification (include OTP hash for verification)
+      const otpHash = await bcrypt.hash(otp, 10);
+      await storage.storeTempSignupData(signupData.email, { ...tempData, otpHash });
       
       console.log(`🔥 EMAIL SIGNUP - OTP sent successfully to: ${signupData.email}`);
       res.json({ message: "Verification code sent to your email" });
@@ -293,16 +299,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       console.log(`🔥 EMAIL SIGNUP - Verifying OTP for: ${email}`);
 
-      // Verify OTP
-      const otpValid = await emailService.verifyOtp(email, otp, 'SIGNUP_VERIFICATION');
-      if (!otpValid) {
-        return res.status(400).json({ message: "Invalid or expired verification code" });
-      }
-
-      // Get stored signup data
+      // Get stored signup data first
       const tempData = await storage.getTempSignupData(email);
       if (!tempData) {
         return res.status(400).json({ message: "Signup session expired. Please start over." });
+      }
+
+      // Verify OTP using bcrypt comparison
+      const otpValid = await bcrypt.compare(otp, tempData.otpHash);
+      if (!otpValid) {
+        return res.status(400).json({ message: "Invalid verification code" });
       }
 
       // Hash password before storing
