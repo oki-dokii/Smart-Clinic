@@ -3,7 +3,7 @@ import { getAuth, signInWithRedirect, signInWithPopup, GoogleAuthProvider, creat
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
-  authDomain: `${import.meta.env.VITE_FIREBASE_PROJECT_ID}.firebaseapp.com`,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
   projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
   storageBucket: `${import.meta.env.VITE_FIREBASE_PROJECT_ID}.firebasestorage.app`,
   appId: import.meta.env.VITE_FIREBASE_APP_ID,
@@ -11,9 +11,13 @@ const firebaseConfig = {
 
 // Check if Firebase configuration is valid before initializing
 const isFirebaseConfigured = firebaseConfig.apiKey && 
+  firebaseConfig.authDomain &&
   firebaseConfig.projectId && 
+  firebaseConfig.appId &&
   firebaseConfig.apiKey !== 'undefined' && 
-  firebaseConfig.projectId !== 'undefined';
+  firebaseConfig.authDomain !== 'undefined' &&
+  firebaseConfig.projectId !== 'undefined' &&
+  firebaseConfig.appId !== 'undefined';
 
 let app: any = null;
 let auth: any = null;
