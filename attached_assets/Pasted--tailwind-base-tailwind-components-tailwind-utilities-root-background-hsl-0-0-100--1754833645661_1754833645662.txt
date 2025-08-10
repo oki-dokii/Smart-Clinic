@@ -501,12 +501,22 @@
   }
   
   .hero-contact {
+    flex-direction: column;
+    align-items: stretch;
     gap: 1rem;
   }
   
   .contact-item {
-    padding: 0.5rem 1rem;
-    font-size: 0.875rem;
+    justify-content: center;
+  }
+  
+  .hero-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .hero-search {
+    min-width: unset;
   }
   
   .dashboard-container {
@@ -518,6 +528,10 @@
     gap: 1.5rem;
   }
   
+  .dashboard-grid-large {
+    grid-template-columns: 1fr;
+  }
+  
   .dashboard-card {
     padding: 1.5rem;
   }
@@ -525,170 +539,64 @@
   .card-main-value {
     font-size: 2.5rem;
   }
+  
+  .stats-row {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+  }
 }
 
-@media (max-width: 640px) {
-  .hero-actions {
-    flex-direction: column;
-    width: 100%;
+@media (max-width: 480px) {
+  .hero-section {
+    min-height: 50vh;
+    padding: 2rem 0;
   }
   
-  .hero-search {
-    min-width: 100%;
+  .hero-title {
+    font-size: 2rem;
   }
   
-  .hero-btn-primary {
-    width: 100%;
-    justify-content: center;
+  .card-main-value {
+    font-size: 2rem;
+  }
+  
+  .stats-row {
+    grid-template-columns: 1fr;
   }
 }
 
 /* Animation keyframes */
 @keyframes gentle-pulse {
   0%, 100% {
-    background-color: hsl(0, 84%, 60%);
-  }
-  50% {
-    background-color: hsl(0, 100%, 50%);
-  }
-}
-
-@keyframes flash {
-  0%, 50%, 100% {
     opacity: 1;
   }
-  25%, 75% {
-    opacity: 0.7;
+  50% {
+    opacity: 0.8;
   }
 }
 
-.animate-flash {
-  animation: flash 2s infinite;
+/* Accessibility improvements */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }
 
-/* Custom scrollbar for better UX */
-::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+/* Focus styles for better accessibility */
+.dashboard-card:focus-within {
+  outline: 2px solid hsl(var(--primary));
+  outline-offset: 2px;
 }
 
-::-webkit-scrollbar-track {
-  background: hsl(var(--muted));
-}
-
-::-webkit-scrollbar-thumb {
-  background: hsl(var(--border));
-  border-radius: 3px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: hsl(var(--muted-foreground));
-}
-
-/* Queue token styling */
-.queue-token {
-  background: linear-gradient(135deg, hsl(var(--healthcare-blue)), hsl(207, 90%, 64%));
-  color: white;
-  border-radius: 12px;
-  padding: 1.5rem;
-  text-align: center;
-  box-shadow: 0 4px 12px hsla(207, 90%, 54%, 0.3);
-}
-
-/* Appointment card */
-.appointment-card {
-  border-left: 4px solid hsl(var(--healthcare-green));
-  background: linear-gradient(to right, hsl(142, 71%, 98%), white);
-}
-
-/* Healthcare status indicators */
-.status-active {
-  background-color: hsl(var(--healthcare-green));
-  color: white;
-}
-
-.status-pending {
-  background-color: hsl(var(--healthcare-orange));
-  color: white;
-}
-
-.status-urgent {
-  background-color: hsl(var(--healthcare-red));
-  color: white;
-}
-
-.status-info {
-  background-color: hsl(var(--healthcare-blue));
-  color: white;
-}
-
-/* Queue status badges */
-.queue-waiting {
-  background: hsl(var(--healthcare-orange) / 0.1);
-  color: hsl(var(--healthcare-orange));
-  padding: 0.25rem 0.75rem;
-  border-radius: 1rem;
-  font-size: 0.75rem;
-  font-weight: 600;
-}
-
-.queue-called {
-  background: hsl(var(--healthcare-blue) / 0.1);
-  color: hsl(var(--healthcare-blue));
-  padding: 0.25rem 0.75rem;
-  border-radius: 1rem;
-  font-size: 0.75rem;
-  font-weight: 600;
-}
-
-.queue-completed {
-  background: hsl(var(--healthcare-green) / 0.1);
-  color: hsl(var(--healthcare-green));
-  padding: 0.25rem 0.75rem;
-  border-radius: 1rem;
-  font-size: 0.75rem;
-  font-weight: 600;
-}
-
-/* Appointment status badges */
-.appointment-scheduled {
-  background: hsl(var(--healthcare-blue) / 0.1);
-  color: hsl(var(--healthcare-blue));
-  padding: 0.25rem 0.75rem;
-  border-radius: 1rem;
-  font-size: 0.75rem;
-  font-weight: 600;
-}
-
-.appointment-confirmed {
-  background: hsl(var(--healthcare-green) / 0.1);
-  color: hsl(var(--healthcare-green));
-  padding: 0.25rem 0.75rem;
-  border-radius: 1rem;
-  font-size: 0.75rem;
-  font-weight: 600;
-}
-
-.appointment-completed {
-  background: hsl(var(--muted));
-  color: hsl(var(--muted-foreground));
-  padding: 0.25rem 0.75rem;
-  border-radius: 1rem;
-  font-size: 0.75rem;
-  font-weight: 600;
-}
-
-.appointment-cancelled {
-  background: hsl(var(--healthcare-red) / 0.1);
-  color: hsl(var(--healthcare-red));
-  padding: 0.25rem 0.75rem;
-  border-radius: 1rem;
-  font-size: 0.75rem;
-  font-weight: 600;
+.card-action:focus {
+  outline: 2px solid hsl(var(--primary));
+  outline-offset: 2px;
 }
 
 /* Loading states */
-.skeleton {
+.loading-skeleton {
   background: linear-gradient(90deg, hsl(var(--muted)) 25%, hsl(var(--muted) / 0.5) 50%, hsl(var(--muted)) 75%);
   background-size: 200% 100%;
   animation: loading 1.5s infinite;
@@ -701,83 +609,4 @@
   100% {
     background-position: -200% 0;
   }
-}
-
-.loading-spinner {
-  width: 2rem;
-  height: 2rem;
-  border: 2px solid hsl(var(--muted));
-  border-top: 2px solid hsl(var(--primary));
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-  0% {
-    transform: rotate(0deg);
-  }
-  100% {
-    transform: rotate(360deg);
-  }
-}
-
-/* Focus styles for accessibility */
-.focus-visible:focus-visible {
-  outline: 2px solid hsl(var(--primary));
-  outline-offset: 2px;
-}
-
-/* Enhanced form styling */
-.form-field {
-  position: relative;
-  margin-bottom: 1.5rem;
-}
-
-.form-label {
-  display: block;
-  font-size: 0.875rem;
-  font-weight: 600;
-  color: hsl(var(--foreground));
-  margin-bottom: 0.5rem;
-}
-
-.form-input {
-  width: 100%;
-  padding: 0.75rem 1rem;
-  border: 1px solid hsl(var(--border));
-  border-radius: 0.5rem;
-  background: hsl(var(--background));
-  color: hsl(var(--foreground));
-  transition: all 0.2s ease;
-}
-
-.form-input:focus {
-  outline: none;
-  border-color: hsl(var(--primary));
-  box-shadow: 0 0 0 3px hsl(var(--primary) / 0.1);
-}
-
-.form-error {
-  color: hsl(var(--healthcare-red));
-  font-size: 0.75rem;
-  margin-top: 0.25rem;
-}
-
-/* Healthcare gradient backgrounds */
-.gradient-healthcare {
-  background: linear-gradient(135deg, hsl(var(--healthcare-blue)), hsl(var(--healthcare-green)));
-}
-
-.gradient-healthcare-secondary {
-  background: linear-gradient(135deg, hsl(var(--healthcare-purple)), hsl(var(--healthcare-blue)));
-}
-
-/* Card hover effects */
-.card-hover {
-  transition: all 0.2s ease-in-out;
-}
-
-.card-hover:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 25px hsla(0, 0%, 0%, 0.1);
 }
