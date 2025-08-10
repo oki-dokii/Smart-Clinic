@@ -4978,6 +4978,257 @@ export default function ClinicDashboard() {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Add Medicine Dialog */}
+      <Dialog open={isAddMedicineOpen} onOpenChange={setIsAddMedicineOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Add New Medicine</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="medicineName">Medicine Name *</Label>
+              <Input
+                id="medicineName"
+                value={newMedicine.name}
+                onChange={(e) => setNewMedicine({...newMedicine, name: e.target.value})}
+                placeholder="e.g., Paracetamol"
+                data-testid="input-medicine-name"
+              />
+            </div>
+            <div>
+              <Label htmlFor="medicineStrength">Strength *</Label>
+              <Input
+                id="medicineStrength"
+                value={newMedicine.strength}
+                onChange={(e) => setNewMedicine({...newMedicine, strength: e.target.value})}
+                placeholder="e.g., 500mg"
+                data-testid="input-medicine-strength"
+              />
+            </div>
+            <div>
+              <Label htmlFor="medicineDosageForm">Dosage Form *</Label>
+              <Select value={newMedicine.dosageForm} onValueChange={(value) => setNewMedicine({...newMedicine, dosageForm: value})}>
+                <SelectTrigger data-testid="select-dosage-form">
+                  <SelectValue placeholder="Select dosage form" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Tablet">Tablet</SelectItem>
+                  <SelectItem value="Capsule">Capsule</SelectItem>
+                  <SelectItem value="Syrup">Syrup</SelectItem>
+                  <SelectItem value="Injection">Injection</SelectItem>
+                  <SelectItem value="Cream">Cream</SelectItem>
+                  <SelectItem value="Drops">Drops</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label htmlFor="medicineManufacturer">Manufacturer *</Label>
+              <Input
+                id="medicineManufacturer"
+                value={newMedicine.manufacturer}
+                onChange={(e) => setNewMedicine({...newMedicine, manufacturer: e.target.value})}
+                placeholder="e.g., MediLabs"
+                data-testid="input-medicine-manufacturer"
+              />
+            </div>
+            <div>
+              <Label htmlFor="medicineStock">Initial Stock</Label>
+              <Input
+                id="medicineStock"
+                type="number"
+                min="0"
+                value={newMedicine.stock}
+                onChange={(e) => setNewMedicine({...newMedicine, stock: parseInt(e.target.value) || 0})}
+                placeholder="0"
+                data-testid="input-medicine-stock"
+              />
+            </div>
+            <div>
+              <Label htmlFor="medicineDescription">Description</Label>
+              <Textarea
+                id="medicineDescription"
+                value={newMedicine.description}
+                onChange={(e) => setNewMedicine({...newMedicine, description: e.target.value})}
+                placeholder="Brief description of the medicine"
+                data-testid="textarea-medicine-description"
+                rows={3}
+              />
+            </div>
+            <div className="flex gap-2 pt-4">
+              <Button 
+                onClick={handleAddMedicine} 
+                className="flex-1"
+                disabled={addMedicineMutation.isPending}
+                data-testid="button-submit-add-medicine"
+              >
+                {addMedicineMutation.isPending ? 'Adding...' : 'Add Medicine'}
+              </Button>
+              <Button 
+                variant="outline" 
+                onClick={() => setIsAddMedicineOpen(false)}
+                className="flex-1"
+                data-testid="button-cancel-add-medicine"
+              >
+                Cancel
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Medicine Dialog */}
+      <Dialog open={isEditMedicineOpen} onOpenChange={setIsEditMedicineOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Edit Medicine</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="editMedicineName">Medicine Name *</Label>
+              <Input
+                id="editMedicineName"
+                value={newMedicine.name}
+                onChange={(e) => setNewMedicine({...newMedicine, name: e.target.value})}
+                placeholder="e.g., Paracetamol"
+                data-testid="input-edit-medicine-name"
+              />
+            </div>
+            <div>
+              <Label htmlFor="editMedicineStrength">Strength *</Label>
+              <Input
+                id="editMedicineStrength"
+                value={newMedicine.strength}
+                onChange={(e) => setNewMedicine({...newMedicine, strength: e.target.value})}
+                placeholder="e.g., 500mg"
+                data-testid="input-edit-medicine-strength"
+              />
+            </div>
+            <div>
+              <Label htmlFor="editMedicineDosageForm">Dosage Form *</Label>
+              <Select value={newMedicine.dosageForm} onValueChange={(value) => setNewMedicine({...newMedicine, dosageForm: value})}>
+                <SelectTrigger data-testid="select-edit-dosage-form">
+                  <SelectValue placeholder="Select dosage form" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Tablet">Tablet</SelectItem>
+                  <SelectItem value="Capsule">Capsule</SelectItem>
+                  <SelectItem value="Syrup">Syrup</SelectItem>
+                  <SelectItem value="Injection">Injection</SelectItem>
+                  <SelectItem value="Cream">Cream</SelectItem>
+                  <SelectItem value="Drops">Drops</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label htmlFor="editMedicineManufacturer">Manufacturer *</Label>
+              <Input
+                id="editMedicineManufacturer"
+                value={newMedicine.manufacturer}
+                onChange={(e) => setNewMedicine({...newMedicine, manufacturer: e.target.value})}
+                placeholder="e.g., MediLabs"
+                data-testid="input-edit-medicine-manufacturer"
+              />
+            </div>
+            <div>
+              <Label htmlFor="editMedicineStock">Current Stock</Label>
+              <Input
+                id="editMedicineStock"
+                type="number"
+                min="0"
+                value={newMedicine.stock}
+                onChange={(e) => setNewMedicine({...newMedicine, stock: parseInt(e.target.value) || 0})}
+                placeholder="0"
+                data-testid="input-edit-medicine-stock"
+              />
+            </div>
+            <div>
+              <Label htmlFor="editMedicineDescription">Description</Label>
+              <Textarea
+                id="editMedicineDescription"
+                value={newMedicine.description}
+                onChange={(e) => setNewMedicine({...newMedicine, description: e.target.value})}
+                placeholder="Brief description of the medicine"
+                data-testid="textarea-edit-medicine-description"
+                rows={3}
+              />
+            </div>
+            <div className="flex gap-2 pt-4">
+              <Button 
+                onClick={handleUpdateMedicine} 
+                className="flex-1"
+                disabled={updateMedicineMutation.isPending}
+                data-testid="button-submit-edit-medicine"
+              >
+                {updateMedicineMutation.isPending ? 'Updating...' : 'Update Medicine'}
+              </Button>
+              <Button 
+                variant="outline" 
+                onClick={() => setIsEditMedicineOpen(false)}
+                className="flex-1"
+                data-testid="button-cancel-edit-medicine"
+              >
+                Cancel
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Restock Medicine Dialog */}
+      <Dialog open={isRestockOpen} onOpenChange={setIsRestockOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Restock Medicine</DialogTitle>
+          </DialogHeader>
+          {selectedMedicine && (
+            <div className="space-y-4">
+              <div className="p-4 bg-gray-50 rounded-lg">
+                <h3 className="font-semibold">{selectedMedicine.name}</h3>
+                <p className="text-sm text-gray-600">
+                  {selectedMedicine.strength} - {selectedMedicine.dosageForm}
+                </p>
+                <p className="text-sm text-gray-500">
+                  Current Stock: <span className="font-medium">{selectedMedicine.stock || 0} units</span>
+                </p>
+              </div>
+              <div>
+                <Label htmlFor="restockAmount">Restock Amount *</Label>
+                <Input
+                  id="restockAmount"
+                  type="number"
+                  min="1"
+                  value={restockAmount}
+                  onChange={(e) => setRestockAmount(parseInt(e.target.value) || 0)}
+                  placeholder="Enter amount to add"
+                  data-testid="input-restock-amount"
+                />
+                <p className="text-sm text-gray-500 mt-1">
+                  New total will be: {(selectedMedicine.stock || 0) + restockAmount} units
+                </p>
+              </div>
+              <div className="flex gap-2 pt-4">
+                <Button 
+                  onClick={handleRestock} 
+                  className="flex-1"
+                  disabled={restockMedicineMutation.isPending || restockAmount <= 0}
+                  data-testid="button-submit-restock"
+                >
+                  {restockMedicineMutation.isPending ? 'Restocking...' : 'Restock Medicine'}
+                </Button>
+                <Button 
+                  variant="outline" 
+                  onClick={() => setIsRestockOpen(false)}
+                  className="flex-1"
+                  data-testid="button-cancel-restock"
+                >
+                  Cancel
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
