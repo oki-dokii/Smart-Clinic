@@ -108,6 +108,15 @@
   color: hsl(var(--card-foreground));
 }
 
+/* Force SmartClinic header to be black */
+.smartclinic-header {
+  color: #000000 !important;
+}
+
+.smartclinic-subtitle {
+  color: #666666 !important;
+}
+
 @layer base {
   * {
     @apply border-border;
