@@ -893,7 +893,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Staff GPS verification routes
-  app.post("/api/staff/checkin", authMiddleware, requireRole(['staff', 'doctor']), gpsVerificationMiddleware, async (req, res) => {
+  app.post("/api/staff/checkin", authMiddleware, requireRole(['staff', 'doctor', 'nurse']), gpsVerificationMiddleware, async (req, res) => {
     try {
       const { latitude, longitude, workLocation } = z.object({
         latitude: z.number(),
@@ -901,29 +901,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
         workLocation: z.string()
       }).parse(req.body);
 
+      // Create verification record
       const verification = await storage.createStaffVerification({
         staffId: req.user!.id,
+        clinicId: req.user!.clinicId || 'clinic-mumbai-main', // Default to Mumbai clinic
         latitude,
         longitude,
         workLocation
       });
 
-      res.json(verification);
+      // Also create/update staff presence record for today
+      await storage.markStaffPresent(req.user!.id, req.user!.clinicId || 'clinic-mumbai-main');
+
+      res.json({ ...verification, message: "Checked in successfully - attendance marked!" });
     } catch (error: any) {
       res.status(400).json({ message: error.message });
     }
   });
 
-  app.post("/api/staff/checkout", authMiddleware, requireRole(['staff', 'doctor']), async (req, res) => {
+  app.post("/api/staff/checkout", authMiddleware, requireRole(['staff', 'doctor', 'nurse']), async (req, res) => {
     try {
       await storage.checkOutStaff(req.user!.id);
+      // Update staff presence with checkout time
+      await storage.updateStaffCheckout(req.user!.id);
       res.json({ message: "Checked out successfully" });
     } catch (error: any) {
       res.status(400).json({ message: error.message });
     }
   });
 
-  app.get("/api/staff/verifications", authMiddleware, requireRole(['staff', 'doctor', 'admin']), async (req, res) => {
+  app.get("/api/staff/verifications", authMiddleware, requireRole(['staff', 'doctor', 'nurse', 'admin']), async (req, res) => {
     try {
       const { date } = req.query;
       const staffId = req.user!.role === 'admin' ? req.query.staffId as string : req.user!.id;
@@ -931,6 +938,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const verifications = await storage.getStaffVerifications(staffId, verificationDate);
       res.json(verifications);
+    } catch (error: any) {
+      res.status(400).json({ message: error.message });
+    }
+  });
+
+  // Admin staff attendance routes
+  app.get("/api/staff-presence/today", authMiddleware, requireRole(['admin', 'staff', 'super_admin']), async (req, res) => {
+    try {
+      const staffPresence = await storage.getTodayStaffPresence();
+      res.json(staffPresence);
+    } catch (error: any) {
+      res.status(400).json({ message: error.message });
+    }
+  });
+
+  app.get("/api/staff-presence/:date", authMiddleware, requireRole(['admin', 'super_admin']), async (req, res) => {
+    try {
+      const { date } = req.params;
+      const targetDate = new Date(date);
+      
+      if (isNaN(targetDate.getTime())) {
+        return res.status(400).json({ message: "Invalid date format" });
+      }
+      
+      const staffPresence = await storage.getStaffPresenceForDate(targetDate);
+      res.json(staffPresence);
     } catch (error: any) {
       res.status(400).json({ message: error.message });
     }

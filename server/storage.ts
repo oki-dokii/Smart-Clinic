@@ -71,6 +71,8 @@ export interface IStorage {
   getStaffPresenceForDate(date: Date): Promise<(StaffPresence & { staff: User })[]>;
   updateStaffPresence(id: string, updates: Partial<InsertStaffPresence>): Promise<StaffPresence | undefined>;
   getTodayStaffPresence(): Promise<(StaffPresence & { staff: User })[]>;
+  markStaffPresent(staffId: string, clinicId: string): Promise<StaffPresence>;
+  updateStaffCheckout(staffId: string): Promise<StaffPresence | undefined>;
   
   // Appointments
   createAppointment(appointment: InsertAppointment): Promise<Appointment>;
@@ -1806,6 +1808,33 @@ export class DatabaseStorage implements IStorage {
       })
       .returning();
     return newPresence;
+  }
+
+  async markStaffPresent(staffId: string, clinicId: string): Promise<StaffPresence> {
+    const today = new Date();
+    return this.createOrUpdateStaffPresence(staffId, today, clinicId);
+  }
+
+  async updateStaffCheckout(staffId: string): Promise<StaffPresence | undefined> {
+    const today = new Date();
+    const startOfDay = new Date(today);
+    startOfDay.setHours(0, 0, 0, 0);
+    const endOfDay = new Date(today);
+    endOfDay.setHours(23, 59, 59, 999);
+
+    const [updated] = await db.update(staffPresence)
+      .set({ 
+        checkOutTime: new Date(),
+        updatedAt: new Date() 
+      })
+      .where(and(
+        eq(staffPresence.staffId, staffId),
+        gte(staffPresence.date, startOfDay),
+        lte(staffPresence.date, endOfDay)
+      ))
+      .returning();
+    
+    return updated || undefined;
   }
 
   // Clinic Management

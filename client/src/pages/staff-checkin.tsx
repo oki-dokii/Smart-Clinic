@@ -23,8 +23,9 @@ interface StaffVerification {
 }
 
 const CLINIC_LOCATIONS = [
-  { name: 'Main Clinic', description: 'Primary healthcare facility' },
-  { name: 'Branch Clinic', description: 'Secondary location' }
+  { name: 'Mumbai Central Clinic', description: 'Primary Mumbai healthcare facility' },
+  { name: 'Andheri Branch', description: 'Western Mumbai location' },
+  { name: 'Bandra Clinic', description: 'Central Mumbai branch' }
 ]
 
 export default function StaffCheckinPage() {
