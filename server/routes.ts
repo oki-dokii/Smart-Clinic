@@ -224,6 +224,148 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Firebase Authentication routes
+  // Patient signup with email OTP - Step 1: Send OTP
+  app.post("/api/auth/patient-signup-otp", async (req, res) => {
+    try {
+      const signupData = z.object({
+        firstName: z.string().min(1),
+        lastName: z.string().min(1),
+        email: z.string().email(),
+        password: z.string().min(6),
+        phoneNumber: z.string().optional(),
+        dateOfBirth: z.string().optional(),
+        address: z.string().optional(),
+        emergencyContact: z.string().optional()
+      }).parse(req.body);
+
+      console.log(`🔥 EMAIL SIGNUP - Initiating signup for: ${signupData.email}`);
+
+      // Check if user already exists
+      const existingUser = await storage.getUserByEmail(signupData.email);
+      if (existingUser) {
+        return res.status(400).json({ message: "Account already exists with this email address" });
+      }
+
+      // Store signup data temporarily and send OTP
+      const tempData = {
+        ...signupData,
+        role: 'patient' as const,
+        isActive: true,
+        dateOfBirth: signupData.dateOfBirth ? new Date(signupData.dateOfBirth) : undefined,
+        phoneNumber: signupData.phoneNumber || `temp${Date.now().toString().slice(-8)}${Math.random().toString(36).substr(2, 4)}`
+      };
+
+      // Generate and send OTP via email
+      const otpResult = await emailService.sendOtp(signupData.email, 'SIGNUP_VERIFICATION');
+      
+      if (!otpResult.success) {
+        // Fallback for development
+        if (process.env.NODE_ENV === 'development' && otpResult.otp) {
+          console.log(`🔥 EMAIL SIGNUP - Development mode: OTP ${otpResult.otp} for ${signupData.email}`);
+          // Store temp data with OTP for verification
+          await storage.storeTempSignupData(signupData.email, { ...tempData, otp: otpResult.otp });
+          return res.json({ 
+            message: "Verification code sent",
+            developmentOtp: otpResult.otp 
+          });
+        }
+        return res.status(500).json({ message: "Failed to send verification email. Please try again." });
+      }
+
+      // Store temp signup data for verification
+      await storage.storeTempSignupData(signupData.email, tempData);
+      
+      console.log(`🔥 EMAIL SIGNUP - OTP sent successfully to: ${signupData.email}`);
+      res.json({ message: "Verification code sent to your email" });
+    } catch (error: any) {
+      console.error('🔥 EMAIL SIGNUP ERROR:', error);
+      res.status(400).json({ message: error.message });
+    }
+  });
+
+  // Patient signup with email OTP - Step 2: Verify OTP and complete signup
+  app.post("/api/auth/verify-signup-otp", async (req, res) => {
+    try {
+      const { email, otp } = z.object({
+        email: z.string().email(),
+        otp: z.string().length(6)
+      }).parse(req.body);
+
+      console.log(`🔥 EMAIL SIGNUP - Verifying OTP for: ${email}`);
+
+      // Verify OTP
+      const otpValid = await emailService.verifyOtp(email, otp, 'SIGNUP_VERIFICATION');
+      if (!otpValid) {
+        return res.status(400).json({ message: "Invalid or expired verification code" });
+      }
+
+      // Get stored signup data
+      const tempData = await storage.getTempSignupData(email);
+      if (!tempData) {
+        return res.status(400).json({ message: "Signup session expired. Please start over." });
+      }
+
+      // Hash password before storing
+      const hashedPassword = await bcrypt.hash(tempData.password, 12);
+
+      // Create user account
+      const userData = {
+        ...tempData,
+        password: hashedPassword,
+        isApproved: true // Auto-approve patients
+      };
+
+      const user = await storage.createUser(userData);
+      
+      // Generate JWT token for immediate login
+      const token = jwt.sign(
+        { 
+          userId: user.id,
+          role: user.role 
+        },
+        process.env.SESSION_SECRET || 'your-super-secret-jwt-key-change-this-in-production',
+        { expiresIn: '7d' }
+      );
+
+      // Create auth session
+      const expiresAt = new Date();
+      expiresAt.setDate(expiresAt.getDate() + 7);
+
+      await storage.createAuthSession({
+        userId: user.id,
+        token,
+        expiresAt,
+        ipAddress: req.ip || '',
+        userAgent: req.get('User-Agent') || '',
+        lastActivity: new Date()
+      });
+
+      // Clean up temp data
+      await storage.deleteTempSignupData(email);
+
+      console.log(`🔥 EMAIL SIGNUP - Account created successfully for: ${user.email}`);
+
+      res.json({
+        token,
+        user: {
+          id: user.id,
+          role: user.role,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          email: user.email,
+          isActive: user.isActive,
+          phoneNumber: user.phoneNumber,
+          dateOfBirth: user.dateOfBirth,
+          address: user.address,
+          emergencyContact: user.emergencyContact
+        }
+      });
+    } catch (error: any) {
+      console.error('🔥 EMAIL SIGNUP VERIFICATION ERROR:', error);
+      res.status(400).json({ message: error.message });
+    }
+  });
+
   app.post("/api/auth/patient-signup", async (req, res) => {
     try {
       const signupData = z.object({

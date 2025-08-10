@@ -44,6 +44,11 @@ export interface IStorage {
   getEmailOtpSession(email: string): Promise<EmailOtpSession | undefined>;
   invalidateEmailOtpSession(email: string): Promise<void>;
   incrementEmailOtpAttempts(email: string): Promise<void>;
+
+  // Temporary Signup Data
+  storeTempSignupData(email: string, data: any): Promise<void>;
+  getTempSignupData(email: string): Promise<any>;
+  deleteTempSignupData(email: string): Promise<void>;
   
   // Auth Sessions
   createAuthSession(session: InsertAuthSession): Promise<AuthSession>;
@@ -2015,6 +2020,32 @@ export class DatabaseStorage implements IStorage {
         sql`${users.role} IN ('staff', 'doctor')`
       ));
     return result.count;
+  }
+
+  // Temporary Signup Data Storage (in-memory for development)
+  private tempSignupData: Map<string, any> = new Map();
+
+  async storeTempSignupData(email: string, data: any): Promise<void> {
+    // Store with expiration (10 minutes)
+    const expirationTime = Date.now() + 10 * 60 * 1000;
+    this.tempSignupData.set(email, { ...data, expiresAt: expirationTime });
+  }
+
+  async getTempSignupData(email: string): Promise<any> {
+    const data = this.tempSignupData.get(email);
+    if (!data) return null;
+    
+    // Check if expired
+    if (Date.now() > data.expiresAt) {
+      this.tempSignupData.delete(email);
+      return null;
+    }
+    
+    return data;
+  }
+
+  async deleteTempSignupData(email: string): Promise<void> {
+    this.tempSignupData.delete(email);
   }
 
 }

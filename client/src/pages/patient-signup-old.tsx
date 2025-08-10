@@ -1,15 +1,13 @@
-'use client'
-
-import { useState } from 'react'
-import { useMutation } from '@tanstack/react-query'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { useToast } from '@/hooks/use-toast'
-import { apiRequest } from '@/lib/queryClient'
-import { signInWithGoogle, createUserAccount } from '@/lib/firebase'
-import { UserPlus, Mail, Lock, User, Phone, MapPin, Heart, Chrome } from 'lucide-react'
+import React, { useState } from 'react';
+import { useMutation } from '@tanstack/react-query';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { useToast } from '@/hooks/use-toast';
+import { apiRequest } from '@/lib/queryClient';
+import { signInWithGoogle, createUserAccount } from '@/lib/firebase';
+import { UserPlus, Mail, Lock, User, Phone, MapPin, Heart, Chrome } from 'lucide-react';
 
 export default function PatientSignup() {
   const [formData, setFormData] = useState({
@@ -22,36 +20,36 @@ export default function PatientSignup() {
     dateOfBirth: '',
     address: '',
     emergencyContact: ''
-  })
-  const [step, setStep] = useState<'signup' | 'otp'>('signup')
-  const [otp, setOtp] = useState('')
-  const [isLoading, setIsLoading] = useState(false)
-  const [developmentOtp, setDevelopmentOtp] = useState<string | null>(null)
-  const { toast } = useToast()
+  });
+  const [step, setStep] = useState<'signup' | 'otp'>('signup');
+  const [otp, setOtp] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [developmentOtp, setDevelopmentOtp] = useState<string | null>(null);
+  const { toast } = useToast();
 
   // Send email OTP for signup
   const sendSignupOtpMutation = useMutation({
     mutationFn: async (signupData: any) => {
-      const response = await apiRequest('POST', '/api/auth/patient-signup-otp', signupData)
-      return await response.json()
+      const response = await apiRequest('POST', '/api/auth/patient-signup-otp', signupData);
+      return await response.json();
     },
     onSuccess: (data: any) => {
-      setStep('otp')
+      setStep('otp');
       
       // Check if development OTP is provided (when email fails)
       if (data.developmentOtp) {
-        setDevelopmentOtp(data.developmentOtp)
+        setDevelopmentOtp(data.developmentOtp);
         toast({
           title: "Email Service Fallback - Development Mode",
           description: `Email delivery fallback. Your OTP is: ${data.developmentOtp}`,
           variant: "destructive",
-        })
+        });
       } else {
-        setDevelopmentOtp(null)
+        setDevelopmentOtp(null);
         toast({
           title: "Verification Code Sent",
           description: "Please check your email for the 6-digit verification code.",
-        })
+        });
       }
     },
     onError: (error: any) => {
@@ -59,25 +57,25 @@ export default function PatientSignup() {
         title: "Signup Failed",
         description: error.message || "Failed to send verification code. Please try again.",
         variant: "destructive"
-      })
+      });
     }
-  })
+  });
 
   // Verify OTP and complete signup
   const verifySignupOtpMutation = useMutation({
     mutationFn: async ({ email, otp }: { email: string; otp: string }) => {
-      const response = await apiRequest('POST', '/api/auth/verify-signup-otp', { email, otp })
-      return await response.json()
+      const response = await apiRequest('POST', '/api/auth/verify-signup-otp', { email, otp });
+      return await response.json();
     },
     onSuccess: (data: any) => {
       if (data.token && data.user) {
-        localStorage.setItem('auth_token', data.token)
-        localStorage.setItem('user', JSON.stringify(data.user))
+        localStorage.setItem('auth_token', data.token);
+        localStorage.setItem('user', JSON.stringify(data.user));
         toast({
           title: "Welcome to SmartClinic!",
           description: `Account created successfully for ${data.user.firstName}. Welcome to your healthcare dashboard.`,
-        })
-        window.location.href = '/dashboard'
+        });
+        window.location.href = '/dashboard';
       }
     },
     onError: (error: any) => {
@@ -85,59 +83,36 @@ export default function PatientSignup() {
         title: "Verification Failed",
         description: error.message || "Invalid verification code. Please try again.",
         variant: "destructive"
-      })
+      });
     }
-  })
-
-  // Firebase Google signup (keep existing functionality)
-  const createPatientMutation = useMutation({
-    mutationFn: async (userData: any) => {
-      const response = await apiRequest('POST', '/api/auth/patient-signup', userData)
-      return await response.json()
-    },
-    onSuccess: (data: any) => {
-      if (data.token) {
-        localStorage.setItem('auth_token', data.token)
-        toast({
-          title: "Account Created!",
-          description: "Welcome to SmartClinic. Your patient account has been created successfully.",
-        })
-        window.location.href = '/dashboard'
-      }
-    },
-    onError: (error: any) => {
-      toast({
-        title: "Signup Failed",
-        description: error.message || "Failed to create account. Please try again.",
-        variant: "destructive"
-      })
-    }
-  })
+  });
 
   const handleGoogleSignup = async () => {
-    setIsLoading(true)
+    setIsLoading(true);
     try {
-      const user = await signInWithGoogle()
+      const user = await signInWithGoogle();
       
-      if (!user) {
-        throw new Error("Google sign-in failed")
-      }
-      
-      // Check if user already exists
+      // First try to login (in case user already exists)
       try {
-        const checkResponse = await apiRequest('GET', `/api/auth/firebase-user?uid=${user.uid}`)
-        const existingUser = await checkResponse.json()
+        const loginResponse = await apiRequest('POST', '/api/auth/firebase-login', {
+          firebaseUid: user.uid,
+          email: user.email,
+          name: user.displayName || user.email?.split('@')[0] || 'User'
+        });
         
-        if (existingUser && existingUser.id) {
+        const loginData = await loginResponse.json();
+        if (loginData.token) {
+          localStorage.setItem('auth_token', loginData.token);
           toast({
-            title: "Account Exists",
-            description: "An account with this Google account already exists. Please try logging in instead.",
-            variant: "destructive"
-          })
-          return
+            title: "Welcome Back!",
+            description: "Successfully signed in with Google.",
+          });
+          window.location.href = '/dashboard';
+          return;
         }
-      } catch (error) {
-        console.log('User not found, creating new account...')
+      } catch (loginError) {
+        // User doesn't exist, proceed with signup
+        console.log('User not found, creating new account...');
       }
       
       // Create new patient account with Google data
@@ -148,38 +123,38 @@ export default function PatientSignup() {
         phoneNumber: user.phoneNumber || '',
         firebaseUid: user.uid,
         authProvider: 'google'
-      })
+      });
     } catch (error: any) {
-      let errorMessage = "Failed to sign up with Google. Please try again."
+      let errorMessage = "Failed to sign up with Google. Please try again.";
       
       if (error.message?.includes('domain')) {
-        errorMessage = "Google sign-in is not configured for this domain. Please use email signup instead."
+        errorMessage = "Google sign-in is not configured for this domain. Please use email signup instead.";
       } else if (error.message?.includes('popup')) {
-        errorMessage = "Popup was blocked. Please allow popups or use email signup."
+        errorMessage = "Popup was blocked. Please allow popups or use email signup.";
       } else if (error.message) {
-        errorMessage = error.message
+        errorMessage = error.message;
       }
       
       toast({
         title: "Google Signup Failed",
         description: errorMessage,
         variant: "destructive"
-      })
+      });
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   const handleEmailSignup = async (e: React.FormEvent) => {
-    e.preventDefault()
+    e.preventDefault();
     
     if (formData.password !== formData.confirmPassword) {
       toast({
         title: "Password Mismatch",
         description: "Passwords do not match. Please try again.",
         variant: "destructive"
-      })
-      return
+      });
+      return;
     }
 
     if (formData.password.length < 6) {
@@ -187,30 +162,30 @@ export default function PatientSignup() {
         title: "Password Too Short",
         description: "Password must be at least 6 characters long.",
         variant: "destructive"
-      })
-      return
+      });
+      return;
     }
 
     // Send OTP for email verification
-    await sendSignupOtpMutation.mutateAsync(formData)
-  }
+    await sendSignupOtpMutation.mutateAsync(formData);
+  };
 
   const handleVerifyOtp = (e: React.FormEvent) => {
-    e.preventDefault()
+    e.preventDefault();
     if (otp.length !== 6) {
       toast({
         title: "Invalid OTP",
         description: "Please enter the complete 6-digit verification code.",
         variant: "destructive"
-      })
-      return
+      });
+      return;
     }
-    verifySignupOtpMutation.mutate({ email: formData.email, otp })
-  }
+    verifySignupOtpMutation.mutate({ email: formData.email, otp });
+  };
 
   const handleInputChange = (field: string, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }))
-  }
+    setFormData(prev => ({ ...prev, [field]: value }));
+  };
 
   // OTP Verification Step
   if (step === 'otp') {
@@ -273,7 +248,7 @@ export default function PatientSignup() {
           </Card>
         </div>
       </div>
-    )
+    );
   }
 
   return (
@@ -480,5 +455,182 @@ export default function PatientSignup() {
         </Card>
       </div>
     </div>
-  )
+  );
+}
+                <span className="bg-white dark:bg-gray-900 px-2 text-gray-500">Or signup with email</span>
+              </div>
+            </div>
+
+            {/* Email Signup Form */}
+            <form onSubmit={handleEmailSignup} className="space-y-4">
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label htmlFor="firstName">First Name</Label>
+                  <div className="relative">
+                    <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                    <Input
+                      id="firstName"
+                      type="text"
+                      placeholder="John"
+                      className="pl-10"
+                      value={formData.firstName}
+                      onChange={(e) => handleInputChange('firstName', e.target.value)}
+                      required
+                      data-testid="input-first-name"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <Label htmlFor="lastName">Last Name</Label>
+                  <div className="relative">
+                    <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                    <Input
+                      id="lastName"
+                      type="text"
+                      placeholder="Doe"
+                      className="pl-10"
+                      value={formData.lastName}
+                      onChange={(e) => handleInputChange('lastName', e.target.value)}
+                      required
+                      data-testid="input-last-name"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <Label htmlFor="email">Email Address</Label>
+                <div className="relative">
+                  <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                  <Input
+                    id="email"
+                    type="email"
+                    placeholder="john@example.com"
+                    className="pl-10"
+                    value={formData.email}
+                    onChange={(e) => handleInputChange('email', e.target.value)}
+                    required
+                    data-testid="input-email"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <Label htmlFor="phoneNumber">Phone Number</Label>
+                <div className="relative">
+                  <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                  <Input
+                    id="phoneNumber"
+                    type="tel"
+                    placeholder="+1 (555) 123-4567"
+                    className="pl-10"
+                    value={formData.phoneNumber}
+                    onChange={(e) => handleInputChange('phoneNumber', e.target.value)}
+                    data-testid="input-phone"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <Label htmlFor="dateOfBirth">Date of Birth</Label>
+                <Input
+                  id="dateOfBirth"
+                  type="date"
+                  value={formData.dateOfBirth}
+                  onChange={(e) => handleInputChange('dateOfBirth', e.target.value)}
+                  data-testid="input-date-of-birth"
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="password">Password</Label>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                  <Input
+                    id="password"
+                    type="password"
+                    placeholder="••••••••"
+                    className="pl-10"
+                    value={formData.password}
+                    onChange={(e) => handleInputChange('password', e.target.value)}
+                    required
+                    minLength={6}
+                    data-testid="input-password"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <Label htmlFor="confirmPassword">Confirm Password</Label>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                  <Input
+                    id="confirmPassword"
+                    type="password"
+                    placeholder="••••••••"
+                    className="pl-10"
+                    value={formData.confirmPassword}
+                    onChange={(e) => handleInputChange('confirmPassword', e.target.value)}
+                    required
+                    minLength={6}
+                    data-testid="input-confirm-password"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <Label htmlFor="address">Address (Optional)</Label>
+                <div className="relative">
+                  <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                  <Input
+                    id="address"
+                    type="text"
+                    placeholder="123 Main St, City, State"
+                    className="pl-10"
+                    value={formData.address}
+                    onChange={(e) => handleInputChange('address', e.target.value)}
+                    data-testid="input-address"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <Label htmlFor="emergencyContact">Emergency Contact (Optional)</Label>
+                <div className="relative">
+                  <Heart className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                  <Input
+                    id="emergencyContact"
+                    type="text"
+                    placeholder="Emergency contact name and phone"
+                    className="pl-10"
+                    value={formData.emergencyContact}
+                    onChange={(e) => handleInputChange('emergencyContact', e.target.value)}
+                    data-testid="input-emergency-contact"
+                  />
+                </div>
+              </div>
+
+              <Button 
+                type="submit" 
+                className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white"
+                disabled={isLoading || createPatientMutation.isPending}
+                data-testid="button-signup"
+              >
+                {isLoading || createPatientMutation.isPending ? "Creating Account..." : "Create Account"}
+              </Button>
+            </form>
+
+            <div className="text-center pt-4">
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                Already have an account?{' '}
+                <a href="/patient-login" className="text-blue-600 hover:text-blue-500 font-medium">
+                  Sign in here
+                </a>
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
 }

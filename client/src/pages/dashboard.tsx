@@ -597,13 +597,23 @@ export default function SmartClinicDashboard() {
               </div>
             </button>
 
-            <div className="flex flex-col items-center gap-1">
-              <span className="text-sm font-medium text-gray-900">
-                {user.firstName || user.phoneNumber}
+            <div className="flex flex-col items-end gap-1">
+              <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                {user.firstName && user.lastName 
+                  ? `${user.firstName} ${user.lastName}`
+                  : user.firstName || user.email?.split('@')[0] || user.phoneNumber
+                }
               </span>
-              <Badge className="bg-green-500 text-white text-xs px-2 py-1 rounded-full">
-                {user.role}
-              </Badge>
+              <div className="flex items-center gap-2">
+                <Badge className="bg-green-500 text-white text-xs px-2 py-1 rounded-full capitalize">
+                  {user.role}
+                </Badge>
+                {user.email && (
+                  <span className="text-xs text-gray-500 dark:text-gray-400 hidden sm:block">
+                    {user.email}
+                  </span>
+                )}
+              </div>
             </div>
 
             {/* Staff Check-in Link */}
@@ -648,9 +658,37 @@ export default function SmartClinicDashboard() {
         <div className="max-w-7xl mx-auto relative z-10">
           <div className="text-white mb-6 sm:mb-8">
             <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-2">
-              Welcome back, {user.firstName || "User"}!
+              {(() => {
+                // Check if user just signed up (new account detection)
+                const userCreatedDate = user.createdAt ? new Date(user.createdAt) : null;
+                const isNewUser = userCreatedDate && (Date.now() - userCreatedDate.getTime()) < 24 * 60 * 60 * 1000; // Last 24 hours
+                
+                if (isNewUser) {
+                  return `Welcome to SmartClinic, ${user.firstName || "User"}!`;
+                } else {
+                  return `Welcome back, ${user.firstName || "User"}!`;
+                }
+              })()}
             </h2>
-            <p className="text-blue-100 text-base sm:text-lg">Manage your healthcare with smart tools</p>
+            <div className="space-y-1">
+              <p className="text-blue-100 text-base sm:text-lg">
+                {user.role === 'patient' 
+                  ? 'Manage your healthcare with smart tools'
+                  : `${user.role.charAt(0).toUpperCase() + user.role.slice(1)} Dashboard - Healthcare Management`
+                }
+              </p>
+              {user.firstName && user.lastName && user.email && (
+                <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 text-blue-200 text-sm">
+                  <span>📧 {user.email}</span>
+                  {user.phoneNumber && (
+                    <span>📞 {user.phoneNumber}</span>
+                  )}
+                  {user.dateOfBirth && (
+                    <span>🎂 {new Date(user.dateOfBirth).toLocaleDateString()}</span>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
 
           <div className="flex flex-col sm:flex-row gap-4 items-stretch sm:items-center">
