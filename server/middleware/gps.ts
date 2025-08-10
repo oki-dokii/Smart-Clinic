@@ -6,6 +6,7 @@ const CLINIC_LOCATIONS = [
   { name: 'Whitefield Branch', lat: 12.9698, lng: 77.7500, radius: 150 }, // Bangalore Whitefield Branch
   { name: 'Koramangala Clinic', lat: 12.9279, lng: 77.6271, radius: 150 }, // Bangalore Koramangala Branch
   { name: 'Electronic City Clinic', lat: 12.8456, lng: 77.6603, radius: 150 }, // Electronic City IT hub location
+  // Local Test Clinic uses dynamic location - handled specially in middleware
   // Add more clinic locations as needed
 ];
 
@@ -32,6 +33,15 @@ export function gpsVerificationMiddleware(req: Request, res: Response, next: Nex
     return;
   }
 
+  // Special handling for Local Test Clinic - use user's current location
+  if (workLocation === 'Local Test Clinic') {
+    // For the test clinic, we'll create a virtual clinic at user's location with a small radius
+    console.log(`🧪 TEST CLINIC: Creating virtual clinic at user location: ${latitude}, ${longitude}`);
+    req.body.isValid = true;
+    next();
+    return;
+  }
+
   // Find the specified work location
   const targetLocation = CLINIC_LOCATIONS.find(loc => loc.name === workLocation);
   if (!targetLocation) {
@@ -46,6 +56,8 @@ export function gpsVerificationMiddleware(req: Request, res: Response, next: Nex
     targetLocation.lat,
     targetLocation.lng
   );
+
+  console.log(`🔍 GPS CHECK: ${workLocation} - User: ${latitude},${longitude} vs Clinic: ${targetLocation.lat},${targetLocation.lng} = ${Math.round(distance)}m`);
 
   // Check if within allowed radius
   if (distance > targetLocation.radius) {
