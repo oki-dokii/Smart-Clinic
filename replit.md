@@ -29,6 +29,10 @@ Preferred communication style: Simple, everyday language.
   - Integrated Firebase auth with existing JWT token system for seamless user experience
   - **Setup Required**: Both Email/Password and Google authentication methods must be enabled in Firebase Console
   - Domain authorization needed: `42638f0d-82bc-40ee-b3bd-785d53c6ac2a-00-3rsnhjlr0ddv2.sisko.replit.dev`
+- **Location Update**: Changed clinic location from Mumbai to Bangalore:
+  - Updated GPS coordinates to Bangalore Central Clinic (12.9716, 77.5946)
+  - Added Whitefield Branch and Koramangala Clinic locations
+  - Staff GPS verification now works for Bangalore area with 150-200m radius
 
 # System Architecture
 

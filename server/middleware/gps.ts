@@ -2,9 +2,9 @@ import { Request, Response, NextFunction } from 'express';
 
 // Define allowed clinic locations (latitude, longitude, radius in meters)
 const CLINIC_LOCATIONS = [
-  { name: 'SmartClinic Mumbai', lat: 19.0728, lng: 72.8826, radius: 200 }, // Mumbai Main Clinic
-  { name: 'SmartClinic Bandra', lat: 19.0596, lng: 72.8295, radius: 150 }, // Mumbai Bandra Branch
-  { name: 'SmartClinic Andheri', lat: 19.1136, lng: 72.8697, radius: 150 }, // Mumbai Andheri Branch
+  { name: 'Bangalore Central Clinic', lat: 12.9716, lng: 77.5946, radius: 200 }, // Bangalore Main Clinic
+  { name: 'Whitefield Branch', lat: 12.9698, lng: 77.7500, radius: 150 }, // Bangalore Whitefield Branch
+  { name: 'Koramangala Clinic', lat: 12.9279, lng: 77.6271, radius: 150 }, // Bangalore Koramangala Branch
   // Add more clinic locations as needed
 ];
 
