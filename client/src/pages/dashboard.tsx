@@ -1281,7 +1281,7 @@ export default function SmartClinicDashboard() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+              <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 sm:gap-4">
                 <Button
                   variant="outline"
                   className="h-16 sm:h-20 flex-col gap-1 sm:gap-2 bg-transparent text-xs sm:text-sm"
@@ -1290,6 +1290,14 @@ export default function SmartClinicDashboard() {
                 >
                   <UserCheck className="w-5 h-5 sm:w-6 sm:h-6 text-green-500" />
                   <span>{checkInMutation.isPending ? "Checking..." : "Check In"}</span>
+                </Button>
+                <Button
+                  variant="outline"
+                  className="h-16 sm:h-20 flex-col gap-1 sm:gap-2 bg-transparent text-xs sm:text-sm"
+                  onClick={() => setLocation("/medicines")}
+                >
+                  <Pill className="w-5 h-5 sm:w-6 sm:h-6 text-purple-500" />
+                  <span>Medicines</span>
                 </Button>
                 <Button
                   variant="outline"
