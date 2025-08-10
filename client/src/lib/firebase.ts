@@ -9,16 +9,43 @@ const firebaseConfig = {
   appId: import.meta.env.VITE_FIREBASE_APP_ID,
 };
 
-const app = initializeApp(firebaseConfig);
-export const auth = getAuth(app);
-export const googleProvider = new GoogleAuthProvider();
+// Check if Firebase configuration is valid before initializing
+const isFirebaseConfigured = firebaseConfig.apiKey && 
+  firebaseConfig.projectId && 
+  firebaseConfig.apiKey !== 'undefined' && 
+  firebaseConfig.projectId !== 'undefined';
 
-// Configure Google provider
-googleProvider.addScope('email');
-googleProvider.addScope('profile');
+let app: any = null;
+let auth: any = null;
+let googleProvider: any = null;
+
+if (isFirebaseConfigured) {
+  try {
+    app = initializeApp(firebaseConfig);
+    auth = getAuth(app);
+    googleProvider = new GoogleAuthProvider();
+    
+    // Configure Google provider
+    googleProvider.addScope('email');
+    googleProvider.addScope('profile');
+    
+    console.log('✅ Firebase initialized successfully');
+  } catch (error) {
+    console.error('❌ Firebase initialization failed:', error);
+    console.log('Firebase authentication will be disabled');
+  }
+} else {
+  console.log('⚠️ Firebase configuration incomplete - authentication features disabled');
+}
+
+export { auth, googleProvider };
 
 // Auth helper functions
 export const signInWithGoogle = async () => {
+  if (!auth || !googleProvider) {
+    throw new Error('Firebase authentication is not configured. Please contact system administrator.');
+  }
+  
   try {
     console.log('Attempting Google sign-in with popup...');
     const result = await signInWithPopup(auth, googleProvider);
@@ -58,6 +85,10 @@ export const signInWithGoogle = async () => {
 };
 
 export const createUserAccount = async (email: string, password: string) => {
+  if (!auth) {
+    throw new Error('Firebase authentication is not configured. Please contact system administrator.');
+  }
+  
   try {
     const result = await createUserWithEmailAndPassword(auth, email, password);
     return result.user;
@@ -68,6 +99,10 @@ export const createUserAccount = async (email: string, password: string) => {
 };
 
 export const signInWithEmail = async (email: string, password: string) => {
+  if (!auth) {
+    throw new Error('Firebase authentication is not configured. Please contact system administrator.');
+  }
+  
   try {
     const result = await signInWithEmailAndPassword(auth, email, password);
     return result.user;
@@ -78,6 +113,11 @@ export const signInWithEmail = async (email: string, password: string) => {
 };
 
 export const logOut = async () => {
+  if (!auth) {
+    console.log('Firebase not configured - logout not needed');
+    return;
+  }
+  
   try {
     await signOut(auth);
   } catch (error: any) {
@@ -87,5 +127,11 @@ export const logOut = async () => {
 };
 
 export const onAuthChange = (callback: (user: User | null) => void) => {
+  if (!auth) {
+    // Call callback with null to indicate no user when Firebase is not configured
+    callback(null);
+    return () => {}; // Return empty unsubscribe function
+  }
+  
   return onAuthStateChanged(auth, callback);
 };
