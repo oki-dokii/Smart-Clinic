@@ -1054,57 +1054,69 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getPatientReminders(patientId: string, date?: Date): Promise<any[]> {
-    // Use Drizzle's query API with proper filtering
-    return await db.query.medicineReminders.findMany({
-      where: date ? and(
-        gte(medicineReminders.scheduledAt, (() => {
-          const startOfDay = new Date(date);
-          startOfDay.setHours(0, 0, 0, 0);
-          return startOfDay;
-        })()),
-        lte(medicineReminders.scheduledAt, (() => {
-          const endOfDay = new Date(date);
-          endOfDay.setHours(23, 59, 59, 999);
-          return endOfDay;
-        })())
-      ) : undefined,
-      with: {
-        prescription: {
-          where: eq(prescriptions.patientId, patientId),
-          with: {
-            medicine: true
-          }
-        }
-      },
-      orderBy: asc(medicineReminders.scheduledAt)
-    }).then(reminders => 
-      // Filter out reminders where prescription is null (not belonging to this patient)
-      reminders.filter(reminder => reminder.prescription)
-    );
+    // Use direct SQL query with proper joins
+    const whereConditions = [eq(prescriptions.patientId, patientId)];
+    
+    if (date) {
+      const startOfDay = new Date(date);
+      startOfDay.setHours(0, 0, 0, 0);
+      const endOfDay = new Date(date);
+      endOfDay.setHours(23, 59, 59, 999);
+      
+      whereConditions.push(
+        gte(medicineReminders.scheduledAt, startOfDay),
+        lte(medicineReminders.scheduledAt, endOfDay)
+      );
+    }
+
+    return await db.select({
+      id: medicineReminders.id,
+      prescriptionId: medicineReminders.prescriptionId,
+      scheduledAt: medicineReminders.scheduledAt,
+      takenAt: medicineReminders.takenAt,
+      skippedAt: medicineReminders.skippedAt,
+      isTaken: medicineReminders.isTaken,
+      isSkipped: medicineReminders.isSkipped,
+      smsReminderSent: medicineReminders.smsReminderSent,
+      notes: medicineReminders.notes,
+      medicineName: medicines.name,
+      dosage: prescriptions.dosage,
+      instructions: prescriptions.instructions,
+      frequency: prescriptions.frequency
+    })
+    .from(medicineReminders)
+    .innerJoin(prescriptions, eq(medicineReminders.prescriptionId, prescriptions.id))
+    .innerJoin(medicines, eq(prescriptions.medicineId, medicines.id))
+    .where(and(...whereConditions))
+    .orderBy(asc(medicineReminders.scheduledAt));
   }
 
   async getDueReminders(): Promise<any[]> {
     const now = new Date();
     const fiveMinutesAgo = new Date(now.getTime() - 5 * 60 * 1000);
     
-    // Use Drizzle's query API for nested relations
-    return await db.query.medicineReminders.findMany({
-      where: and(
-        lte(medicineReminders.scheduledAt, now),
-        gte(medicineReminders.scheduledAt, fiveMinutesAgo),
-        eq(medicineReminders.isTaken, false),
-        eq(medicineReminders.isSkipped, false),
-        eq(medicineReminders.smsReminderSent, false)
-      ),
-      with: {
-        prescription: {
-          with: {
-            medicine: true,
-            patient: true
-          }
-        }
-      }
-    });
+    // Use direct SQL query to avoid relation issues
+    return await db.select({
+      id: medicineReminders.id,
+      prescriptionId: medicineReminders.prescriptionId,
+      scheduledAt: medicineReminders.scheduledAt,
+      patientName: sql<string>`CONCAT(${users.firstName}, ' ', ${users.lastName})`,
+      patientPhone: users.phoneNumber,
+      medicineName: medicines.name,
+      dosage: prescriptions.dosage,
+      instructions: prescriptions.instructions
+    })
+    .from(medicineReminders)
+    .innerJoin(prescriptions, eq(medicineReminders.prescriptionId, prescriptions.id))
+    .innerJoin(users, eq(prescriptions.patientId, users.id))
+    .innerJoin(medicines, eq(prescriptions.medicineId, medicines.id))
+    .where(and(
+      lte(medicineReminders.scheduledAt, now),
+      gte(medicineReminders.scheduledAt, fiveMinutesAgo),
+      eq(medicineReminders.isTaken, false),
+      eq(medicineReminders.isSkipped, false),
+      eq(medicineReminders.smsReminderSent, false)
+    ));
   }
 
   async markReminderTaken(id: string): Promise<MedicineReminder | undefined> {

@@ -52,7 +52,10 @@ app.use((req, res, next) => {
   // importantly only setup vite in development and after
   // setting up all the other routes so the catch-all route
   // doesn't interfere with the other routes
-  if (app.get("env") === "development") {
+  const isDevMode = process.env.NODE_ENV === "development" || app.get("env") === "development";
+  log(`Environment: NODE_ENV=${process.env.NODE_ENV}, app.env=${app.get("env")}, isDevMode=${isDevMode}`);
+  
+  if (isDevMode) {
     await setupVite(app, server);
   } else {
     serveStatic(app);
@@ -64,10 +67,10 @@ app.use((req, res, next) => {
   // It is the only port that is not firewalled.
   const port = parseInt(process.env.PORT || "5000", 10);
 
-  if (process.env.NODE_ENV === "development") {
-    // Simplified configuration for local development on macOS
-    server.listen(port, () => {
-      log(`serving on port ${port}`);
+  if (isDevMode) {
+    // Development configuration with proper host binding for Replit
+    server.listen(port, "0.0.0.0", () => {
+      log(`serving on port ${port} in development mode`);
 
       // Start automatic queue wait time updates every 60 seconds
       setInterval(async () => {
@@ -88,7 +91,7 @@ app.use((req, res, next) => {
         reusePort: true,
       },
       () => {
-        log(`serving on port ${port}`);
+        log(`serving on port ${port} in production mode`);
 
         // Start automatic queue wait time updates every 60 seconds
         setInterval(async () => {

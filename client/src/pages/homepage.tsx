@@ -49,6 +49,9 @@ export default function Homepage() {
   const queryClient = useQueryClient();
   const { theme, toggleTheme } = useTheme();
 
+  // Simple test to ensure the component renders
+  console.log('🔥 Homepage component rendering...');
+
   const form = useForm<ClinicRegistrationForm>({
     resolver: zodResolver(clinicRegistrationSchema),
     defaultValues: {

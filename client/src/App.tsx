@@ -250,16 +250,33 @@ const AppRouter = () => {
 };
 
 function App() {
-  return (
-    <QueryClientProvider client={queryClient}>
-      <ThemeProvider>
-        <TooltipProvider>
-          <Toaster />
-          <AppRouter />
-        </TooltipProvider>
-      </ThemeProvider>
-    </QueryClientProvider>
-  );
+  console.log('🔥 App component rendering...');
+  
+  // Simple test to see if React is working
+  try {
+    return (
+      <div style={{ padding: '20px', backgroundColor: '#f0f0f0', minHeight: '100vh' }}>
+        <h1>Healthcare Management System</h1>
+        <p>Application is loading successfully!</p>
+        <div>
+          <a href="/login" style={{ marginRight: '10px', padding: '10px', backgroundColor: '#007bff', color: 'white', textDecoration: 'none' }}>
+            Staff Login
+          </a>
+          <a href="/patient-login" style={{ padding: '10px', backgroundColor: '#28a745', color: 'white', textDecoration: 'none' }}>
+            Patient Login
+          </a>
+        </div>
+      </div>
+    );
+  } catch (error) {
+    console.error('🔥 App component error:', error);
+    return (
+      <div style={{ padding: '20px', color: 'red' }}>
+        <h1>Error loading application</h1>
+        <p>Error: {String(error)}</p>
+      </div>
+    );
+  }
 }
 
 export default App;
