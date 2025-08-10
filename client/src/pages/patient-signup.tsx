@@ -53,7 +53,30 @@ export default function PatientSignup() {
     try {
       const user = await signInWithGoogle();
       
-      // Create patient account with Google data
+      // First try to login (in case user already exists)
+      try {
+        const loginResponse = await apiRequest('POST', '/api/auth/firebase-login', {
+          firebaseUid: user.uid,
+          email: user.email,
+          name: user.displayName || user.email?.split('@')[0] || 'User'
+        });
+        
+        const loginData = await loginResponse.json();
+        if (loginData.token) {
+          localStorage.setItem('auth_token', loginData.token);
+          toast({
+            title: "Welcome Back!",
+            description: "Successfully signed in with Google.",
+          });
+          window.location.href = '/dashboard';
+          return;
+        }
+      } catch (loginError) {
+        // User doesn't exist, proceed with signup
+        console.log('User not found, creating new account...');
+      }
+      
+      // Create new patient account with Google data
       await createPatientMutation.mutateAsync({
         firstName: user.displayName?.split(' ')[0] || user.email?.split('@')[0] || 'Patient',
         lastName: user.displayName?.split(' ').slice(1).join(' ') || 'User',

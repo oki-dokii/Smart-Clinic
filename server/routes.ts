@@ -12,6 +12,7 @@ import { z } from "zod";
 import { authMiddleware, requireRole, requireSuperAdmin } from "./middleware/auth";
 import { gpsVerificationMiddleware } from "./middleware/gps";
 import { authService } from "./services/auth";
+import jwt from 'jsonwebtoken';
 import { emailService } from "./services/email";
 import { queueService } from "./services/queue";
 import { schedulerService } from "./services/scheduler";
@@ -265,7 +266,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const user = await storage.createUser(userData);
       
       // Generate JWT token for immediate login
-      const token = await authService.generateToken(user.id, req.ip, req.get('User-Agent'));
+      const token = jwt.sign(
+        { 
+          userId: user.id,
+          role: user.role 
+        },
+        process.env.SESSION_SECRET || 'your-super-secret-jwt-key-change-this-in-production',
+        { expiresIn: '7d' }
+      );
+
+      // Create auth session
+      const expiresAt = new Date();
+      expiresAt.setDate(expiresAt.getDate() + 7); // 7 days from now
+
+      await storage.createAuthSession({
+        userId: user.id,
+        token,
+        expiresAt,
+        ipAddress: req.ip || '',
+        userAgent: req.get('User-Agent') || '',
+        lastActivity: new Date()
+      });
 
       console.log(`🔥 FIREBASE SIGNUP - Account created successfully for: ${user.email}`);
 
@@ -329,7 +350,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           role: user.role,
           ...(user.clinicId && { clinicId: user.clinicId })
         },
-        process.env.JWT_SECRET || 'your-super-secret-jwt-key-change-this-in-production',
+        process.env.SESSION_SECRET || 'your-super-secret-jwt-key-change-this-in-production',
         { expiresIn: '7d' }
       );
 
