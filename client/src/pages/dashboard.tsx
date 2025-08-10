@@ -575,9 +575,9 @@ export default function SmartClinicDashboard() {
             <div className="w-8 h-8 sm:w-10 sm:h-10 bg-blue-500 rounded-lg flex items-center justify-center">
               <Stethoscope className="w-4 h-4 sm:w-6 sm:h-6 text-white" />
             </div>
-            <div className="hidden sm:block">
-              <h1 className="text-lg sm:text-xl font-semibold smartclinic-header">SmartClinic</h1>
-              <p className="text-xs sm:text-sm smartclinic-subtitle">Healthcare Manager</p>
+            <div className="hidden sm:block" style={{ backgroundColor: 'yellow' }}>
+              <h1 className="text-lg sm:text-xl font-semibold" style={{ color: 'red', backgroundColor: 'white', padding: '4px' }}>SmartClinic</h1>
+              <p className="text-xs sm:text-sm" style={{ color: 'blue', backgroundColor: 'white', padding: '2px' }}>Healthcare Manager</p>
             </div>
           </div>
 
