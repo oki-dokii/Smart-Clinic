@@ -122,11 +122,56 @@ export default function PatientLogin() {
           }
         }
       } catch (dbError: any) {
-        toast({
-          title: "Login Failed",
-          description: firebaseError.message || "Invalid email or password. Please try again.",
-          variant: "destructive"
-        });
+        let errorResponse = {};
+        try {
+          if (dbError.response) {
+            errorResponse = await dbError.response.json();
+          }
+        } catch (e) {
+          // If parsing fails, use the error message directly
+        }
+        
+        if (errorResponse.needsPasswordSetup) {
+          toast({
+            title: "Password Setup Required",
+            description: "Your account was created with phone verification. Please set up a password first.",
+            variant: "destructive"
+          });
+          
+          // Show password setup form
+          const newPassword = prompt("Set a new password for email login (minimum 6 characters):");
+          if (newPassword && newPassword.length >= 6) {
+            try {
+              const response = await apiRequest('POST', '/api/auth/set-password', {
+                email,
+                newPassword
+              });
+              
+              toast({
+                title: "Password Set Successfully!",
+                description: "You can now login with your email and password.",
+              });
+              
+              // Retry login with new password
+              setTimeout(() => {
+                setPassword(newPassword);
+              }, 1000);
+              
+            } catch (setPasswordError: any) {
+              toast({
+                title: "Failed to Set Password",
+                description: "Please try again or contact support.",
+                variant: "destructive"
+              });
+            }
+          }
+        } else {
+          toast({
+            title: "Login Failed",
+            description: firebaseError.message || "Invalid email or password. Please try again.",
+            variant: "destructive"
+          });
+        }
       }
     } finally {
       setIsLoading(false);

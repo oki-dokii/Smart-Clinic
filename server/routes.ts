@@ -474,8 +474,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "Account is not active" });
       }
 
+      // Check if user has a password set (for accounts created via email/OTP vs phone/OTP)
+      if (!user.password) {
+        return res.status(400).json({ 
+          message: "This account was created with phone verification. Please use the 'Forgot Password' feature to set up email login, or contact support for assistance.",
+          needsPasswordSetup: true
+        });
+      }
+
       // Verify password
-      const passwordValid = await bcrypt.compare(password, user.password || '');
+      const passwordValid = await bcrypt.compare(password, user.password);
       if (!passwordValid) {
         return res.status(401).json({ message: "Incorrect password. Please check your password and try again." });
       }
@@ -519,6 +527,47 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     } catch (error: any) {
       console.error('🔥 EMAIL LOGIN ERROR:', error);
+      res.status(400).json({ message: error.message });
+    }
+  });
+
+  // Set password for existing accounts (for users who signed up with phone/OTP)
+  app.post("/api/auth/set-password", async (req, res) => {
+    try {
+      const { email, newPassword } = z.object({
+        email: z.string().email(),
+        newPassword: z.string().min(6)
+      }).parse(req.body);
+
+      console.log(`🔥 SET PASSWORD - Setting password for: ${email}`);
+
+      // Find user by email
+      const user = await storage.getUserByEmail(email);
+      if (!user) {
+        return res.status(404).json({ message: "Account not found." });
+      }
+
+      if (!user.isActive) {
+        return res.status(403).json({ message: "Account is not active" });
+      }
+
+      // Hash the new password
+      const hashedPassword = await bcrypt.hash(newPassword, 12);
+
+      // Update user with new password
+      await storage.updateUser(user.id, { 
+        password: hashedPassword,
+        authProvider: 'email' // Update auth provider to email since they're setting a password
+      });
+
+      console.log(`🔥 SET PASSWORD - Password set successfully for: ${email}`);
+
+      res.json({ 
+        message: "Password set successfully. You can now login with email and password.",
+        success: true
+      });
+    } catch (error: any) {
+      console.error('🔥 SET PASSWORD ERROR:', error);
       res.status(400).json({ message: error.message });
     }
   });
