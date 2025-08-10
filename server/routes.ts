@@ -1568,18 +1568,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/medicines", authMiddleware, async (req, res) => {
-    try {
-      const { search } = req.query;
-      // Only return actual clinic medicines, not patient-added ones
-      const medicines = search 
-        ? await storage.searchClinicMedicines(search as string, req.user!.clinicId)
-        : await storage.getClinicMedicines(req.user!.clinicId);
-      res.json(medicines);
-    } catch (error: any) {
-      res.status(400).json({ message: error.message });
-    }
-  });
+  // Removed duplicate medicines endpoint - using the one below at line 2436
 
   // Prescription routes
   app.post("/api/prescriptions", authMiddleware, requireRole(['doctor']), async (req, res) => {
@@ -2429,18 +2418,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Medicine management routes
+  // Medicine management routes - accessible by patients, staff, doctors, and admins
   app.get("/api/medicines", authMiddleware, async (req, res) => {
     try {
       console.log('🔥 MEDICINES GET - User:', req.user!.email, 'Role:', req.user!.role, 'Clinic ID:', req.user!.clinicId);
       
+      // Allow all authenticated users to access medicines
       // For admin users, filter by clinic ID
       if (req.user!.role === 'admin' && req.user!.clinicId) {
         const medicines = await storage.getMedicinesByClinic(req.user!.clinicId);
         console.log('🔥 MEDICINES - Admin fetching for clinic:', req.user!.clinicId, 'Count:', medicines.length);
-        console.log('🔥 MEDICINES - Raw data:', medicines);
         res.json(medicines);
       } else {
+        // For patients, doctors, and staff - show all available medicines
         const medicines = await storage.getAllMedicines();
         console.log('🔥 MEDICINES - All medicines count:', medicines.length);
         res.json(medicines);
