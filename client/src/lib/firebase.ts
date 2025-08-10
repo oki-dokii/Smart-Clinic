@@ -40,6 +40,12 @@ if (isFirebaseConfigured) {
   }
 } else {
   console.log('⚠️ Firebase configuration incomplete - authentication features disabled');
+  console.log('Debug Firebase config:', {
+    apiKey: firebaseConfig.apiKey ? 'present' : 'missing',
+    authDomain: firebaseConfig.authDomain ? 'present' : 'missing',
+    projectId: firebaseConfig.projectId ? 'present' : 'missing',
+    appId: firebaseConfig.appId ? 'present' : 'missing'
+  });
 }
 
 export { auth, googleProvider };
