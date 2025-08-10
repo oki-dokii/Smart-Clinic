@@ -454,6 +454,75 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Direct email/password login for database-created accounts
+  app.post("/api/auth/login-email", async (req, res) => {
+    try {
+      const { email, password } = z.object({
+        email: z.string().email(),
+        password: z.string().min(1)
+      }).parse(req.body);
+
+      console.log(`🔥 EMAIL LOGIN - Attempting login for: ${email}`);
+
+      // Find user by email
+      const user = await storage.getUserByEmail(email);
+      if (!user) {
+        return res.status(404).json({ message: "Account not found. Please check your email or create a new account." });
+      }
+
+      if (!user.isActive) {
+        return res.status(403).json({ message: "Account is not active" });
+      }
+
+      // Verify password
+      const passwordValid = await bcrypt.compare(password, user.password || '');
+      if (!passwordValid) {
+        return res.status(401).json({ message: "Incorrect password. Please check your password and try again." });
+      }
+
+      // Generate JWT token
+      const token = jwt.sign(
+        { 
+          userId: user.id, 
+          role: user.role,
+          ...(user.clinicId && { clinicId: user.clinicId })
+        },
+        process.env.SESSION_SECRET || 'your-super-secret-jwt-key-change-this-in-production',
+        { expiresIn: '7d' }
+      );
+
+      // Create auth session
+      const expiresAt = new Date();
+      expiresAt.setDate(expiresAt.getDate() + 7);
+
+      await storage.createAuthSession({
+        token,
+        userId: user.id,
+        ipAddress: req.ip || 'unknown',
+        userAgent: req.get('User-Agent') || 'unknown',
+        expiresAt,
+        lastActivity: new Date()
+      });
+
+      console.log(`🔥 EMAIL LOGIN - Login successful for: ${user.email}`);
+
+      res.json({
+        token,
+        user: {
+          id: user.id,
+          role: user.role,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          email: user.email,
+          isActive: user.isActive
+        }
+      });
+    } catch (error: any) {
+      console.error('🔥 EMAIL LOGIN ERROR:', error);
+      res.status(400).json({ message: error.message });
+    }
+  });
+
   app.post("/api/auth/firebase-login", async (req, res) => {
     try {
       const loginData = z.object({

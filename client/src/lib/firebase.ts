@@ -118,7 +118,29 @@ export const signInWithEmail = async (email: string, password: string) => {
     return result.user;
   } catch (error: any) {
     console.error('Email sign-in error:', error);
-    throw error;
+    
+    // If user not found in Firebase, provide helpful error
+    if (error.code === 'auth/user-not-found') {
+      throw new Error('Account not found. Please check your email or create a new account.');
+    }
+    
+    // If wrong password
+    if (error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
+      throw new Error('Incorrect password. Please check your password and try again.');
+    }
+    
+    // If email format is invalid
+    if (error.code === 'auth/invalid-email') {
+      throw new Error('Invalid email format. Please enter a valid email address.');
+    }
+    
+    // If too many failed attempts
+    if (error.code === 'auth/too-many-requests') {
+      throw new Error('Too many failed login attempts. Please try again later.');
+    }
+    
+    // Generic error for other cases
+    throw new Error('Login failed. Please check your credentials and try again.');
   }
 };
 

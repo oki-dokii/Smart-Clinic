@@ -92,14 +92,42 @@ export default function PatientLogin() {
 
     setIsLoading(true);
     try {
+      // First try Firebase authentication
       const user = await signInWithEmail(email, password);
       await loginWithFirebaseMutation.mutateAsync(user);
-    } catch (error: any) {
-      toast({
-        title: "Login Failed",
-        description: error.message || "Invalid email or password. Please try again.",
-        variant: "destructive"
-      });
+    } catch (firebaseError: any) {
+      console.log("Firebase login failed, trying database authentication...");
+      
+      // If Firebase fails, try direct database authentication
+      try {
+        const response = await apiRequest('POST', '/api/auth/login-email', {
+          email,
+          password
+        });
+        const data = await response.json();
+        
+        if (data.token && data.user) {
+          localStorage.setItem('auth_token', data.token);
+          localStorage.setItem('user', JSON.stringify(data.user));
+          toast({
+            title: "Login Successful!",
+            description: "Welcome back to SmartClinic.",
+          });
+          
+          // Redirect based on user role
+          if (data.user.role === 'admin') {
+            window.location.href = '/admin-dashboard';
+          } else {
+            window.location.href = '/dashboard';
+          }
+        }
+      } catch (dbError: any) {
+        toast({
+          title: "Login Failed",
+          description: firebaseError.message || "Invalid email or password. Please try again.",
+          variant: "destructive"
+        });
+      }
     } finally {
       setIsLoading(false);
     }
