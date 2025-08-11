@@ -1831,14 +1831,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { name, dosage, frequency, instructions, startDate, endDate, timings } = req.body;
       
-      // First create a medicine entry
-      const medicine = await storage.createMedicine({
+      // First create a medicine entry for patient
+      const medicine = await storage.createPatientMedicine({
         name,
         description: `Custom medicine added by patient`,
         dosageForm: 'custom',
         strength: dosage,
-        manufacturer: 'Patient Added',
-        clinicId: req.user!.clinicId || 'default-clinic-id'
+        manufacturer: 'Patient Added'
       });
 
       // Then create a prescription for this custom medicine
@@ -1953,13 +1952,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
           try {
             // Create medicine
-            const medicine = await storage.createMedicine({
+            const medicine = await storage.createPatientMedicine({
               name,
               description: `Uploaded medicine by patient`,
               dosageForm: 'tablet',
               strength: dosage,
-              manufacturer: 'Patient Added',
-              clinicId: req.user!.clinicId || 'default-clinic-id'
+              manufacturer: 'Patient Added'
             });
 
             // Create prescription

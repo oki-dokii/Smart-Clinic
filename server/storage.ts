@@ -920,6 +920,16 @@ export class DatabaseStorage implements IStorage {
     return newMedicine;
   }
 
+  async createPatientMedicine(medicine: Omit<InsertMedicine, 'clinicId'>): Promise<Medicine> {
+    // For patient-added medicines, use default clinic ID
+    const medicineData = {
+      ...medicine,
+      clinicId: 'default-clinic-id'
+    };
+    const [newMedicine] = await db.insert(medicines).values(medicineData).returning();
+    return newMedicine;
+  }
+
   async getMedicineById(medicineId: string): Promise<Medicine | null> {
     const [medicine] = await db.select().from(medicines).where(eq(medicines.id, medicineId));
     return medicine || null;
