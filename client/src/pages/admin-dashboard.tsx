@@ -355,7 +355,7 @@ export default function ClinicDashboard() {
 
   // Appointment form state
   const [appointmentForm, setAppointmentForm] = useState({
-    patientId: '',
+    patientName: '',
     doctorId: '',
     appointmentDate: '',
     appointmentTime: '',
@@ -462,7 +462,7 @@ export default function ClinicDashboard() {
   }
 
   const handleAppointmentSubmit = async () => {
-    if (!appointmentForm.patientId || !appointmentForm.doctorId || !appointmentForm.appointmentDate || !appointmentForm.appointmentTime) {
+    if (!appointmentForm.patientName || !appointmentForm.doctorId || !appointmentForm.appointmentDate || !appointmentForm.appointmentTime) {
       toast({
         title: 'Validation Error',
         description: 'Please fill in all required fields.',
@@ -476,7 +476,7 @@ export default function ClinicDashboard() {
       const appointmentDateTime = new Date(`${appointmentForm.appointmentDate}T${appointmentForm.appointmentTime}:00`)
       
       const appointmentData = {
-        patientId: appointmentForm.patientId,
+        patientName: appointmentForm.patientName,
         doctorId: appointmentForm.doctorId,
         appointmentDate: appointmentDateTime.toISOString(),
         type: appointmentForm.consultationType === 'video-call' ? 'telehealth' : 
@@ -485,11 +485,11 @@ export default function ClinicDashboard() {
         status: 'scheduled'
       }
 
-      await apiRequest('POST', '/api/appointments', appointmentData)
+      await apiRequest('POST', '/api/appointments/admin', appointmentData)
       
       // Reset form and close modal
       setAppointmentForm({
-        patientId: '',
+        patientName: '',
         doctorId: '',
         appointmentDate: '',
         appointmentTime: '',
@@ -1479,14 +1479,19 @@ export default function ClinicDashboard() {
       
       console.log('🔥 PATIENT SUBMIT - Registration successful, refreshing cache');
       
-      // Comprehensive cache invalidation
-      await queryClient.invalidateQueries({ queryKey: ['/api/patients'] })
-      await queryClient.removeQueries({ queryKey: ['/api/patients'] })
-      await queryClient.refetchQueries({ queryKey: ['/api/patients'] })
-      await refetchPatients() // Direct refetch call
+      // Multiple refresh strategies to ensure UI updates
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['/api/patients'] }),
+        queryClient.removeQueries({ queryKey: ['/api/patients'] }),
+        queryClient.refetchQueries({ queryKey: ['/api/patients'] }),
+        refetchPatients()
+      ])
       
-      // Force re-render
-      setForceRender(prev => prev + 1)
+      // Force complete re-render after a brief delay
+      setTimeout(() => {
+        setForceRender(prev => prev + 1)
+        refetchPatients()
+      }, 500)
       
       // Reset form
       setPatientForm({
@@ -1499,7 +1504,7 @@ export default function ClinicDashboard() {
       })
       
       console.log('🔥 PATIENT SUBMIT - Cache refreshed and form reset');
-      toast({ title: 'Success', description: 'Patient added successfully and records refreshed' })
+      toast({ title: 'Success', description: 'Patient added successfully! The Patient Records will refresh in a moment.' })
     } catch (error: any) {
       console.error('🔥 PATIENT SUBMIT - Error:', error);
       toast({ title: 'Error', description: error.message, variant: 'destructive' })
@@ -2899,21 +2904,13 @@ export default function ClinicDashboard() {
                             </DialogHeader>
                             <div className="space-y-4">
                               <div>
-                                <Label htmlFor="patientSelect">Select Patient *</Label>
-                                <Select onValueChange={(value) => setAppointmentForm({...appointmentForm, patientId: value})}>
-                                  <SelectTrigger>
-                                    <SelectValue placeholder="Choose a patient" />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    {patients?.map((patient) => (
-                                      <SelectItem key={patient.id} value={patient.id}>
-                                        {patient.firstName && patient.lastName 
-                                          ? `${patient.firstName} ${patient.lastName}` 
-                                          : patient.email || patient.phoneNumber}
-                                      </SelectItem>
-                                    ))}
-                                  </SelectContent>
-                                </Select>
+                                <Label htmlFor="patientName">Patient Name *</Label>
+                                <Input
+                                  id="patientName"
+                                  value={appointmentForm.patientName || ''}
+                                  onChange={(e) => setAppointmentForm({...appointmentForm, patientName: e.target.value})}
+                                  placeholder="Enter patient full name"
+                                />
                               </div>
                               <div>
                                 <Label htmlFor="doctorSelect">Select Doctor *</Label>
@@ -2922,28 +2919,27 @@ export default function ClinicDashboard() {
                                     <SelectValue placeholder="Choose a doctor" />
                                   </SelectTrigger>
                                   <SelectContent>
-                                    {/* Include doctors from users data (clinic staff) */}
-                                    {users?.filter(user => user.role === 'doctor').map((doctor) => (
-                                      <SelectItem key={doctor.id} value={doctor.id}>
-                                        {doctor.firstName && doctor.lastName 
-                                          ? `${doctor.firstName} ${doctor.lastName}` 
-                                          : doctor.email}
-                                      </SelectItem>
-                                    ))}
-                                    {/* Include doctors from appointments data (cross-clinic) */}
+                                    {/* Include doctors from appointments data (all available doctors) */}
                                     {appointments?.map(apt => apt.doctor)
                                       .filter((doctor, index, self) => 
                                         doctor && 
-                                        !users?.find(u => u.id === doctor.id) && // Don't duplicate
                                         self.findIndex(d => d?.id === doctor.id) === index // Remove duplicates
                                       )
                                       .map((doctor) => (
-                                        <SelectItem key={`external-${doctor.id}`} value={doctor.id}>
+                                        <SelectItem key={doctor.id} value={doctor.id}>
                                           {doctor.firstName && doctor.lastName 
                                             ? `${doctor.firstName} ${doctor.lastName}` 
                                             : doctor.email}
                                         </SelectItem>
                                       ))}
+                                    {/* Include doctors from users data if any */}
+                                    {users?.filter(user => user.role === 'doctor').map((doctor) => (
+                                      <SelectItem key={`local-${doctor.id}`} value={doctor.id}>
+                                        {doctor.firstName && doctor.lastName 
+                                          ? `${doctor.firstName} ${doctor.lastName}` 
+                                          : doctor.email}
+                                      </SelectItem>
+                                    ))}
                                   </SelectContent>
                                 </Select>
                               </div>
@@ -5233,19 +5229,15 @@ export default function ClinicDashboard() {
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="newAppointmentPatient">Select Patient *</Label>
-                <Select value={appointmentForm.patientId} onValueChange={(value) => setAppointmentForm({...appointmentForm, patientId: value})}>
-                  <SelectTrigger data-testid="select-new-appointment-patient">
-                    <SelectValue placeholder="Choose a patient" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {patients?.map((patient) => (
-                      <SelectItem key={patient.id} value={patient.id}>
-                        {patient.firstName} {patient.lastName} - {patient.phoneNumber}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <Label htmlFor="newAppointmentPatient">Patient Name *</Label>
+                <Input
+                  id="newAppointmentPatient"
+                  type="text"
+                  value={appointmentForm.patientName}
+                  onChange={(e) => setAppointmentForm({...appointmentForm, patientName: e.target.value})}
+                  placeholder="Enter patient full name"
+                  data-testid="input-new-appointment-patient"
+                />
               </div>
               <div>
                 <Label htmlFor="newAppointmentDoctor">Select Doctor *</Label>

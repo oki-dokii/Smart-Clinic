@@ -1255,6 +1255,75 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Admin appointment creation route (accepts patientName instead of patientId)
+  app.post("/api/appointments/admin", authMiddleware, requireSuperAdmin, async (req, res) => {
+    try {
+      console.log('🔥 ADMIN APPOINTMENT CREATION:', req.body);
+      const { patientName, doctorId, appointmentDate, type, symptoms, status } = req.body;
+      
+      if (!patientName || !doctorId || !appointmentDate) {
+        return res.status(400).json({ message: "Missing required fields: patientName, doctorId, appointmentDate" });
+      }
+
+      // Try to find existing patient by name (fuzzy search)
+      const patients = await storage.getPatients(req.user!.clinicId);
+      const patient = patients.find(p => 
+        `${p.firstName} ${p.lastName}`.toLowerCase().includes(patientName.toLowerCase()) ||
+        patientName.toLowerCase().includes(`${p.firstName} ${p.lastName}`.toLowerCase())
+      );
+
+      let patientId: string;
+      
+      if (patient) {
+        // Use existing patient
+        patientId = patient.id;
+        console.log('🔥 Found existing patient:', patientId, patientName);
+      } else {
+        // Create new patient from name
+        const nameParts = patientName.trim().split(' ');
+        const firstName = nameParts[0] || 'Unknown';
+        const lastName = nameParts.slice(1).join(' ') || 'Patient';
+        
+        console.log('🔥 Creating new patient:', firstName, lastName);
+        
+        const newPatient = await storage.createUser({
+          firstName,
+          lastName,
+          phoneNumber: `temp${Date.now()}`, // Temporary phone number
+          role: 'patient' as const,
+          password: 'temp123',
+          clinicId: req.user!.clinicId,
+          isApproved: true
+        });
+        
+        patientId = newPatient.id;
+        console.log('🔥 Created new patient:', patientId);
+      }
+
+      // Create appointment with found/created patient
+      const appointmentData = {
+        patientId,
+        doctorId,
+        clinicId: req.user!.clinicId,
+        appointmentDate: new Date(appointmentDate),
+        duration: 30,
+        type: type || 'clinic',
+        status: status || 'scheduled',
+        symptoms: symptoms || '',
+        notes: `Scheduled by admin for: ${patientName}`
+      };
+      
+      const validatedData = insertAppointmentSchema.parse(appointmentData);
+      const appointment = await storage.createAppointment(validatedData);
+      
+      console.log('🔥 Created appointment:', appointment.id);
+      res.json(appointment);
+    } catch (error: any) {
+      console.error('🔥 Error creating admin appointment:', error);
+      res.status(400).json({ message: error.message });
+    }
+  });
+
   // Appointment routes
   app.post("/api/appointments", authMiddleware, async (req, res) => {
     try {
@@ -1325,18 +1394,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { id } = req.params;
       // Handle date conversion if appointmentDate is provided as string
       const { appointmentDate, ...otherData } = req.body;
-      const appointmentData = {
-        ...otherData,
-        ...(appointmentDate && { appointmentDate: new Date(appointmentDate) })
-      };
-      
-      const validatedData = insertAppointmentSchema.partial().parse(appointmentData);
-      
       // Get the original appointment first to compare dates
       const existingAppointment = await storage.getAppointment(id);
       if (!existingAppointment) {
         return res.status(404).json({ message: "Appointment not found" });
       }
+      
+      const appointmentData = {
+        ...otherData,
+        ...(appointmentDate && { appointmentDate: new Date(appointmentDate) })
+      };
+      
+      // If rescheduling a completed appointment, reset status to scheduled
+      if (existingAppointment.status === 'completed' && appointmentDate) {
+        appointmentData.status = 'scheduled';
+        console.log('🚨 RESCHEDULE - Resetting completed appointment status to scheduled');
+      }
+      
+      const validatedData = insertAppointmentSchema.partial().parse(appointmentData);
 
       // Check permissions
       if (req.user!.role === 'patient' && existingAppointment.patientId !== req.user!.id) {
