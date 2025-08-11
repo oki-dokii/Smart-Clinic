@@ -77,7 +77,7 @@ function SuperAdminRoute({ children }: { children: React.ReactNode }) {
         window.location.href = '/login';
       } else {
         // Default redirect - try to be smart about it
-        window.location.href = redirectTo;
+        window.location.href = "/login";
       }
       return;
     }
@@ -201,7 +201,7 @@ function ProtectedRoute({
         window.location.href = '/login';
       } else {
         // Default redirect - try to be smart about it
-        window.location.href = redirectTo;
+        window.location.href = "/login";
       }
       return;
     }
@@ -221,7 +221,7 @@ function ProtectedRoute({
         // For generic dashboard access, redirect to login selection
         window.location.href = '/';
       } else {
-        window.location.href = redirectTo;
+        window.location.href = "/login";
       }
       return;
     }

@@ -1,7 +1,7 @@
 import { 
   users, otpSessions, emailOtpSessions, authSessions, staffVerifications, staffPresence, appointments, 
   queueTokens, medicines, prescriptions, medicineReminders, delayNotifications,
-  homeVisits, medicalHistory, patientFeedback, clinics,
+  homeVisits, medicalHistory, patientFeedback, clinics, emergencyRequests,
   type User, type InsertUser, type OtpSession, type InsertOtpSession,
   type EmailOtpSession, type InsertEmailOtpSession,
   type AuthSession, type InsertAuthSession, type StaffVerification, type InsertStaffVerification,
@@ -10,7 +10,8 @@ import {
   type Medicine, type InsertMedicine, type Prescription, type InsertPrescription,
   type MedicineReminder, type InsertMedicineReminder, type DelayNotification, type InsertDelayNotification,
   type HomeVisit, type InsertHomeVisit, type MedicalHistory, type InsertMedicalHistory,
-  type PatientFeedback, type InsertPatientFeedback, type Clinic, type InsertClinic
+  type PatientFeedback, type InsertPatientFeedback, type Clinic, type InsertClinic,
+  type EmergencyRequest, type InsertEmergencyRequest
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, gte, lte, desc, asc, sql, not } from "drizzle-orm";
@@ -188,6 +189,14 @@ export interface IStorage {
   getQueueTokensByClinic(clinicId: string): Promise<(QueueToken & { patient: User; doctor: User })[]>;
   getAppointmentsByDateRange(startDate: Date, endDate: Date, clinicId?: string): Promise<(Appointment & { patient: User; doctor: User })[]>;
   getActiveStaffCountByClinic(clinicId: string): Promise<number>;
+
+  // Emergency Requests
+  createEmergencyRequest(request: InsertEmergencyRequest): Promise<EmergencyRequest>;
+  getEmergencyRequest(id: string): Promise<EmergencyRequest | undefined>;
+  getEmergencyRequestsForClinic(clinicId: string): Promise<(EmergencyRequest & { patient: User })[]>;
+  getEmergencyRequestsForPatient(patientId: string): Promise<(EmergencyRequest & { doctor?: User })[]>;
+  updateEmergencyRequestStatus(id: string, status: string, doctorId?: string): Promise<EmergencyRequest | undefined>;
+  getActiveEmergencyRequests(): Promise<(EmergencyRequest & { patient: User; doctor?: User })[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -2082,6 +2091,166 @@ export class DatabaseStorage implements IStorage {
     this.tempSignupData.delete(email);
   }
 
+  // Emergency Requests Implementation
+  async createEmergencyRequest(request: InsertEmergencyRequest): Promise<EmergencyRequest> {
+    const [newRequest] = await db.insert(emergencyRequests).values(request).returning();
+    return newRequest;
+  }
+
+  async getEmergencyRequest(id: string): Promise<EmergencyRequest | undefined> {
+    const [request] = await db.select().from(emergencyRequests).where(eq(emergencyRequests.id, id));
+    return request || undefined;
+  }
+
+  async getEmergencyRequestsForClinic(clinicId: string): Promise<(EmergencyRequest & { patient: User })[]> {
+    return await db.select({
+      id: emergencyRequests.id,
+      patientId: emergencyRequests.patientId,
+      doctorId: emergencyRequests.doctorId,
+      clinicId: emergencyRequests.clinicId,
+      urgencyLevel: emergencyRequests.urgencyLevel,
+      symptoms: emergencyRequests.symptoms,
+      contactMethod: emergencyRequests.contactMethod,
+      location: emergencyRequests.location,
+      notes: emergencyRequests.notes,
+      status: emergencyRequests.status,
+      acknowledgedAt: emergencyRequests.acknowledgedAt,
+      resolvedAt: emergencyRequests.resolvedAt,
+      createdAt: emergencyRequests.createdAt,
+      updatedAt: emergencyRequests.updatedAt,
+      patient: users
+    })
+    .from(emergencyRequests)
+    .innerJoin(users, eq(emergencyRequests.patientId, users.id))
+    .where(eq(emergencyRequests.clinicId, clinicId))
+    .orderBy(desc(emergencyRequests.createdAt));
+  }
+
+  async getEmergencyRequestsForPatient(patientId: string): Promise<(EmergencyRequest & { doctor?: User })[]> {
+    return await db.select({
+      id: emergencyRequests.id,
+      patientId: emergencyRequests.patientId,
+      doctorId: emergencyRequests.doctorId,
+      clinicId: emergencyRequests.clinicId,
+      urgencyLevel: emergencyRequests.urgencyLevel,
+      symptoms: emergencyRequests.symptoms,
+      contactMethod: emergencyRequests.contactMethod,
+      location: emergencyRequests.location,
+      notes: emergencyRequests.notes,
+      status: emergencyRequests.status,
+      acknowledgedAt: emergencyRequests.acknowledgedAt,
+      resolvedAt: emergencyRequests.resolvedAt,
+      createdAt: emergencyRequests.createdAt,
+      updatedAt: emergencyRequests.updatedAt,
+      doctor: users
+    })
+    .from(emergencyRequests)
+    .leftJoin(users, eq(emergencyRequests.doctorId, users.id))
+    .where(eq(emergencyRequests.patientId, patientId))
+    .orderBy(desc(emergencyRequests.createdAt));
+  }
+
+  async updateEmergencyRequestStatus(id: string, status: string, doctorId?: string): Promise<EmergencyRequest | undefined> {
+    const updates: any = { 
+      status, 
+      updatedAt: new Date() 
+    };
+    
+    if (status === 'acknowledged') {
+      updates.acknowledgedAt = new Date();
+    }
+    
+    if (status === 'resolved') {
+      updates.resolvedAt = new Date();
+    }
+    
+    if (doctorId) {
+      updates.doctorId = doctorId;
+    }
+
+    const [updatedRequest] = await db.update(emergencyRequests)
+      .set(updates)
+      .where(eq(emergencyRequests.id, id))
+      .returning();
+    return updatedRequest || undefined;
+  }
+
+  async getActiveEmergencyRequests(): Promise<(EmergencyRequest & { patient: User; doctor?: User })[]> {
+    return await db.select({
+      id: emergencyRequests.id,
+      patientId: emergencyRequests.patientId,
+      doctorId: emergencyRequests.doctorId,
+      clinicId: emergencyRequests.clinicId,
+      urgencyLevel: emergencyRequests.urgencyLevel,
+      symptoms: emergencyRequests.symptoms,
+      contactMethod: emergencyRequests.contactMethod,
+      location: emergencyRequests.location,
+      notes: emergencyRequests.notes,
+      status: emergencyRequests.status,
+      acknowledgedAt: emergencyRequests.acknowledgedAt,
+      resolvedAt: emergencyRequests.resolvedAt,
+      createdAt: emergencyRequests.createdAt,
+      updatedAt: emergencyRequests.updatedAt,
+      patient: {
+        id: sql`patient.id`,
+        firstName: sql`patient.first_name`,
+        lastName: sql`patient.last_name`,
+        phoneNumber: sql`patient.phone_number`,
+        email: sql`patient.email`,
+        role: sql`patient.role`,
+        dateOfBirth: sql`patient.date_of_birth`,
+        address: sql`patient.address`,
+        emergencyContact: sql`patient.emergency_contact`,
+        clinicId: sql`patient.clinic_id`,
+        isActive: sql`patient.is_active`,
+        isApproved: sql`patient.is_approved`,
+        createdAt: sql`patient.created_at`,
+        updatedAt: sql`patient.updated_at`
+      },
+      doctor: {
+        id: sql`doctor.id`,
+        firstName: sql`doctor.first_name`,
+        lastName: sql`doctor.last_name`,
+        phoneNumber: sql`doctor.phone_number`,
+        email: sql`doctor.email`,
+        role: sql`doctor.role`,
+        dateOfBirth: sql`doctor.date_of_birth`,
+        address: sql`doctor.address`,
+        emergencyContact: sql`doctor.emergency_contact`,
+        clinicId: sql`doctor.clinic_id`,
+        isActive: sql`doctor.is_active`,
+        isApproved: sql`doctor.is_approved`,
+        createdAt: sql`doctor.created_at`,
+        updatedAt: sql`doctor.updated_at`
+      }
+    })
+    .from(emergencyRequests)
+    .innerJoin(sql`${users} AS patient`, sql`${emergencyRequests.patientId} = patient.id`)
+    .leftJoin(sql`${users} AS doctor`, sql`${emergencyRequests.doctorId} = doctor.id`)
+    .where(sql`${emergencyRequests.status} IN ('pending', 'acknowledged', 'in_progress')`)
+    .orderBy(desc(emergencyRequests.createdAt));
+  }
+
+  // Clinic hours validation method
+  async isWithinClinicHours(clinicId: string, dateTime: Date): Promise<boolean> {
+    const clinic = await this.getClinicById(clinicId);
+    if (!clinic) return false;
+
+    const dayOfWeek = dateTime.getDay(); // 0 = Sunday, 1 = Monday, etc.
+    const timeString = dateTime.toTimeString().substring(0, 5); // "HH:MM"
+    
+    // Map day of week to clinic hours format
+    const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+    const dayName = dayNames[dayOfWeek];
+    
+    const hours = clinic.operatingHours as any;
+    if (!hours || !hours[dayName]) return false;
+    
+    const dayHours = hours[dayName];
+    if (!dayHours.isOpen) return false;
+    
+    return timeString >= dayHours.start && timeString <= dayHours.end;
+  }
 }
 
 export const storage = new DatabaseStorage();

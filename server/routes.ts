@@ -6,7 +6,8 @@ import {
   insertUserSchema, insertAppointmentSchema, insertQueueTokenSchema, 
   insertMedicineSchema, insertPrescriptionSchema, insertMedicineReminderSchema,
   insertDelayNotificationSchema, insertHomeVisitSchema, insertMedicalHistorySchema,
-  insertStaffVerificationSchema, insertPatientFeedbackSchema, insertClinicSchema
+  insertStaffVerificationSchema, insertPatientFeedbackSchema, insertClinicSchema,
+  insertEmergencyRequestSchema
 } from "@shared/schema";
 import { z } from "zod";
 import { authMiddleware, requireRole, requireSuperAdmin } from "./middleware/auth";
@@ -1442,11 +1443,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
         priority: z.number().default(1)
       }).parse(req.body);
 
-      const tokenNumber = await storage.getNextTokenNumber(doctorId, appointmentId);
       // Get clinic ID from user or doctor
       const user = await storage.getUser(req.user!.id);
       const doctor = await storage.getUser(doctorId);
       const clinicId = user?.clinicId || doctor?.clinicId || '84e1b3c6-3b25-4446-96e8-a227d9e92d76';
+
+      // Validate clinic hours
+      const now = new Date();
+      if (clinicId) {
+        const isWithinHours = await storage.isWithinClinicHours(clinicId, now);
+        if (!isWithinHours) {
+          const clinic = await storage.getClinicById(clinicId);
+          return res.status(400).json({ 
+            error: "Queue is closed. Please join during clinic operating hours.",
+            clinicHours: clinic?.operatingHours
+          });
+        }
+      }
+
+      const tokenNumber = await storage.getNextTokenNumber(doctorId, appointmentId);
 
       const queueToken = await storage.createQueueToken({
         tokenNumber,
@@ -3424,8 +3439,114 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Medicine stock alert route
+  app.get('/api/medicines/low-stock', authMiddleware, requireRole(['admin', 'doctor', 'staff']), async (req, res) => {
+    try {
+      const user = (req as any).user;
+      const medicines = await storage.getMedicinesByClinic(user.clinicId);
+      
+      // Filter medicines with low stock (less than 10 units or custom threshold)
+      const threshold = parseInt(req.query.threshold as string) || 10;
+      const lowStockMedicines = medicines.filter(medicine => 
+        medicine.stockQuantity !== undefined && 
+        medicine.stockQuantity !== null && 
+        medicine.stockQuantity < threshold
+      );
+      
+      res.json(lowStockMedicines);
+    } catch (error: any) {
+      console.error('❌ Error checking medicine stock:', error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
   // Start background services
   schedulerService.start();
+
+  // Emergency request routes
+  app.post('/api/emergency', authMiddleware, async (req, res) => {
+    try {
+      const user = (req as any).user;
+      const requestData = insertEmergencyRequestSchema.parse(req.body);
+      
+      // Ensure patient can only create requests for themselves
+      if (user.role === 'patient' && requestData.patientId !== user.id) {
+        return res.status(403).json({ error: 'Patients can only create emergency requests for themselves' });
+      }
+      
+      // For non-patients, get patient's clinic
+      if (user.role !== 'patient') {
+        const patient = await storage.getUser(requestData.patientId);
+        if (!patient) {
+          return res.status(404).json({ error: 'Patient not found' });
+        }
+        requestData.clinicId = patient.clinicId;
+      } else {
+        requestData.clinicId = user.clinicId;
+      }
+      
+      const emergencyRequest = await storage.createEmergencyRequest(requestData);
+      
+      // Broadcast emergency alert to admin/staff via WebSocket
+      const alertData = {
+        type: 'emergency_alert',
+        data: {
+          ...emergencyRequest,
+          patient: await storage.getUser(emergencyRequest.patientId)
+        }
+      };
+      
+      // Send to all WebSocket clients (admins/staff)
+      wss.clients.forEach((client) => {
+        if (client.readyState === WebSocket.OPEN) {
+          client.send(JSON.stringify(alertData));
+        }
+      });
+      
+      res.json(emergencyRequest);
+    } catch (error: any) {
+      console.error('❌ Error creating emergency request:', error);
+      res.status(400).json({ error: error.message });
+    }
+  });
+
+  app.get('/api/emergency', authMiddleware, async (req, res) => {
+    try {
+      const user = (req as any).user;
+      let requests;
+      
+      if (user.role === 'patient') {
+        requests = await storage.getEmergencyRequestsForPatient(user.id);
+      } else {
+        // Admin/staff can see all requests for their clinic
+        requests = await storage.getEmergencyRequestsForClinic(user.clinicId);
+      }
+      
+      res.json(requests);
+    } catch (error: any) {
+      console.error('❌ Error fetching emergency requests:', error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.patch('/api/emergency/:id', authMiddleware, requireRole(['admin', 'doctor', 'staff']), async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { status } = req.body;
+      const user = (req as any).user;
+      
+      const updatedRequest = await storage.updateEmergencyRequestStatus(id, status, user.id);
+      
+      if (!updatedRequest) {
+        return res.status(404).json({ error: 'Emergency request not found' });
+      }
+      
+      res.json(updatedRequest);
+    } catch (error: any) {
+      console.error('❌ Error updating emergency request:', error);
+      res.status(500).json({ error: error.message });
+    }
+  });
 
   return httpServer;
 }

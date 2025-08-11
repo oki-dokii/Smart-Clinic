@@ -47,6 +47,8 @@ import { apiRequest } from "@/lib/queryClient"
 import { useToast } from "@/hooks/use-toast"
 import { useQueueSocket } from "@/hooks/useQueueSocket"
 import { useTheme } from "@/components/ThemeProvider"
+import { EmergencyAlerts } from "@/components/EmergencyAlerts"
+import { LowStockAlerts } from "@/components/LowStockAlerts"
 
 import jsPDF from 'jspdf'
 
@@ -2709,7 +2711,13 @@ export default function ClinicDashboard() {
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                  {/* Emergency Alerts */}
+                  {/* Emergency Alerts - Real emergency requests */}
+                  <EmergencyAlerts />
+                  
+                  {/* Medicine Stock Alerts */}
+                  <LowStockAlerts />
+                  
+                  {/* Legacy Emergency Alerts - Keep for testing */}
                   <Card className="border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-950">
                     <CardHeader>
                       <CardTitle className="text-red-700 dark:text-red-300 flex items-center gap-2">

@@ -230,6 +230,24 @@ export const patientFeedback = pgTable("patient_feedback", {
   createdAt: timestamp("created_at").notNull().default(sql`NOW()`),
 });
 
+// Emergency requests table
+export const emergencyRequests = pgTable("emergency_requests", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  patientId: varchar("patient_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  doctorId: varchar("doctor_id").references(() => users.id, { onDelete: "set null" }),
+  clinicId: varchar("clinic_id").notNull().references(() => clinics.id, { onDelete: "cascade" }),
+  urgencyLevel: varchar("urgency_level").notNull(), // low, medium, high, critical
+  symptoms: text("symptoms").notNull(),
+  contactMethod: varchar("contact_method").notNull(), // call_doctor, ambulance, home_visit, video_call
+  location: text("location"),
+  notes: text("notes"),
+  status: varchar("status").notNull().default("pending"), // pending, acknowledged, in_progress, resolved, cancelled
+  acknowledgedAt: timestamp("acknowledged_at"),
+  resolvedAt: timestamp("resolved_at"),
+  createdAt: timestamp("created_at").notNull().default(sql`NOW()`),
+  updatedAt: timestamp("updated_at").notNull().default(sql`NOW()`),
+});
+
 // Home visits table
 export const homeVisits = pgTable("home_visits", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -360,6 +378,12 @@ export const medicalHistoryRelations = relations(medicalHistory, ({ one }) => ({
   appointment: one(appointments, { fields: [medicalHistory.appointmentId], references: [appointments.id] }),
 }));
 
+export const emergencyRequestsRelations = relations(emergencyRequests, ({ one }) => ({
+  patient: one(users, { fields: [emergencyRequests.patientId], references: [users.id] }),
+  doctor: one(users, { fields: [emergencyRequests.doctorId], references: [users.id] }),
+  clinic: one(clinics, { fields: [emergencyRequests.clinicId], references: [clinics.id] }),
+}));
+
 // Insert schemas
 export const insertClinicSchema = createInsertSchema(clinics).omit({
   id: true,
@@ -460,6 +484,12 @@ export const insertPatientFeedbackSchema = createInsertSchema(patientFeedback).o
   patientId: z.string().nullable().optional(),
 });
 
+export const insertEmergencyRequestSchema = createInsertSchema(emergencyRequests).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 // Types
 export type Clinic = typeof clinics.$inferSelect;
 export type InsertClinic = z.infer<typeof insertClinicSchema>;
@@ -493,3 +523,5 @@ export type MedicalHistory = typeof medicalHistory.$inferSelect;
 export type InsertMedicalHistory = z.infer<typeof insertMedicalHistorySchema>;
 export type PatientFeedback = typeof patientFeedback.$inferSelect;
 export type InsertPatientFeedback = z.infer<typeof insertPatientFeedbackSchema>;
+export type EmergencyRequest = typeof emergencyRequests.$inferSelect;
+export type InsertEmergencyRequest = z.infer<typeof insertEmergencyRequestSchema>;

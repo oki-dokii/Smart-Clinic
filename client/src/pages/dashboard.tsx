@@ -21,7 +21,7 @@ import {
   Send,
 } from "lucide-react";
 import BookingModal from "@/components/BookingModal";
-import EmergencyModal from "@/components/EmergencyModal";
+import { EmergencyModal } from "@/components/EmergencyModal";
 import CancelModal from "@/components/CancelModal";
 import AppointmentDetailsModal from "@/components/AppointmentDetailsModal";
 import { Badge } from "@/components/ui/badge";
@@ -173,8 +173,8 @@ export default function SmartClinicDashboard() {
     refetchInterval: 30000, // Check every 30 seconds for real-time updates
   });
 
-  // WebSocket connection for real-time admin queue updates  
-  const { adminQueue: liveAdminQueue } = useQueueSocket(
+  // WebSocket connection for real-time queue updates  
+  const { queueTokens: liveQueue } = useQueueSocket(
     user?.id, 
     user?.role === 'admin' || user?.role === 'staff'
   );
@@ -185,11 +185,11 @@ export default function SmartClinicDashboard() {
     refetchInterval: 2000, // Faster refresh to pick up changes
     retry: false, // Don't retry if unauthorized
     staleTime: 0, // Always fetch fresh data
-    cacheTime: 0, // Don't cache data
+    gcTime: 0, // Don't cache data
   });
 
   // Prioritize live WebSocket data and filter out completed patients
-  const rawAdminQueue = liveAdminQueue && liveAdminQueue.length > 0 ? liveAdminQueue : apiAdminQueue || [];
+  const rawAdminQueue = liveQueue && liveQueue.length > 0 ? liveQueue : apiAdminQueue || [];
   
   // Filter out completed patients and sort by token number for proper queue display
   const adminQueue = Array.isArray(rawAdminQueue) ? 
@@ -395,10 +395,10 @@ export default function SmartClinicDashboard() {
 
   const handleJoinQueue = () => {
     // Check if user is already in queue
-    if (queuePosition && queuePosition.status === 'waiting') {
+    if (queuePosition && (queuePosition as any).status === 'waiting') {
       toast({
         title: "Already in Queue",
-        description: `You are already in the queue at position #${queuePosition.tokenNumber}`,
+        description: `You are already in the queue at position #${(queuePosition as any).tokenNumber}`,
         variant: "destructive",
       });
       return;
@@ -830,11 +830,11 @@ export default function SmartClinicDashboard() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold mb-1">
-                {currentQueuePosition ? `#${currentQueuePosition.tokenNumber}` : "Not in queue"}
+                {currentQueuePosition ? `#${(currentQueuePosition as any).tokenNumber}` : "Not in queue"}
               </div>
               <div className="text-sm text-gray-600 mb-4">
                 {currentQueuePosition ? 
-                  `Estimated wait: ${currentQueuePosition.estimatedWaitTime || 0} minutes` : 
+                  `Estimated wait: ${(currentQueuePosition as any).estimatedWaitTime || 0} minutes` : 
                   "Join queue when you arrive"
                 }
               </div>
@@ -1369,10 +1369,11 @@ export default function SmartClinicDashboard() {
           notes: selectedAppointment.notes || ""
         } : null}
       />
-      <EmergencyModal 
-        isOpen={showEmergencyModal} 
-        onClose={() => setShowEmergencyModal(false)} 
-      />
+      {showEmergencyModal && user?.id && (
+        <EmergencyModal 
+          patientId={user.id}
+        />
+      )}
       <CancelModal 
         isOpen={showCancelModal} 
         onClose={() => setShowCancelModal(false)}
@@ -1732,8 +1733,8 @@ function LiveQueueContent({
   joinQueuePending: boolean;
   isInQueue: boolean;
 }) {
-  // WebSocket connection for real-time admin queue updates
-  const { adminQueue: liveAdminQueue } = useQueueSocket(
+  // WebSocket connection for real-time queue updates
+  const { queueTokens: liveAdminQueue } = useQueueSocket(
     undefined, // No specific user ID for modal view
     true // Admin mode for full queue access
   );
