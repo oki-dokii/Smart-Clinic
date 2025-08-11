@@ -357,9 +357,9 @@ export default function ClinicDashboard() {
   const [appointmentForm, setAppointmentForm] = useState({
     patientName: '',
     doctorId: '',
-    appointmentDate: '',
-    appointmentTime: '',
-    consultationType: 'regular',
+    date: '',
+    time: '',
+    type: 'clinic',
     symptoms: ''
   })
 
@@ -462,10 +462,10 @@ export default function ClinicDashboard() {
   }
 
   const handleAppointmentSubmit = async () => {
-    if (!appointmentForm.patientName || !appointmentForm.doctorId || !appointmentForm.appointmentDate || !appointmentForm.appointmentTime) {
+    if (!appointmentForm.patientName || !appointmentForm.doctorId || !appointmentForm.date || !appointmentForm.time) {
       toast({
         title: 'Validation Error',
-        description: 'Please fill in all required fields.',
+        description: 'Please fill in all required fields (patient name, doctor, date, and time).',
         variant: 'destructive'
       })
       return
@@ -520,15 +520,14 @@ export default function ClinicDashboard() {
       }
 
       // Combine date and time into proper DateTime format
-      const appointmentDateTime = new Date(`${appointmentForm.appointmentDate}T${appointmentForm.appointmentTime}:00`)
+      const appointmentDateTime = new Date(`${appointmentForm.date}T${appointmentForm.time}:00`)
       
       const appointmentData = {
         patientName: appointmentForm.patientName,
         doctorId: appointmentForm.doctorId,
         appointmentDate: appointmentDateTime.toISOString(),
-        type: appointmentForm.consultationType === 'video-call' ? 'telehealth' : 
-              appointmentForm.consultationType === 'home-visit' ? 'home_visit' : 'clinic',
-        symptoms: appointmentForm.symptoms,
+        type: appointmentForm.type || 'clinic',
+        symptoms: appointmentForm.symptoms || 'Scheduled by admin for: ' + appointmentForm.patientName,
         status: 'scheduled'
       }
 
@@ -538,9 +537,9 @@ export default function ClinicDashboard() {
       setAppointmentForm({
         patientName: '',
         doctorId: '',
-        appointmentDate: '',
-        appointmentTime: '',
-        consultationType: 'regular',
+        date: '',
+        time: '',
+        type: 'clinic',
         symptoms: ''
       })
       setShowAppointmentModal(false)
@@ -628,19 +627,56 @@ export default function ClinicDashboard() {
     }
   }
 
-  const handlePrescriptionSubmit = () => {
-    toast({
-      title: 'Prescription Created',
-      description: `Prescription for ${prescriptionForm.medicineName} has been created.`,
-    })
-    setPrescriptionForm({
-      patientId: '',
-      medicineName: '',
-      dosage: '',
-      frequency: '',
-      duration: '',
-      instructions: ''
-    })
+  const handlePrescriptionSubmit = async () => {
+    if (!prescriptionForm.patientId || !prescriptionForm.medicineName || !prescriptionForm.dosage || !prescriptionForm.frequency) {
+      toast({
+        title: 'Validation Error',
+        description: 'Please fill in all required fields (patient, medicine name, dosage, and frequency).',
+        variant: 'destructive'
+      })
+      return
+    }
+
+    try {
+      const prescriptionData = {
+        patientId: prescriptionForm.patientId,
+        medicines: [{
+          name: prescriptionForm.medicineName,
+          dosage: prescriptionForm.dosage,
+          frequency: prescriptionForm.frequency,
+          duration: prescriptionForm.duration || '7 days',
+          instructions: prescriptionForm.instructions || 'Take as directed'
+        }],
+        notes: `Prescription created by admin for ${prescriptionForm.medicineName}`
+      }
+
+      await apiRequest('POST', '/api/prescriptions', prescriptionData)
+      
+      // Reset form
+      setPrescriptionForm({
+        patientId: '',
+        medicineName: '',
+        dosage: '',
+        frequency: '',
+        duration: '',
+        instructions: ''
+      })
+
+      // Refresh relevant data
+      queryClient.invalidateQueries({ queryKey: ['/api/prescriptions'] })
+      queryClient.invalidateQueries({ queryKey: ['/api/appointments/admin'] })
+
+      toast({
+        title: 'Prescription Created',
+        description: `Prescription for ${prescriptionData.medicines[0].name} has been created successfully.`,
+      })
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: 'Failed to create prescription. Please try again.',
+        variant: 'destructive'
+      })
+    }
   }
 
 
@@ -3114,13 +3150,19 @@ export default function ClinicDashboard() {
                             </DialogHeader>
                             <div className="space-y-4">
                               <div>
-                                <Label htmlFor="prescriptionPatient">Patient</Label>
-                                <Input
-                                  id="prescriptionPatient"
-                                  value={prescriptionForm.patientId}
-                                  onChange={(e) => setPrescriptionForm({...prescriptionForm, patientId: e.target.value})}
-                                  placeholder="Search patient by name or ID"
-                                />
+                                <Label htmlFor="prescriptionPatient">Patient *</Label>
+                                <Select onValueChange={(value) => setPrescriptionForm({...prescriptionForm, patientId: value})}>
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="Select a patient..." />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    {patients?.map((patient) => (
+                                      <SelectItem key={patient.id} value={patient.id}>
+                                        {patient.firstName} {patient.lastName} ({patient.phoneNumber})
+                                      </SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
                               </div>
                               <div>
                                 <Label htmlFor="medicineName">Medicine Name</Label>
