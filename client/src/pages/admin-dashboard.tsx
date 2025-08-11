@@ -359,10 +359,7 @@ export default function ClinicDashboard() {
     appointmentDate: '',
     appointmentTime: '',
     consultationType: 'regular',
-    symptoms: '',
-    date: '',
-    time: '',
-    type: ''
+    symptoms: ''
   })
 
   const [prescriptionForm, setPrescriptionForm] = useState({
@@ -429,7 +426,8 @@ export default function ClinicDashboard() {
           role: 'patient',
           password: 'temp123', // Default password
           dateOfBirth: patientForm.dateOfBirth || undefined, // Send as string, schema will convert
-          address: patientForm.address || undefined
+          address: patientForm.address || undefined,
+          clinicId: user?.clinicId // Link patient to the same clinic as admin
         })
       })
       
@@ -495,10 +493,7 @@ export default function ClinicDashboard() {
         appointmentDate: '',
         appointmentTime: '',
         consultationType: 'regular',
-        symptoms: '',
-        date: '',
-        time: '',
-        type: ''
+        symptoms: ''
       })
       setShowAppointmentModal(false)
       
@@ -5273,24 +5268,34 @@ export default function ClinicDashboard() {
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="newAppointmentPatientId">Patient ID *</Label>
-                <Input
-                  id="newAppointmentPatientId"
-                  value={appointmentForm.patientId}
-                  onChange={(e) => setAppointmentForm({...appointmentForm, patientId: e.target.value})}
-                  placeholder="Enter patient ID"
-                  data-testid="input-new-appointment-patient-id"
-                />
+                <Label htmlFor="newAppointmentPatient">Select Patient *</Label>
+                <Select value={appointmentForm.patientId} onValueChange={(value) => setAppointmentForm({...appointmentForm, patientId: value})}>
+                  <SelectTrigger data-testid="select-new-appointment-patient">
+                    <SelectValue placeholder="Choose a patient" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {patients?.map((patient) => (
+                      <SelectItem key={patient.id} value={patient.id}>
+                        {patient.firstName} {patient.lastName} - {patient.phoneNumber}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               <div>
-                <Label htmlFor="newAppointmentDoctorId">Doctor ID *</Label>
-                <Input
-                  id="newAppointmentDoctorId"
-                  value={appointmentForm.doctorId}
-                  onChange={(e) => setAppointmentForm({...appointmentForm, doctorId: e.target.value})}
-                  placeholder="Enter doctor ID"
-                  data-testid="input-new-appointment-doctor-id"
-                />
+                <Label htmlFor="newAppointmentDoctor">Select Doctor *</Label>
+                <Select value={appointmentForm.doctorId} onValueChange={(value) => setAppointmentForm({...appointmentForm, doctorId: value})}>
+                  <SelectTrigger data-testid="select-new-appointment-doctor">
+                    <SelectValue placeholder="Choose a doctor" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {users?.filter(user => user.role === 'doctor').map((doctor) => (
+                      <SelectItem key={doctor.id} value={doctor.id}>
+                        {doctor.firstName} {doctor.lastName}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             </div>
             <div className="grid grid-cols-2 gap-4">
