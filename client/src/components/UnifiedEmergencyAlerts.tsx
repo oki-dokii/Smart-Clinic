@@ -224,16 +224,7 @@ export function UnifiedEmergencyAlerts({ onTestAlerts }: UnifiedEmergencyAlertsP
               <AlertTriangle className="w-5 h-5" />
               Emergency Alerts
             </CardTitle>
-            {onTestAlerts && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={onTestAlerts}
-                className="text-xs border-red-300 text-red-600 hover:bg-red-100"
-              >
-                Test Alerts
-              </Button>
-            )}
+
           </div>
           <p className={`text-sm ${totalAlerts > 0 ? 'text-red-600 dark:text-red-400' : 'text-gray-500 dark:text-gray-400'}`}>
             {totalAlerts > 0 ? 'Urgent notifications requiring immediate attention' : 'No active emergency alerts at this time.'}
