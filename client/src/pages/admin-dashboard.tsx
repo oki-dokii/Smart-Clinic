@@ -3014,21 +3014,26 @@ export default function ClinicDashboard() {
                               </div>
                               <div className="grid grid-cols-2 gap-4">
                                 <div>
-                                  <Label htmlFor="appointmentDate">Date</Label>
+                                  <Label htmlFor="appointmentDate">Date *</Label>
                                   <Input
                                     id="appointmentDate"
                                     type="date"
-                                    value={appointmentForm.date}
+                                    value={appointmentForm.date || ''}
                                     onChange={(e) => setAppointmentForm({...appointmentForm, date: e.target.value})}
+                                    min={new Date().toISOString().split('T')[0]}
+                                    className="w-full"
+                                    data-testid="input-appointment-date"
                                   />
                                 </div>
                                 <div>
-                                  <Label htmlFor="appointmentTime">Time</Label>
+                                  <Label htmlFor="appointmentTime">Time *</Label>
                                   <Input
                                     id="appointmentTime"
                                     type="time"
-                                    value={appointmentForm.time}
+                                    value={appointmentForm.time || ''}
                                     onChange={(e) => setAppointmentForm({...appointmentForm, time: e.target.value})}
+                                    className="w-full"
+                                    data-testid="input-appointment-time"
                                   />
                                 </div>
                               </div>
