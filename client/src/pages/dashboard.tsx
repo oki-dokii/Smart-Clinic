@@ -283,6 +283,7 @@ export default function SmartClinicDashboard() {
     return date.toLocaleTimeString('en-IN', { 
       hour: '2-digit', 
       minute: '2-digit',
+      hour12: true,
       timeZone: 'Asia/Kolkata'
     });
   };
@@ -1270,21 +1271,20 @@ export default function SmartClinicDashboard() {
                         <Button 
                           size="sm" 
                           variant="outline" 
-                          className="flex-1 bg-transparent"
-                          onClick={() => handleRescheduleAppointment(appointment)}
-                        >
-                          Reschedule
-                        </Button>
-                        <Button 
-                          size="sm" 
-                          variant="outline" 
                           className="flex-1 text-red-600 border-red-200 bg-transparent"
                           onClick={() => handleCancelAppointment(appointment)}
                         >
                           Cancel
                         </Button>
-                        <Button size="sm" className="bg-green-500 hover:bg-green-600">
-                          <Phone className="w-3 h-3" />
+                        <Button 
+                          size="sm" 
+                          className="flex-1 bg-blue-500 hover:bg-blue-600"
+                          onClick={() => {
+                            setSelectedAppointment(appointment);
+                            setShowDetailsModal(true);
+                          }}
+                        >
+                          View Details
                         </Button>
                       </div>
                     </div>
@@ -1309,7 +1309,7 @@ export default function SmartClinicDashboard() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 sm:gap-4">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
                 <Button
                   variant="outline"
                   className="h-16 sm:h-20 flex-col gap-1 sm:gap-2 bg-transparent text-xs sm:text-sm"
@@ -1335,28 +1335,7 @@ export default function SmartClinicDashboard() {
                   <AlertTriangle className="w-5 h-5 sm:w-6 sm:h-6 text-red-500" />
                   <span>Emergency</span>
                 </Button>
-                <Button
-                  variant="outline"
-                  className="h-16 sm:h-20 flex-col gap-1 sm:gap-2 bg-transparent text-xs sm:text-sm"
-                  onClick={() => {
-                    if (appointments?.length > 0) {
-                      setShowBookingModal(true);
-                      toast({
-                        title: "Reschedule Mode",
-                        description: "Select a new date and time for your appointment.",
-                      });
-                    } else {
-                      toast({
-                        title: "No Appointments",
-                        description: "You don't have any appointments to reschedule.",
-                        variant: "destructive",
-                      });
-                    }
-                  }}
-                >
-                  <Clock className="w-5 h-5 sm:w-6 sm:h-6 text-blue-500" />
-                  <span>Reschedule</span>
-                </Button>
+
                 <Button
                   variant="outline"
                   className="h-16 sm:h-20 flex-col gap-1 sm:gap-2 bg-transparent text-xs sm:text-sm"

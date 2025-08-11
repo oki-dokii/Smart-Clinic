@@ -99,10 +99,6 @@ export default function AppointmentDetailsModal({ isOpen, onClose, appointment }
             <Button variant="outline" className="flex-1" onClick={onClose}>
               Close
             </Button>
-            <Button className="bg-green-500 hover:bg-green-600">
-              <Phone className="w-4 h-4 mr-2" />
-              Call Doctor
-            </Button>
           </div>
         </div>
       </DialogContent>
