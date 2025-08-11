@@ -472,6 +472,53 @@ export default function ClinicDashboard() {
     }
 
     try {
+      // First, create patient if doesn't exist (extract from patientName)
+      const [firstName, ...lastNameParts] = appointmentForm.patientName.trim().split(' ')
+      const lastName = lastNameParts.join(' ') || firstName
+      
+      // Create patient first
+      const patientResponse = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
+        },
+        body: JSON.stringify({
+          firstName: firstName,
+          lastName: lastName,
+          phoneNumber: `${Date.now()}`, // Temporary phone number
+          role: 'patient',
+          password: 'temp123',
+          clinicId: currentUser?.clinicId || '84e1b3c6-3b25-4446-96e8-a227d9e92d76'
+        })
+      })
+      
+      let patientId = null
+      if (patientResponse.ok) {
+        const patientData = await patientResponse.json()
+        patientId = patientData.user.id
+      } else {
+        // Patient might already exist, try to find by name
+        const existingPatients = await fetch('/api/patients', {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
+          }
+        })
+        if (existingPatients.ok) {
+          const patients = await existingPatients.json()
+          const foundPatient = patients.find((p: any) => 
+            `${p.firstName} ${p.lastName}`.toLowerCase() === appointmentForm.patientName.toLowerCase()
+          )
+          if (foundPatient) {
+            patientId = foundPatient.id
+          }
+        }
+      }
+
+      if (!patientId) {
+        throw new Error('Failed to create or find patient')
+      }
+
       // Combine date and time into proper DateTime format
       const appointmentDateTime = new Date(`${appointmentForm.appointmentDate}T${appointmentForm.appointmentTime}:00`)
       
@@ -498,12 +545,13 @@ export default function ClinicDashboard() {
       })
       setShowAppointmentModal(false)
       
-      // Refresh appointments
+      // Refresh both appointments and patients data
       queryClient.invalidateQueries({ queryKey: ['/api/appointments/admin'] })
+      queryClient.invalidateQueries({ queryKey: ['/api/patients'] })
       
       toast({
         title: 'Appointment Scheduled',
-        description: 'New appointment has been successfully scheduled.',
+        description: 'New appointment has been successfully scheduled and patient added to records.',
       })
     } catch (error) {
       toast({
@@ -538,15 +586,19 @@ export default function ClinicDashboard() {
           email: staffForm.email || undefined,
           role: staffForm.role,
           password: 'temp123', // Default password
-          isApproved: true // Auto-approve staff created by admin
+          isApproved: true, // Auto-approve staff created by admin
+          clinicId: currentUser?.clinicId || '84e1b3c6-3b25-4446-96e8-a227d9e92d76' // Link staff to the same clinic as admin
         })
       })
       
       if (response.ok) {
         // Refresh staff data with multiple cache-busting strategies
+        queryClient.invalidateQueries({ queryKey: ['/api/users'] })
         queryClient.removeQueries({ queryKey: ['users', 'staff'] })
         setForceRender(prev => prev + 1)
-        await refetchUsers() // Force immediate refetch
+        if (refetchUsers) {
+          await refetchUsers() // Force immediate refetch
+        }
         
         toast({
           title: 'Staff Member Added Successfully',
@@ -558,7 +610,7 @@ export default function ClinicDashboard() {
           lastName: '',
           phoneNumber: '',
           email: '',
-          role: ''
+          role: 'staff'
         })
         
         setIsAddStaffOpen(false) // Close dialog
@@ -3815,7 +3867,7 @@ export default function ClinicDashboard() {
                             placeholder="123 Main St, City, State"
                           />
                         </div>
-                        <Button onClick={handlePatientSubmit} className="w-full">
+                        <Button onClick={handlePatientSubmitOriginal} className="w-full">
                           <UserPlus className="w-4 h-4 mr-2" />
                           Add Patient
                         </Button>
