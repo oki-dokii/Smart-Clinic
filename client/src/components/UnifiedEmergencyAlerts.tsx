@@ -63,14 +63,14 @@ export function UnifiedEmergencyAlerts({ onTestAlerts }: UnifiedEmergencyAlertsP
 
   // Fetch emergency requests
   const { data: emergencyRequests = [], isLoading: requestsLoading } = useQuery({
-    queryKey: ['/api/emergency-requests'],
-    refetchInterval: 5000, // Refresh every 5 seconds for real-time updates
+    queryKey: ['/api/emergency'],
+    refetchInterval: 10000, // Refresh every 10 seconds for real-time updates
   });
 
   // Fetch medicines for low stock monitoring
   const { data: medicines = [], isLoading: medicinesLoading } = useQuery({
     queryKey: ['/api/medicines'],
-    refetchInterval: 5000, // Refresh every 5 seconds
+    refetchInterval: 30000, // Refresh every 30 seconds to reduce fluctuation
   });
 
   // Calculate low stock alerts
@@ -91,14 +91,14 @@ export function UnifiedEmergencyAlerts({ onTestAlerts }: UnifiedEmergencyAlertsP
   // Acknowledge emergency request mutation
   const acknowledgeRequestMutation = useMutation({
     mutationFn: async ({ requestId, notes }: { requestId: string; notes: string }) => {
-      const response = await apiRequest('PUT', `/api/emergency-requests/${requestId}/acknowledge`, {
+      const response = await apiRequest('PATCH', `/api/emergency/${requestId}`, {
         status: 'acknowledged',
         responseNotes: notes,
       });
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/emergency-requests'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/emergency'] });
       setShowResponseDialog(false);
       setSelectedRequest(null);
       setResponseNotes('');
@@ -119,14 +119,14 @@ export function UnifiedEmergencyAlerts({ onTestAlerts }: UnifiedEmergencyAlertsP
   // Resolve emergency request mutation
   const resolveRequestMutation = useMutation({
     mutationFn: async ({ requestId, notes }: { requestId: string; notes: string }) => {
-      const response = await apiRequest('PUT', `/api/emergency-requests/${requestId}/resolve`, {
+      const response = await apiRequest('PATCH', `/api/emergency/${requestId}`, {
         status: 'resolved',
         responseNotes: notes,
       });
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/emergency-requests'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/emergency'] });
       setShowResponseDialog(false);
       setSelectedRequest(null);
       setResponseNotes('');
