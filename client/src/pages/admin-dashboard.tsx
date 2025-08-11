@@ -5263,6 +5263,104 @@ export default function ClinicDashboard() {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* New Appointment Modal */}
+      <Dialog open={showAppointmentModal} onOpenChange={setShowAppointmentModal}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Schedule New Appointment</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="newAppointmentPatientId">Patient ID *</Label>
+                <Input
+                  id="newAppointmentPatientId"
+                  value={appointmentForm.patientId}
+                  onChange={(e) => setAppointmentForm({...appointmentForm, patientId: e.target.value})}
+                  placeholder="Enter patient ID"
+                  data-testid="input-new-appointment-patient-id"
+                />
+              </div>
+              <div>
+                <Label htmlFor="newAppointmentDoctorId">Doctor ID *</Label>
+                <Input
+                  id="newAppointmentDoctorId"
+                  value={appointmentForm.doctorId}
+                  onChange={(e) => setAppointmentForm({...appointmentForm, doctorId: e.target.value})}
+                  placeholder="Enter doctor ID"
+                  data-testid="input-new-appointment-doctor-id"
+                />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="newAppointmentDate">Date *</Label>
+                <Input
+                  id="newAppointmentDate"
+                  type="date"
+                  value={appointmentForm.appointmentDate}
+                  onChange={(e) => setAppointmentForm({...appointmentForm, appointmentDate: e.target.value})}
+                  data-testid="input-new-appointment-date"
+                />
+              </div>
+              <div>
+                <Label htmlFor="newAppointmentTime">Time *</Label>
+                <Input
+                  id="newAppointmentTime"
+                  type="time"
+                  value={appointmentForm.appointmentTime}
+                  onChange={(e) => setAppointmentForm({...appointmentForm, appointmentTime: e.target.value})}
+                  data-testid="input-new-appointment-time"
+                />
+              </div>
+            </div>
+            <div>
+              <Label htmlFor="newAppointmentType">Consultation Type</Label>
+              <Select value={appointmentForm.consultationType} onValueChange={(value) => setAppointmentForm({...appointmentForm, consultationType: value})}>
+                <SelectTrigger data-testid="select-new-appointment-type">
+                  <SelectValue placeholder="Select consultation type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="regular">Regular</SelectItem>
+                  <SelectItem value="video-call">Video Call</SelectItem>
+                  <SelectItem value="home-visit">Home Visit</SelectItem>
+                  <SelectItem value="emergency">Emergency</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label htmlFor="newAppointmentSymptoms">Symptoms/Notes</Label>
+              <Textarea
+                id="newAppointmentSymptoms"
+                value={appointmentForm.symptoms}
+                onChange={(e) => setAppointmentForm({...appointmentForm, symptoms: e.target.value})}
+                placeholder="Describe symptoms or appointment purpose"
+                data-testid="textarea-new-appointment-symptoms"
+                rows={3}
+              />
+            </div>
+            <div className="flex gap-2 pt-4">
+              <Button 
+                onClick={handleAppointmentSubmit} 
+                className="flex-1 bg-blue-600 hover:bg-blue-700"
+                data-testid="button-submit-new-appointment"
+              >
+                <Calendar className="w-4 h-4 mr-2" />
+                Schedule Appointment
+              </Button>
+              <Button 
+                variant="outline" 
+                onClick={() => setShowAppointmentModal(false)}
+                className="flex-1"
+                data-testid="button-cancel-new-appointment"
+              >
+                Cancel
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

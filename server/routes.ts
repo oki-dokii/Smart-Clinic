@@ -2411,8 +2411,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Admin user has no associated clinic" });
       }
 
-      // Get today's date for filtering - use August 9th as "today"
-      const today = new Date('2025-08-09');
+      // Get today's date for filtering - use current date as "today"
+      const today = new Date();
       today.setHours(0, 0, 0, 0);
       const tomorrow = new Date(today);
       tomorrow.setDate(tomorrow.getDate() + 1);
