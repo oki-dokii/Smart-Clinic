@@ -1096,7 +1096,7 @@ export default function SmartClinicDashboard() {
                     <div key={reminder.id} className="border rounded-lg p-4">
                       <div className="flex items-center justify-between mb-2">
                         <div className="flex items-center gap-2">
-                          <span className="font-medium">{reminder.prescription.medicine.name}</span>
+                          <span className="font-medium">{reminder.prescription?.medicine?.name || 'Medicine'}</span>
                           <Pill className="w-4 h-4 text-blue-500" />
                         </div>
                         <div className="text-right">
@@ -1108,7 +1108,7 @@ export default function SmartClinicDashboard() {
                           )}
                         </div>
                       </div>
-                      <div className="text-sm text-gray-600 mb-2">{reminder.prescription.dosage}</div>
+                      <div className="text-sm text-gray-600 mb-2">{reminder.prescription?.dosage || 'As prescribed'}</div>
                       <div className="flex gap-2">
                         {!reminder.isTaken && !reminder.isSkipped ? (
                           <>

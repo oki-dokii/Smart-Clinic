@@ -7,6 +7,12 @@ SmartClinic is a comprehensive healthcare management system built as a full-stac
 Preferred communication style: Simple, everyday language.
 
 ## Recent Changes (August 2025)
+- **Patient Medicine Management Fix**: Fixed critical issues with patient medicine functionality:
+  - Resolved dashboard blank screen error caused by undefined reminder.prescription.medicine
+  - Created dedicated createPatientMedicine method for patient-only medicine management
+  - Removed clinic dependency from patient medicine operations
+  - Patient medicines now work completely independently from admin/clinic systems
+  - Fixed both "Add Medicine" and "Upload List" functionality for patients
 - **CRITICAL Security Fixes**: Fixed major authentication vulnerabilities:
   - Removed hardcoded JWT token from admin dashboard (line 860)
   - Implemented proper route-level authentication protection
