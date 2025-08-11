@@ -1933,22 +1933,22 @@ export default function ClinicDashboard() {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <header className="bg-white border-b border-gray-200 px-6 py-4">
+      <header className="bg-white border-b border-gray-200 px-2 sm:px-4 lg:px-6 py-3 sm:py-4">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-                <Stethoscope className="w-5 h-5 text-white" />
+          <div className="flex items-center gap-2 sm:gap-4">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <div className="w-6 h-6 sm:w-8 sm:h-8 bg-blue-600 rounded-lg flex items-center justify-center">
+                <Stethoscope className="w-3 h-3 sm:w-5 sm:h-5 text-white" />
               </div>
               <div>
-                <h1 className="text-xl font-semibold text-gray-900">SmartClinic Medical Center</h1>
-                <p className="text-sm text-gray-500">Healthcare Management System</p>
+                <h1 className="text-sm sm:text-xl font-semibold text-gray-900">SmartClinic Medical Center</h1>
+                <p className="text-xs sm:text-sm text-gray-500 hidden sm:block">Healthcare Management System</p>
               </div>
             </div>
           </div>
 
-          <div className="flex items-center gap-6">
-            <div className="flex items-center gap-4 text-sm text-gray-600">
+          <div className="flex items-center gap-2 sm:gap-6">
+            <div className="hidden md:flex items-center gap-4 text-sm text-gray-600">
               <div className="flex items-center gap-2">
                 <Clock className="w-4 h-4" />
                 <span>{formatTime(currentTime)}</span>
@@ -2263,18 +2263,18 @@ export default function ClinicDashboard() {
                               <DialogTitle>User Management</DialogTitle>
                             </DialogHeader>
                             <div className="space-y-4">
-                              <div className="grid grid-cols-3 gap-4">
-                                <div className="text-center p-4 bg-blue-50 rounded-lg">
-                                  <div className="text-2xl font-bold text-blue-600">{Array.isArray(patients) ? patients.length : 0}</div>
-                                  <div className="text-sm text-gray-600">Active Patients</div>
+                              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
+                                <div className="text-center p-3 sm:p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                                  <div className="text-xl sm:text-2xl font-bold text-blue-600 dark:text-blue-400">{Array.isArray(patients) ? patients.length : 0}</div>
+                                  <div className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">Active Patients</div>
                                 </div>
-                                <div className="text-center p-4 bg-green-50 rounded-lg">
-                                  <div className="text-2xl font-bold text-green-600">3</div>
-                                  <div className="text-sm text-gray-600">Doctors</div>
+                                <div className="text-center p-3 sm:p-4 bg-green-50 dark:bg-green-900/20 rounded-lg">
+                                  <div className="text-xl sm:text-2xl font-bold text-green-600 dark:text-green-400">3</div>
+                                  <div className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">Doctors</div>
                                 </div>
-                                <div className="text-center p-4 bg-purple-50 rounded-lg">
-                                  <div className="text-2xl font-bold text-purple-600">8</div>
-                                  <div className="text-sm text-gray-600">Staff Members</div>
+                                <div className="text-center p-3 sm:p-4 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
+                                  <div className="text-xl sm:text-2xl font-bold text-purple-600 dark:text-purple-400">8</div>
+                                  <div className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">Staff Members</div>
                                 </div>
                               </div>
                               <div className="space-y-2">
@@ -2592,54 +2592,58 @@ export default function ClinicDashboard() {
 
       {/* Navigation Tabs */}
       <div className="nav-tabs">
-        <div className="px-6">
+        <div className="px-2 sm:px-4 lg:px-6">
           <Tabs defaultValue="dashboard" className="w-full">
-            <TabsList className="grid w-full grid-cols-8 bg-transparent border-0 h-auto p-0">
+            <TabsList className="grid w-full grid-cols-4 sm:grid-cols-8 bg-transparent border-0 h-auto p-0 overflow-x-auto">
               <TabsTrigger
                 value="dashboard"
-                className="nav-tab data-[state=active]:active rounded-none"
+                className="nav-tab data-[state=active]:active rounded-none text-xs sm:text-sm px-2 sm:px-4"
               >
-                Dashboard
+                <span className="hidden sm:inline">Dashboard</span>
+                <span className="sm:hidden">Home</span>
               </TabsTrigger>
               <TabsTrigger
                 value="queue"
-                className="nav-tab data-[state=active]:active rounded-none"
+                className="nav-tab data-[state=active]:active rounded-none text-xs sm:text-sm px-2 sm:px-4"
               >
-                Patient Queue
+                <span className="hidden sm:inline">Patient Queue</span>
+                <span className="sm:hidden">Queue</span>
               </TabsTrigger>
               <TabsTrigger
                 value="appointments"
-                className="nav-tab data-[state=active]:active rounded-none"
+                className="nav-tab data-[state=active]:active rounded-none text-xs sm:text-sm px-2 sm:px-4"
               >
-                Appointments
+                <span className="hidden sm:inline">Appointments</span>
+                <span className="sm:hidden">Appts</span>
               </TabsTrigger>
               <TabsTrigger
                 value="records"
-                className="nav-tab data-[state=active]:active rounded-none"
+                className="nav-tab data-[state=active]:active rounded-none text-xs sm:text-sm px-2 sm:px-4"
               >
-                Patient Records
+                <span className="hidden sm:inline">Patient Records</span>
+                <span className="sm:hidden">Records</span>
               </TabsTrigger>
               <TabsTrigger
                 value="inventory"
-                className="nav-tab data-[state=active]:active rounded-none"
+                className="nav-tab data-[state=active]:active rounded-none text-xs sm:text-sm hidden sm:flex"
               >
                 Inventory
               </TabsTrigger>
               <TabsTrigger
                 value="staff"
-                className="nav-tab data-[state=active]:active rounded-none"
+                className="nav-tab data-[state=active]:active rounded-none text-xs sm:text-sm hidden sm:flex"
               >
                 Staff
               </TabsTrigger>
               <TabsTrigger
                 value="feedback"
-                className="nav-tab data-[state=active]:active rounded-none"
+                className="nav-tab data-[state=active]:active rounded-none text-xs sm:text-sm hidden sm:flex"
               >
                 Feedback
               </TabsTrigger>
               <TabsTrigger
                 value="reports"
-                className="nav-tab data-[state=active]:active rounded-none"
+                className="nav-tab data-[state=active]:active rounded-none text-xs sm:text-sm hidden sm:flex"
               >
                 Reports
               </TabsTrigger>
@@ -2648,9 +2652,9 @@ export default function ClinicDashboard() {
             </TabsList>
 
             <TabsContent value="dashboard" className="mt-0">
-              <main className="p-6">
+              <main className="p-2 sm:p-4 lg:p-6">
                 {/* Key Metrics */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6 mb-6 sm:mb-8">
                   {/* Patients Today */}
                   <Card className="dashboard-card stats-card">
                     <CardHeader className="pb-3">
@@ -2766,7 +2770,7 @@ export default function ClinicDashboard() {
                   </Card>
                 </div>
 
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 lg:gap-8">
                   {/* Emergency Alerts - Real emergency requests */}
                   <UnifiedEmergencyAlerts onTestAlerts={triggerTestAlerts} />
                   
@@ -2774,24 +2778,24 @@ export default function ClinicDashboard() {
 
                   {/* Quick Actions */}
                   <Card>
-                    <CardHeader>
-                      <CardTitle className="flex items-center gap-2">
-                        <BarChart3 className="w-5 h-5 text-blue-500 dark:text-blue-400" />
+                    <CardHeader className="pb-3 sm:pb-4">
+                      <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+                        <BarChart3 className="w-4 h-4 sm:w-5 sm:h-5 text-blue-500 dark:text-blue-400" />
                         Quick Actions
                       </CardTitle>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">Common administrative tasks</p>
+                      <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">Common administrative tasks</p>
                     </CardHeader>
                     <CardContent>
-                      <div className="grid grid-cols-2 gap-4">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                         {/* Doctor Running Late Dialog */}
                         <Dialog open={isDelayModalOpen} onOpenChange={setIsDelayModalOpen}>
                           <DialogTrigger asChild>
                             <Button 
-                              className="action-btn-primary h-20 flex-col gap-2 bg-orange-600 hover:bg-orange-700"
+                              className="action-btn-primary h-16 sm:h-20 flex-col gap-1 sm:gap-2 bg-orange-600 hover:bg-orange-700 text-xs sm:text-sm"
                               data-testid="button-doctor-delay"
                             >
-                              <Clock className="w-6 h-6" />
-                              <span>Doctor Running Late</span>
+                              <Clock className="w-4 h-4 sm:w-6 sm:h-6" />
+                              <span className="text-center">Doctor Running Late</span>
                             </Button>
                           </DialogTrigger>
                           <DialogContent className="max-w-md">
@@ -2861,11 +2865,11 @@ export default function ClinicDashboard() {
                         <Dialog open={showPatientModal} onOpenChange={setShowPatientModal}>
                           <DialogTrigger asChild>
                             <Button 
-                              className="h-20 flex-col gap-2 bg-blue-600 hover:bg-blue-700"
+                              className="h-16 sm:h-20 flex-col gap-1 sm:gap-2 bg-blue-600 hover:bg-blue-700 text-xs sm:text-sm"
                               data-testid="button-quick-add-patient"
                             >
-                              <UserPlus className="w-6 h-6" />
-                              <span>Add Patient</span>
+                              <UserPlus className="w-4 h-4 sm:w-6 sm:h-6" />
+                              <span className="text-center">Add Patient</span>
                             </Button>
                           </DialogTrigger>
                           <DialogContent className="max-w-md">
@@ -2952,11 +2956,11 @@ export default function ClinicDashboard() {
                           <DialogTrigger asChild>
                             <Button 
                               variant="outline" 
-                              className="h-20 flex-col gap-2 bg-transparent"
+                              className="h-16 sm:h-20 flex-col gap-1 sm:gap-2 bg-transparent text-xs sm:text-sm"
                               data-testid="button-quick-schedule"
                             >
-                              <Calendar className="w-6 h-6" />
-                              <span>Schedule</span>
+                              <Calendar className="w-4 h-4 sm:w-6 sm:h-6" />
+                              <span className="text-center">Schedule</span>
                             </Button>
                           </DialogTrigger>
                           <DialogContent className="max-w-md">

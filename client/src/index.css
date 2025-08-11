@@ -284,7 +284,70 @@
   @apply animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500;
 }
 
-/* Responsive enhancements */
+/* Comprehensive responsive enhancements */
+@media (max-width: 640px) {
+  .nav-tab {
+    @apply px-2 py-2 text-xs;
+  }
+
+  .dashboard-card {
+    @apply p-3;
+  }
+
+  .stat-number {
+    @apply text-xl;
+  }
+
+  /* Mobile-specific layout improvements */
+  .mobile-stack {
+    @apply flex-col space-y-3;
+  }
+
+  .mobile-full-width {
+    @apply w-full;
+  }
+
+  .mobile-text-sm {
+    @apply text-sm;
+  }
+
+  .mobile-hidden {
+    @apply hidden;
+  }
+
+  .mobile-grid-1 {
+    @apply grid-cols-1;
+  }
+
+  .mobile-p-2 {
+    @apply p-2;
+  }
+
+  .mobile-gap-2 {
+    @apply gap-2;
+  }
+
+  /* Quick Actions mobile layout */
+  .quick-actions-mobile {
+    @apply grid-cols-2 gap-2;
+  }
+
+  /* Emergency alerts mobile */
+  .emergency-mobile {
+    @apply text-sm p-3;
+  }
+
+  /* Table mobile responsiveness */
+  .table-mobile {
+    @apply text-xs;
+  }
+
+  .table-mobile th,
+  .table-mobile td {
+    @apply px-2 py-2;
+  }
+}
+
 @media (max-width: 768px) {
   .nav-tab {
     @apply px-3 py-2 text-xs;
@@ -296,6 +359,45 @@
 
   .stat-number {
     @apply text-2xl;
+  }
+
+  /* Tablet-specific improvements */
+  .tablet-grid-2 {
+    @apply grid-cols-2;
+  }
+
+  .tablet-text-sm {
+    @apply text-sm;
+  }
+
+  .tablet-p-3 {
+    @apply p-3;
+  }
+
+  .tablet-gap-3 {
+    @apply gap-3;
+  }
+}
+
+@media (min-width: 769px) and (max-width: 1024px) {
+  /* Desktop small improvements */
+  .desktop-grid-3 {
+    @apply grid-cols-3;
+  }
+
+  .desktop-text-base {
+    @apply text-base;
+  }
+}
+
+@media (min-width: 1025px) {
+  /* Large desktop improvements */
+  .desktop-large-grid-4 {
+    @apply grid-cols-4;
+  }
+
+  .desktop-large-grid-6 {
+    @apply grid-cols-6;
   }
 }
 
