@@ -2899,22 +2899,53 @@ export default function ClinicDashboard() {
                             </DialogHeader>
                             <div className="space-y-4">
                               <div>
-                                <Label htmlFor="patientSelect">Patient</Label>
-                                <Input
-                                  id="patientSelect"
-                                  value={appointmentForm.patientId}
-                                  onChange={(e) => setAppointmentForm({...appointmentForm, patientId: e.target.value})}
-                                  placeholder="Search patient by name or ID"
-                                />
+                                <Label htmlFor="patientSelect">Select Patient *</Label>
+                                <Select onValueChange={(value) => setAppointmentForm({...appointmentForm, patientId: value})}>
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="Choose a patient" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    {patients?.map((patient) => (
+                                      <SelectItem key={patient.id} value={patient.id}>
+                                        {patient.firstName && patient.lastName 
+                                          ? `${patient.firstName} ${patient.lastName}` 
+                                          : patient.email || patient.phoneNumber}
+                                      </SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
                               </div>
                               <div>
-                                <Label htmlFor="doctorSelect">Doctor</Label>
-                                <Input
-                                  id="doctorSelect"
-                                  value={appointmentForm.doctorId}
-                                  onChange={(e) => setAppointmentForm({...appointmentForm, doctorId: e.target.value})}
-                                  placeholder="Select doctor"
-                                />
+                                <Label htmlFor="doctorSelect">Select Doctor *</Label>
+                                <Select onValueChange={(value) => setAppointmentForm({...appointmentForm, doctorId: value})}>
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="Choose a doctor" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    {/* Include doctors from users data (clinic staff) */}
+                                    {users?.filter(user => user.role === 'doctor').map((doctor) => (
+                                      <SelectItem key={doctor.id} value={doctor.id}>
+                                        {doctor.firstName && doctor.lastName 
+                                          ? `${doctor.firstName} ${doctor.lastName}` 
+                                          : doctor.email}
+                                      </SelectItem>
+                                    ))}
+                                    {/* Include doctors from appointments data (cross-clinic) */}
+                                    {appointments?.map(apt => apt.doctor)
+                                      .filter((doctor, index, self) => 
+                                        doctor && 
+                                        !users?.find(u => u.id === doctor.id) && // Don't duplicate
+                                        self.findIndex(d => d?.id === doctor.id) === index // Remove duplicates
+                                      )
+                                      .map((doctor) => (
+                                        <SelectItem key={`external-${doctor.id}`} value={doctor.id}>
+                                          {doctor.firstName && doctor.lastName 
+                                            ? `${doctor.firstName} ${doctor.lastName}` 
+                                            : doctor.email}
+                                        </SelectItem>
+                                      ))}
+                                  </SelectContent>
+                                </Select>
                               </div>
                               <div className="grid grid-cols-2 gap-4">
                                 <div>
@@ -2937,16 +2968,16 @@ export default function ClinicDashboard() {
                                 </div>
                               </div>
                               <div>
-                                <Label htmlFor="appointmentType">Type</Label>
+                                <Label htmlFor="appointmentType">Consultation Type</Label>
                                 <Select onValueChange={(value) => setAppointmentForm({...appointmentForm, type: value})}>
                                   <SelectTrigger>
-                                    <SelectValue placeholder="Select appointment type" />
+                                    <SelectValue placeholder="Regular" />
                                   </SelectTrigger>
                                   <SelectContent>
-                                    <SelectItem value="consultation">Consultation</SelectItem>
+                                    <SelectItem value="clinic">Regular</SelectItem>
                                     <SelectItem value="follow-up">Follow-up</SelectItem>
                                     <SelectItem value="emergency">Emergency</SelectItem>
-                                    <SelectItem value="checkup">Checkup</SelectItem>
+                                    <SelectItem value="checkup">Health Checkup</SelectItem>
                                   </SelectContent>
                                 </Select>
                               </div>
