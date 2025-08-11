@@ -747,11 +747,9 @@ Lisinopril 10mg - Once daily at 9:00 PM - For blood pressure"
                             new Date(reminder.scheduledAt) < new Date() ? 'bg-orange-500' : 'bg-yellow-500'
                           }`} />
                           <div>
-                            <h4 className="font-medium text-gray-900 dark:text-white">{reminder.prescription?.medicine?.name}</h4>
+                            <h4 className="font-medium text-gray-900 dark:text-white">{reminder.medicineName || reminder.prescription?.medicine?.name || 'Medicine'}</h4>
                             <p className="text-sm text-gray-600 dark:text-gray-300">
-                              {reminder.prescription?.dosage} - {reminder.prescription?.timings && reminder.prescription.timings.length > 0 
-                                ? formatTime(reminder.prescription.timings[0]) 
-                                : formatTime(reminder.scheduledAt)}
+                              {reminder.dosage || reminder.prescription?.dosage} - {formatTime(reminder.scheduledAt)}
                               {!reminder.isTaken && !reminder.isSkipped && new Date(reminder.scheduledAt) < new Date() && (
                                 <Badge className="bg-orange-100 text-orange-800 text-xs ml-2">Overdue</Badge>
                               )}

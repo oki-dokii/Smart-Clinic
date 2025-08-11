@@ -259,6 +259,40 @@ export default function SmartClinicDashboard() {
     snoozeReminderMutation.mutate(reminderId);
   };
 
+  const formatTime = (time: string) => {
+    if (!time) return 'N/A';
+    
+    // Handle time string (HH:MM format)
+    if (time.includes(':') && !time.includes('T') && !time.includes('Z')) {
+      // Ensure proper time format
+      const timeFormatted = time.length === 5 ? `${time}:00` : time;
+      const date = new Date(`2000-01-01T${timeFormatted}`);
+      if (isNaN(date.getTime())) return time; // Return original if invalid
+      return date.toLocaleTimeString([], { 
+        hour: '2-digit', 
+        minute: '2-digit' 
+      });
+    }
+    
+    // Handle full datetime string - extract time parts directly to avoid timezone conversion
+    const date = new Date(time);
+    if (isNaN(date.getTime())) return time; // Return original if invalid
+    
+    // Get the time components directly from the date string to avoid timezone issues
+    const timeMatch = time.match(/T?(\d{1,2}):(\d{2}):(\d{2})/);
+    if (timeMatch) {
+      const hours = parseInt(timeMatch[1]);
+      const minutes = parseInt(timeMatch[2]);
+      return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+    }
+    
+    // Fallback to regular date formatting
+    return date.toLocaleTimeString([], { 
+      hour: '2-digit', 
+      minute: '2-digit' 
+    });
+  };
+
   // Add new reminder action handlers
   const handleSkipReminder = (reminderId: string) => {
     skipReminderMutation.mutate(reminderId);
@@ -1096,19 +1130,19 @@ export default function SmartClinicDashboard() {
                     <div key={reminder.id} className="border rounded-lg p-4">
                       <div className="flex items-center justify-between mb-2">
                         <div className="flex items-center gap-2">
-                          <span className="font-medium">{reminder.prescription?.medicine?.name || 'Medicine'}</span>
+                          <span className="font-medium">{reminder.medicineName || reminder.prescription?.medicine?.name || 'Medicine'}</span>
                           <Pill className="w-4 h-4 text-blue-500" />
                         </div>
                         <div className="text-right">
                           <div className="text-sm font-medium">
-                            {new Date(reminder.scheduledAt).toLocaleTimeString('en-IN', {hour: 'numeric', minute: '2-digit', hour12: true, timeZone: 'Asia/Kolkata'})}
+                            {formatTime(reminder.scheduledAt)}
                           </div>
                           {!reminder.isTaken && new Date(reminder.scheduledAt) < new Date() && (
                             <Badge className="bg-red-100 text-red-800 text-xs">Overdue</Badge>
                           )}
                         </div>
                       </div>
-                      <div className="text-sm text-gray-600 mb-2">{reminder.prescription?.dosage || 'As prescribed'}</div>
+                      <div className="text-sm text-gray-600 mb-2">{reminder.dosage || reminder.prescription?.dosage || 'As prescribed'}</div>
                       <div className="flex gap-2">
                         {!reminder.isTaken && !reminder.isSkipped ? (
                           <>

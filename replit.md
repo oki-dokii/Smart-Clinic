@@ -9,10 +9,13 @@ Preferred communication style: Simple, everyday language.
 ## Recent Changes (August 2025)
 - **Patient Medicine Management Fix**: Fixed critical issues with patient medicine functionality:
   - Resolved dashboard blank screen error caused by undefined reminder.prescription.medicine
+  - Fixed medicine name display in "Today's Reminders" by using correct data structure (medicineName)
+  - Fixed time display inconsistency between "My Medicines" and "Today's Reminders" sections
   - Created dedicated createPatientMedicine method for patient-only medicine management
   - Removed clinic dependency from patient medicine operations
   - Patient medicines now work completely independently from admin/clinic systems
   - Fixed both "Add Medicine" and "Upload List" functionality for patients
+  - Backend returns flat reminder properties (medicineName, dosage) which frontend now correctly accesses
 - **CRITICAL Security Fixes**: Fixed major authentication vulnerabilities:
   - Removed hardcoded JWT token from admin dashboard (line 860)
   - Implemented proper route-level authentication protection
