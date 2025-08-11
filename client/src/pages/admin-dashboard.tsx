@@ -2713,77 +2713,7 @@ export default function ClinicDashboard() {
                   {/* Emergency Alerts - Real emergency requests */}
                   <UnifiedEmergencyAlerts onTestAlerts={triggerTestAlerts} />
                   
-                  {/* Legacy Emergency Alerts - Keep for testing */}
-                  <Card className="border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-950">
-                    <CardHeader>
-                      <CardTitle className="text-red-700 dark:text-red-300 flex items-center gap-2">
-                        <AlertTriangle className="w-5 h-5" />
-                        Emergency Alerts
-                      </CardTitle>
-                      <p className="text-sm text-red-600 dark:text-red-400">Urgent notifications requiring immediate attention</p>
-                      <div className="text-right">
-                        <Button 
-                          size="sm" 
-                          variant="outline" 
-                          onClick={triggerTestAlerts}
-                          className="action-btn-secondary text-xs"
-                          data-testid="button-test-alerts"
-                        >
-                          Test Alerts
-                        </Button>
-                      </div>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="space-y-4">
-                        {emergencyAlerts.length > 0 ? (
-                          <div className="space-y-2 max-h-64 overflow-y-auto">
-                            {emergencyAlerts.slice(0, 5).map((alert) => (
-                              <div key={alert.id} className={`flex items-center justify-between p-3 bg-white dark:bg-gray-800 rounded-lg border ${
-                                alert.type === 'critical' ? 'border-red-200 dark:border-red-700 bg-red-50 dark:bg-red-950' :
-                                alert.type === 'warning' ? 'border-yellow-200 dark:border-yellow-700 bg-yellow-50 dark:bg-yellow-950' :
-                                'border-blue-200 dark:border-blue-700 bg-blue-50 dark:bg-blue-950'
-                              }`}>
-                                <div className="flex items-center gap-3">
-                                  <div className={`w-2 h-2 rounded-full ${
-                                    alert.type === 'critical' ? 'bg-red-500 dark:bg-red-400' :
-                                    alert.type === 'warning' ? 'bg-yellow-500 dark:bg-yellow-400' :
-                                    'bg-blue-500 dark:bg-blue-400'
-                                  }`}></div>
-                                  <div className="flex items-center gap-2">
-                                    {alert.type === 'critical' && <AlertTriangle className="w-4 h-4 text-red-600 dark:text-red-400" />}
-                                    {alert.type === 'warning' && <Clock className="w-4 h-4 text-yellow-600 dark:text-yellow-400" />}
-                                    {alert.type === 'info' && <Bell className="w-4 h-4 text-blue-600 dark:text-blue-400" />}
-                                    <span className="text-sm font-medium text-gray-900 dark:text-gray-100">{alert.message}</span>
-                                  </div>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                  <span className="text-xs text-gray-500 dark:text-gray-400">{alert.timeAgo}</span>
-                                  <Button 
-                                    size="sm" 
-                                    variant="outline" 
-                                    className="text-xs bg-transparent"
-                                    onClick={() => removeAlert(alert.id)}
-                                    data-testid={`button-resolve-${alert.id}`}
-                                  >
-                                    <X className="w-3 h-3 mr-1" />
-                                    Resolve
-                                  </Button>
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        ) : (
-                          <div className="text-center py-8">
-                            <div className="w-12 h-12 bg-green-100 dark:bg-green-900 rounded-full flex items-center justify-center mx-auto mb-3">
-                              <AlertTriangle className="w-6 h-6 text-green-600 dark:text-green-400" />
-                            </div>
-                            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">All Clear!</h3>
-                            <p className="text-gray-600 dark:text-gray-400">No emergency alerts at this time.</p>
-                          </div>
-                        )}
-                      </div>
-                    </CardContent>
-                  </Card>
+
 
                   {/* Quick Actions */}
                   <Card>
