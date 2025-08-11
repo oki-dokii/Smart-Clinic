@@ -118,28 +118,21 @@ export class SchedulerService {
       while (currentDate <= maxDate) {
         for (const time of reminderTimes) {
           // Create reminder in Indian Standard Time (IST = UTC+5:30)
-          // Convert IST time to UTC for storage
-          const reminderDateTime = new Date(
+          // User enters time in IST, but we need to store as UTC for consistency
+          
+          // First create the datetime in IST timezone
+          const istDateTime = new Date(
             currentDate.getFullYear(),
             currentDate.getMonth(),
             currentDate.getDate(),
-            time.hour - 5, // Convert IST to UTC (subtract 5 hours)
-            time.minute - 30, // Convert IST to UTC (subtract 30 minutes)
+            time.hour,
+            time.minute,
             0,
             0
           );
           
-          // Handle minute underflow
-          if (reminderDateTime.getMinutes() < 0) {
-            reminderDateTime.setMinutes(reminderDateTime.getMinutes() + 60);
-            reminderDateTime.setHours(reminderDateTime.getHours() - 1);
-          }
-          
-          // Handle hour underflow
-          if (reminderDateTime.getHours() < 0) {
-            reminderDateTime.setHours(reminderDateTime.getHours() + 24);
-            reminderDateTime.setDate(reminderDateTime.getDate() - 1);
-          }
+          // Convert IST to UTC by subtracting 5 hours and 30 minutes
+          const reminderDateTime = new Date(istDateTime.getTime() - (5 * 60 + 30) * 60 * 1000);
           
           // Create reminders for today and future dates
           // For custom medicines, create today's reminder even if the time has passed
