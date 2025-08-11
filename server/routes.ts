@@ -743,8 +743,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // If no role specified, get all non-patient users for staff management
         if (!role) {
           let staffUsers;
-          if (req.user!.clinicId) {
-            // Admin with clinic ID - filter by clinic
+          
+          // Check if super admin - show all clinics data
+          const isSuperAdmin = req.user!.email === '44441100sf@gmail.com';
+          
+          if (isSuperAdmin) {
+            // Super admin - get all users from all clinics
+            const users = await storage.getAllUsers();
+            staffUsers = users.filter(user => user.role !== 'patient');
+            console.log('🔥 USERS - Super admin fetching ALL staff from all clinics. Total users:', users.length, 'Staff users:', staffUsers.length);
+          } else if (req.user!.clinicId) {
+            // Regular admin with clinic ID - filter by clinic
             const users = await storage.getUsersByClinic(req.user!.clinicId);
             staffUsers = users.filter(user => user.role !== 'patient');
             console.log('🔥 USERS - Admin fetching staff for clinic:', req.user!.clinicId, 'Staff users:', staffUsers.length);
@@ -761,8 +770,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
           res.json(staffUsers);
         } else {
           let users;
-          if (req.user!.clinicId && req.user!.role === 'admin') {
-            // Admin with clinic ID - filter by role and clinic
+          
+          // Check if super admin - show all clinics data
+          const isSuperAdmin = req.user!.email === '44441100sf@gmail.com';
+          
+          if (isSuperAdmin) {
+            // Super admin - get all users of specified role from all clinics
+            users = await storage.getUsersByRole(role as string);
+            console.log('🔥 USERS - Super admin fetching role', role, 'from ALL clinics. Count:', users.length);
+          } else if (req.user!.clinicId && req.user!.role === 'admin') {
+            // Regular admin with clinic ID - filter by role and clinic
             users = await storage.getUsersByRoleAndClinic(role as string, req.user!.clinicId);
             console.log('🔥 USERS - Admin fetching role', role, 'for clinic:', req.user!.clinicId, 'Count:', users.length);
           } else {
@@ -1106,23 +1123,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
     console.log('🔥 ADMIN APPOINTMENTS ROUTE HIT - START');
     try {
 
-      // Get admin's clinic ID from user data  
+      // Check if super admin - show all clinics data
+      const isSuperAdmin = req.user!.email === '44441100sf@gmail.com';
       const adminClinicId = req.user!.clinicId;
-      console.log('🔥 Admin clinic ID:', adminClinicId);
       
-      if (!adminClinicId) {
+      console.log('🔥 Super admin:', isSuperAdmin, 'Admin clinic ID:', adminClinicId);
+      
+      if (!isSuperAdmin && !adminClinicId) {
         console.log('🔥 No clinic ID found for admin user');
         return res.status(400).json({ message: "Admin user has no associated clinic" });
       }
 
-      console.log('🔥 About to call storage.getAppointmentsByClinic() with clinic ID:', adminClinicId);
-      const appointments = await storage.getAppointmentsByClinic(adminClinicId);
-      console.log('🔥 Found appointments for clinic:', appointments?.length || 0);
+      let appointments;
+      if (isSuperAdmin) {
+        console.log('🔥 Super admin: About to call storage.getAllAppointments() for ALL clinics');
+        appointments = await storage.getAllAppointments();
+        console.log('🔥 Super admin: Found appointments from ALL clinics:', appointments?.length || 0);
+      } else {
+        console.log('🔥 About to call storage.getAppointmentsByClinic() with clinic ID:', adminClinicId);
+        appointments = await storage.getAppointmentsByClinic(adminClinicId);
+        console.log('🔥 Found appointments for clinic:', appointments?.length || 0);
+      }
       
       if (appointments && appointments.length > 0) {
         console.log('🔥 Sample appointment:', JSON.stringify(appointments[0], null, 2));
       } else {
-        console.log('🔥 No appointments returned from storage for clinic', adminClinicId);
+        console.log('🔥 No appointments returned from storage');
       }
       
       console.log('🔥 Sending response with', appointments?.length || 0, 'appointments');
@@ -2493,11 +2519,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/admin/dashboard-stats", authMiddleware, requireSuperAdmin, async (req, res) => {
     try {
 
-      // Get admin's clinic ID
+      // Check if super admin - show all clinics data
+      const isSuperAdmin = req.user!.email === '44441100sf@gmail.com';
       const adminClinicId = req.user!.clinicId;
-      console.log('🔥 DASHBOARD STATS - Admin clinic ID:', adminClinicId);
       
-      if (!adminClinicId) {
+      console.log('🔥 DASHBOARD STATS - Super admin:', isSuperAdmin, 'Admin clinic ID:', adminClinicId);
+      
+      if (!isSuperAdmin && !adminClinicId) {
         return res.status(400).json({ message: "Admin user has no associated clinic" });
       }
 
@@ -2514,9 +2542,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         tomorrowLocal: tomorrow.toLocaleDateString()
       });
 
-      // Fetch clinic-specific stats
-      const todayAppointments = await storage.getAppointmentsByDateRange(today, tomorrow, adminClinicId);
-      console.log('🔥 DASHBOARD STATS - Found appointments for clinic:', todayAppointments.length);
+      // Fetch stats - all clinics for super admin, specific clinic for regular admin
+      let todayAppointments;
+      if (isSuperAdmin) {
+        todayAppointments = await storage.getAppointmentsByDateRange(today, tomorrow); // No clinic filter
+        console.log('🔥 DASHBOARD STATS - Super admin: Found appointments from ALL clinics:', todayAppointments.length);
+      } else {
+        todayAppointments = await storage.getAppointmentsByDateRange(today, tomorrow, adminClinicId);
+        console.log('🔥 DASHBOARD STATS - Found appointments for clinic:', todayAppointments.length);
+      }
       console.log('🔥 DASHBOARD STATS - Sample appointment dates:', todayAppointments.slice(0, 3).map(apt => ({
         id: apt.id,
         appointmentDate: apt.appointmentDate,
@@ -2529,11 +2563,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const revenue = completedAppointments.length * 150; // Assuming $150 per consultation
 
+      // Calculate active staff - all clinics for super admin, specific clinic for regular admin
+      let activeStaff;
+      if (isSuperAdmin) {
+        activeStaff = await storage.getActiveStaffCount(); // All clinics
+      } else {
+        activeStaff = await storage.getActiveStaffCountByClinic(adminClinicId);
+      }
+
       const stats = {
         patientsToday: todayAppointments.length,
         completedAppointments: completedAppointments.length,
         revenue: revenue,
-        activeStaff: await storage.getActiveStaffCountByClinic(adminClinicId),
+        activeStaff: activeStaff,
       };
 
       console.log('🔥 DASHBOARD STATS - Final stats:', stats);

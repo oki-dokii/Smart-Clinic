@@ -84,7 +84,7 @@ export interface IStorage {
   updateAppointment(id: string, appointment: Partial<InsertAppointment>): Promise<Appointment | undefined>;
   cancelAppointment(id: string): Promise<Appointment | undefined>;
   getAppointments(userId?: string): Promise<(Appointment & { patient: User; doctor: User })[]>;
-  getAppointmentsByDateRange(startDate: Date, endDate: Date): Promise<(Appointment & { patient: User; doctor: User })[]>;
+  getAppointmentsByDateRange(startDate: Date, endDate: Date, clinicId?: string): Promise<(Appointment & { patient: User; doctor: User })[]>;
   getAppointmentById(id: string): Promise<Appointment | null>;
   getPendingAppointments(): Promise<(Appointment & { patient: User; doctor: User })[]>;
   updateUserStatus(userId: string, status: { isApproved: boolean }): Promise<void>;
@@ -127,7 +127,6 @@ export interface IStorage {
   getAllQueueTokens(): Promise<(QueueToken & { patient: User; doctor: User })[]>;
   getAllAppointments(): Promise<(Appointment & { patient: User; doctor: User })[]>;
   getAllPatients(): Promise<User[]>;
-  getAppointmentsByDateRange(startDate: Date, endDate: Date): Promise<(Appointment & { patient: User; doctor: User })[]>;
   getActiveStaffCount(): Promise<number>;
   updateAppointmentStatus(id: string, status: string): Promise<Appointment | undefined>;
   updateUserApproval(id: string, isApproved: boolean): Promise<User | undefined>;
