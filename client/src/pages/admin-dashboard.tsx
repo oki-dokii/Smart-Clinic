@@ -1054,12 +1054,11 @@ export default function ClinicDashboard() {
   const currentUserPresenceRecord = staffPresence.find(presence => presence.staffId === currentUser?.id)
   const isCurrentUserInPresenceRecords = !!currentUserPresenceRecord
   
-  // If current user is staff/admin and not in presence records, count them as present (since they're logged in and active)
-  const shouldCountCurrentUserAsPresent = currentUser && 
-    ['admin', 'staff', 'doctor', 'nurse'].includes(currentUser.role) && 
-    !isCurrentUserInPresenceRecords
+  // Only count staff who have actually checked in via GPS verification
+  // Being logged in ≠ being physically present at the clinic
+  const shouldCountCurrentUserAsPresent = false
   
-  const presentStaff = presentFromRecords + (shouldCountCurrentUserAsPresent ? 1 : 0)
+  const presentStaff = presentFromRecords
   const onDutyStaff = presentStaff
 
   // Medicines/Inventory data
