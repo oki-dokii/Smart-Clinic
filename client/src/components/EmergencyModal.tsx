@@ -49,10 +49,24 @@ export function EmergencyModal({ patientId, trigger, onClose }: EmergencyModalPr
 
   const emergencyMutation = useMutation({
     mutationFn: async (data: EmergencyFormData) => {
-      return apiRequest('/api/emergency', 'POST', {
-        ...data,
-        patientId,
+      const response = await fetch('/api/emergency', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('auth_token')}`,
+        },
+        body: JSON.stringify({
+          ...data,
+          patientId,
+        }),
       });
+      
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to send emergency request');
+      }
+      
+      return response.json();
     },
     onSuccess: () => {
       toast({
