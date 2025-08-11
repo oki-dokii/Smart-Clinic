@@ -428,7 +428,7 @@ export default function ClinicDashboard() {
           password: 'temp123', // Default password
           dateOfBirth: patientForm.dateOfBirth || undefined, // Send as string, schema will convert
           address: patientForm.address || undefined,
-          clinicId: user?.clinicId // Link patient to the same clinic as admin
+          clinicId: currentUser?.clinicId // Link patient to the same clinic as admin
         })
       })
       
@@ -1314,9 +1314,38 @@ export default function ClinicDashboard() {
   
   // Debug: Log staff data
   console.log('Staff members:', staffMembers, 'Total users:', users?.length, 'Users loading:', usersLoading)
+  console.log('🔥 DOCTORS DEBUG - All users:', users?.map(u => ({id: u.id, role: u.role, firstName: u.firstName, lastName: u.lastName})))
+  console.log('🔥 DOCTORS DEBUG - Filtered doctors:', users?.filter(user => user.role === 'doctor'))
   if (usersError) {
     console.error('Users query error details:', JSON.stringify(usersError, null, 2))
   }
+  
+  // Get doctors from appointment data as fallback
+  const doctorsFromAppointments = React.useMemo(() => {
+    if (!appointments) return []
+    const doctorMap = new Map()
+    appointments.forEach(apt => {
+      if (apt.doctor && !doctorMap.has(apt.doctor.id)) {
+        doctorMap.set(apt.doctor.id, apt.doctor)
+      }
+    })
+    return Array.from(doctorMap.values())
+  }, [appointments])
+  
+  // Combine doctors from users API and appointments as fallback
+  const availableDoctors = React.useMemo(() => {
+    const doctorsFromUsers = users?.filter(user => user.role === 'doctor') || []
+    const fromAppointments = doctorsFromAppointments || []
+    
+    // Merge and dedupe by ID
+    const doctorMap = new Map()
+    doctorsFromUsers.forEach(doc => doctorMap.set(doc.id, doc))
+    fromAppointments.forEach(doc => doctorMap.set(doc.id, doc))
+    
+    const result = Array.from(doctorMap.values())
+    console.log('🔥 AVAILABLE DOCTORS - Combined result:', result)
+    return result
+  }, [users, doctorsFromAppointments])
   console.log('Auth token exists:', !!localStorage.getItem('auth_token'))
 
   const formatTime = (date: Date) => {
@@ -5246,7 +5275,7 @@ export default function ClinicDashboard() {
                     <SelectValue placeholder="Choose a doctor" />
                   </SelectTrigger>
                   <SelectContent>
-                    {users?.filter(user => user.role === 'doctor').map((doctor) => (
+                    {availableDoctors.map((doctor) => (
                       <SelectItem key={doctor.id} value={doctor.id}>
                         {doctor.firstName} {doctor.lastName}
                       </SelectItem>
