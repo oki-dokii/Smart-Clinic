@@ -198,6 +198,7 @@ export default function ClinicDashboard() {
   const [restockAmount, setRestockAmount] = useState(0)
   const [forceRender, setForceRender] = useState(0)
   const [showAppointmentModal, setShowAppointmentModal] = useState(false)
+  const [showPatientModal, setShowPatientModal] = useState(false)
   const [isDelayModalOpen, setIsDelayModalOpen] = useState(false)
   
   // Delay notification form state
@@ -402,7 +403,7 @@ export default function ClinicDashboard() {
 
 
   // Form submission handlers
-  const handlePatientSubmitOriginal = async () => {
+  const handlePatientSubmit = async () => {
     if (!patientForm.firstName || !patientForm.lastName || !patientForm.phoneNumber) {
       toast({
         title: 'Validation Error',
@@ -451,6 +452,7 @@ export default function ClinicDashboard() {
           dateOfBirth: '',
           address: ''
         })
+        setShowPatientModal(false)
       } else {
         throw new Error('Registration failed')
       }
@@ -1559,53 +1561,6 @@ export default function ClinicDashboard() {
 
   const handleGenerateReport = () => {
     generateReport.mutate()
-  }
-
-
-  
-  // Patient form submission handler
-  const handlePatientSubmit = async () => {
-    try {
-      console.log('🔥 PATIENT SUBMIT - Starting registration');
-      await apiRequest('POST', '/api/auth/register', {
-        ...patientForm,
-        role: 'patient',
-        password: 'temp123', // Required password for new accounts
-        isApproved: true // Auto-approve patients created by admin
-      })
-      
-      console.log('🔥 PATIENT SUBMIT - Registration successful, refreshing cache');
-      
-      // Multiple refresh strategies to ensure UI updates
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ['/api/patients'] }),
-        queryClient.removeQueries({ queryKey: ['/api/patients'] }),
-        queryClient.refetchQueries({ queryKey: ['/api/patients'] }),
-        refetchPatients()
-      ])
-      
-      // Force complete re-render after a brief delay
-      setTimeout(() => {
-        setForceRender(prev => prev + 1)
-        refetchPatients()
-      }, 500)
-      
-      // Reset form
-      setPatientForm({
-        firstName: '',
-        lastName: '',
-        phoneNumber: '',
-        email: '',
-        dateOfBirth: '',
-        address: ''
-      })
-      
-      console.log('🔥 PATIENT SUBMIT - Cache refreshed and form reset');
-      toast({ title: 'Success', description: 'Patient added successfully! The Patient Records will refresh in a moment.' })
-    } catch (error: any) {
-      console.error('🔥 PATIENT SUBMIT - Error:', error);
-      toast({ title: 'Error', description: error.message, variant: 'destructive' })
-    }
   }
   
   // Reschedule appointment handler
@@ -2903,7 +2858,7 @@ export default function ClinicDashboard() {
                         </Dialog>
 
                         {/* Add Patient Dialog */}
-                        <Dialog>
+                        <Dialog open={showPatientModal} onOpenChange={setShowPatientModal}>
                           <DialogTrigger asChild>
                             <Button 
                               className="h-20 flex-col gap-2 bg-blue-600 hover:bg-blue-700"
@@ -2975,10 +2930,19 @@ export default function ClinicDashboard() {
                                   placeholder="123 Main St, City, State"
                                 />
                               </div>
-                              <Button onClick={handlePatientSubmit} className="w-full">
-                                <Plus className="w-4 h-4 mr-2" />
-                                Add Patient
-                              </Button>
+                              <div className="flex gap-2">
+                                <Button onClick={handlePatientSubmit} className="flex-1">
+                                  <Plus className="w-4 h-4 mr-2" />
+                                  Add Patient
+                                </Button>
+                                <Button 
+                                  variant="outline" 
+                                  onClick={() => setShowPatientModal(false)}
+                                  className="flex-1"
+                                >
+                                  Cancel
+                                </Button>
+                              </div>
                             </div>
                           </DialogContent>
                         </Dialog>
@@ -3091,10 +3055,19 @@ export default function ClinicDashboard() {
                                   placeholder="Describe symptoms or appointment purpose"
                                 />
                               </div>
-                              <Button onClick={handleAppointmentSubmit} className="w-full">
-                                <Calendar className="w-4 h-4 mr-2" />
-                                Schedule Appointment
-                              </Button>
+                              <div className="flex gap-2">
+                                <Button onClick={handleAppointmentSubmit} className="flex-1">
+                                  <Calendar className="w-4 h-4 mr-2" />
+                                  Schedule Appointment
+                                </Button>
+                                <Button 
+                                  variant="outline" 
+                                  onClick={() => setShowAppointmentModal(false)}
+                                  className="flex-1"
+                                >
+                                  Cancel
+                                </Button>
+                              </div>
                             </div>
                           </DialogContent>
                         </Dialog>
@@ -3876,7 +3849,7 @@ export default function ClinicDashboard() {
                             placeholder="123 Main St, City, State"
                           />
                         </div>
-                        <Button onClick={handlePatientSubmitOriginal} className="w-full">
+                        <Button onClick={handlePatientSubmit} className="w-full">
                           <UserPlus className="w-4 h-4 mr-2" />
                           Add Patient
                         </Button>
