@@ -435,6 +435,8 @@ export default function ClinicDashboard() {
       if (response.ok) {
         // Refresh patient data
         queryClient.invalidateQueries({ queryKey: ['/api/patients'] })
+        queryClient.invalidateQueries({ queryKey: ['/api/users'] })
+        queryClient.invalidateQueries({ queryKey: ['/api/appointments/admin'] })
         
         toast({
           title: 'Patient Added Successfully',
@@ -472,65 +474,19 @@ export default function ClinicDashboard() {
     }
 
     try {
-      // First, create patient if doesn't exist (extract from patientName)
-      const [firstName, ...lastNameParts] = appointmentForm.patientName.trim().split(' ')
-      const lastName = lastNameParts.join(' ') || firstName
-      
-      // Create patient first
-      const patientResponse = await fetch('/api/auth/register', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
-        },
-        body: JSON.stringify({
-          firstName: firstName,
-          lastName: lastName,
-          phoneNumber: `${Date.now()}`, // Temporary phone number
-          role: 'patient',
-          password: 'temp123',
-          clinicId: currentUser?.clinicId || '84e1b3c6-3b25-4446-96e8-a227d9e92d76'
-        })
-      })
-      
-      let patientId = null
-      if (patientResponse.ok) {
-        const patientData = await patientResponse.json()
-        patientId = patientData.user.id
-      } else {
-        // Patient might already exist, try to find by name
-        const existingPatients = await fetch('/api/patients', {
-          headers: {
-            'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
-          }
-        })
-        if (existingPatients.ok) {
-          const patients = await existingPatients.json()
-          const foundPatient = patients.find((p: any) => 
-            `${p.firstName} ${p.lastName}`.toLowerCase() === appointmentForm.patientName.toLowerCase()
-          )
-          if (foundPatient) {
-            patientId = foundPatient.id
-          }
-        }
-      }
-
-      if (!patientId) {
-        throw new Error('Failed to create or find patient')
-      }
-
       // Combine date and time into proper DateTime format
       const appointmentDateTime = new Date(`${appointmentForm.date}T${appointmentForm.time}:00`)
       
       const appointmentData = {
-        patientName: appointmentForm.patientName,
+        patientName: appointmentForm.patientName.trim(),
         doctorId: appointmentForm.doctorId,
         appointmentDate: appointmentDateTime.toISOString(),
         type: appointmentForm.type || 'clinic',
-        symptoms: appointmentForm.symptoms || 'Scheduled by admin for: ' + appointmentForm.patientName,
+        symptoms: appointmentForm.symptoms || 'Scheduled by admin',
         status: 'scheduled'
       }
 
+      console.log('🔥 Frontend submitting appointment:', appointmentData)
       await apiRequest('POST', '/api/appointments/admin', appointmentData)
       
       // Reset form and close modal
@@ -547,12 +503,15 @@ export default function ClinicDashboard() {
       // Refresh both appointments and patients data
       queryClient.invalidateQueries({ queryKey: ['/api/appointments/admin'] })
       queryClient.invalidateQueries({ queryKey: ['/api/patients'] })
+      queryClient.invalidateQueries({ queryKey: ['/api/appointments'] })
+      queryClient.invalidateQueries({ queryKey: ['/api/users'] })
       
       toast({
         title: 'Appointment Scheduled',
         description: 'New appointment has been successfully scheduled and patient added to records.',
       })
     } catch (error) {
+      console.error('🔥 Frontend appointment error:', error)
       toast({
         title: 'Booking Error',
         description: 'Failed to schedule appointment. Please try again.',
@@ -3025,7 +2984,7 @@ export default function ClinicDashboard() {
                         </Dialog>
 
                         {/* Schedule Appointment Dialog */}
-                        <Dialog>
+                        <Dialog open={showAppointmentModal} onOpenChange={setShowAppointmentModal}>
                           <DialogTrigger asChild>
                             <Button 
                               variant="outline" 
@@ -3057,27 +3016,35 @@ export default function ClinicDashboard() {
                                     <SelectValue placeholder="Choose a doctor" />
                                   </SelectTrigger>
                                   <SelectContent>
-                                    {/* Include doctors from appointments data (all available doctors) */}
-                                    {appointments?.map(apt => apt.doctor)
-                                      .filter((doctor, index, self) => 
-                                        doctor && 
-                                        self.findIndex(d => d?.id === doctor.id) === index // Remove duplicates
-                                      )
-                                      .map((doctor) => (
+                                    {/* Get unique doctors from both appointments and users */}
+                                    {(() => {
+                                      const allDoctors = [];
+                                      
+                                      // Add doctors from appointments
+                                      appointments?.forEach(apt => {
+                                        if (apt.doctor) {
+                                          allDoctors.push(apt.doctor);
+                                        }
+                                      });
+                                      
+                                      // Add doctors from users
+                                      users?.filter(user => user.role === 'doctor').forEach(doctor => {
+                                        allDoctors.push(doctor);
+                                      });
+                                      
+                                      // Remove duplicates by ID
+                                      const uniqueDoctors = allDoctors.filter((doctor, index, self) => 
+                                        doctor && self.findIndex(d => d?.id === doctor.id) === index
+                                      );
+                                      
+                                      return uniqueDoctors.map((doctor) => (
                                         <SelectItem key={doctor.id} value={doctor.id}>
                                           {doctor.firstName && doctor.lastName 
                                             ? `${doctor.firstName} ${doctor.lastName}` 
                                             : doctor.email}
                                         </SelectItem>
-                                      ))}
-                                    {/* Include doctors from users data if any */}
-                                    {users?.filter(user => user.role === 'doctor').map((doctor) => (
-                                      <SelectItem key={`local-${doctor.id}`} value={doctor.id}>
-                                        {doctor.firstName && doctor.lastName 
-                                          ? `${doctor.firstName} ${doctor.lastName}` 
-                                          : doctor.email}
-                                      </SelectItem>
-                                    ))}
+                                      ));
+                                    })()}
                                   </SelectContent>
                                 </Select>
                               </div>
