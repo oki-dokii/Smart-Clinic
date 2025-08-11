@@ -1372,6 +1372,7 @@ export default function SmartClinicDashboard() {
       {showEmergencyModal && user?.id && (
         <EmergencyModal 
           patientId={user.id}
+          onClose={() => setShowEmergencyModal(false)}
         />
       )}
       <CancelModal 

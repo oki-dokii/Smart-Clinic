@@ -28,10 +28,11 @@ type EmergencyFormData = z.infer<typeof emergencySchema>;
 interface EmergencyModalProps {
   patientId: string;
   trigger?: React.ReactNode;
+  onClose?: () => void;
 }
 
-export function EmergencyModal({ patientId, trigger }: EmergencyModalProps) {
-  const [isOpen, setIsOpen] = useState(false);
+export function EmergencyModal({ patientId, trigger, onClose }: EmergencyModalProps) {
+  const [isOpen, setIsOpen] = useState(true); // Auto-open modal when rendered
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -48,12 +49,9 @@ export function EmergencyModal({ patientId, trigger }: EmergencyModalProps) {
 
   const emergencyMutation = useMutation({
     mutationFn: async (data: EmergencyFormData) => {
-      return apiRequest('/api/emergency', {
-        method: 'POST',
-        body: JSON.stringify({
-          ...data,
-          patientId,
-        }),
+      return apiRequest('/api/emergency', 'POST', {
+        ...data,
+        patientId,
       });
     },
     onSuccess: () => {
@@ -61,8 +59,9 @@ export function EmergencyModal({ patientId, trigger }: EmergencyModalProps) {
         title: 'Emergency Request Sent',
         description: 'Your emergency request has been sent to the medical staff. They will contact you shortly.',
       });
-      queryClient.invalidateQueries({ queryKey: ['/api/emergency'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/emergency-requests'] });
       setIsOpen(false);
+      onClose?.();
       form.reset();
     },
     onError: (error: any) => {
@@ -85,8 +84,15 @@ export function EmergencyModal({ patientId, trigger }: EmergencyModalProps) {
     critical: 'text-red-800 font-bold',
   };
 
+  const handleOpenChange = (open: boolean) => {
+    setIsOpen(open);
+    if (!open) {
+      onClose?.();
+    }
+  };
+
   return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+    <Dialog open={isOpen} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
         {trigger || (
           <Button
