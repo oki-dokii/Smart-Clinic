@@ -16,6 +16,11 @@ Preferred communication style: Simple, everyday language.
   - Patient medicines now work completely independently from admin/clinic systems
   - Fixed both "Add Medicine" and "Upload List" functionality for patients
   - Backend returns flat reminder properties (medicineName, dosage) which frontend now correctly accesses
+  - **Indian Standard Time Fix**: Fixed timezone handling for medicine reminders:
+    - Server now properly converts IST to UTC when storing reminders
+    - Frontend displays all times in Indian Standard Time (Asia/Kolkata)
+    - Fixed 1-hour time mismatch issue between "My Medicines" and "Today's Reminders"
+    - All medicine reminder times now consistently show in IST format
 - **CRITICAL Security Fixes**: Fixed major authentication vulnerabilities:
   - Removed hardcoded JWT token from admin dashboard (line 860)
   - Implemented proper route-level authentication protection
