@@ -959,12 +959,41 @@ export default function ClinicDashboard() {
   const queueTokens = (liveQueueTokens && liveQueueTokens.length > 0) ? liveQueueTokens : fallbackQueueTokens;
 
   // Appointments data - polling every 3 seconds for real-time patient bookings
-  const { data: appointments, isLoading: appointmentsLoading } = useQuery<Appointment[]>({
-    queryKey: ['/api/appointments/admin'],
+  const { data: appointments, isLoading: appointmentsLoading, error: appointmentsError, refetch: refetchAppointments } = useQuery<Appointment[]>({
+    queryKey: ['/api/appointments/admin', forceRender],
+    queryFn: () => fetch('/api/appointments/admin', {
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('auth_token')}`,
+        'Content-Type': 'application/json'
+      }
+    }).then(res => {
+      if (!res.ok) throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+      return res.json();
+    }),
     refetchInterval: 3000, // Poll every 3 seconds for real-time patient bookings
     refetchOnWindowFocus: true,
-    staleTime: 0 // Always consider data stale for real-time sync
+    staleTime: 0, // Always consider data stale for real-time sync
+    gcTime: 0, // Don't cache data to ensure fresh reads
+    retry: 3
   })
+
+  // Force initial appointment data fetch on mount
+  React.useEffect(() => {
+    console.log('🔥 APPOINTMENTS COMPONENT MOUNTED - Force fetching appointments');
+    console.log('🔥 APPOINTMENTS INITIAL STATE:', { appointments, appointmentsLoading, appointmentsError });
+    refetchAppointments();
+  }, []);
+
+  // Debug appointments data changes
+  React.useEffect(() => {
+    console.log('🔥 APPOINTMENTS DATA CHANGED:', { 
+      appointments, 
+      length: appointments?.length, 
+      loading: appointmentsLoading, 
+      error: appointmentsError,
+      currentTab: activeTab 
+    });
+  }, [appointments, appointmentsLoading, appointmentsError, activeTab]);
 
   // Patients data with force render dependency and proper auth
   const { data: patients, isLoading: patientsLoading, refetch: refetchPatients, error: patientsError } = useQuery<User[]>({
@@ -1082,6 +1111,17 @@ export default function ClinicDashboard() {
   console.log('Medicines data:', medicines, 'Loading:', medicinesLoading, 'Force render:', forceRender)
   console.log('First medicine stock:', medicines[0]?.stock)
   
+  // Debug: Log appointments data
+  React.useEffect(() => {
+    console.log('🔥 APPOINTMENTS QUERY - Data:', Array.isArray(appointments) ? appointments.length : 0, 'Loading:', appointmentsLoading, 'Error:', appointmentsError);
+    if (appointmentsError) {
+      console.log('🔥 APPOINTMENTS QUERY ERROR DETAILS:', appointmentsError);
+    }
+    if (appointments) {
+      console.log('🔥 APPOINTMENTS DATA:', appointments);
+    }
+  }, [appointments, appointmentsLoading, appointmentsError]);
+
   // Debug: Log staff presence data
   console.log('🔥 FRONTEND - Staff presence data:', staffPresence)
   console.log('🔥 FRONTEND - Staff presence loading:', presenceLoading)
@@ -1089,13 +1129,6 @@ export default function ClinicDashboard() {
   console.log('🔥 FRONTEND - Present from records:', presentFromRecords)
   console.log('🔥 FRONTEND - Current user in records:', isCurrentUserInPresenceRecords)
   console.log('🔥 FRONTEND - Should count current user:', shouldCountCurrentUserAsPresent)
-  console.log('🔥 FRONTEND - Individual presence status:', staffPresence.map(p => ({ 
-    id: p.id, 
-    staffId: p.staffId, 
-    isPresent: p.isPresent, 
-    staffRole: p.staff?.role,
-    staffEmail: p.staff?.email 
-  })))
 
   // Function to remove emergency alert
   const removeAlert = (alertId: string) => {
@@ -3410,6 +3443,8 @@ export default function ClinicDashboard() {
                   </div>
                 ) : (
                   <div className="space-y-4">
+                    {/* Debug appointments rendering */}
+                    {console.log('🔥 APPOINTMENTS RENDER DEBUG:', { appointments, length: appointments?.length, loading: appointmentsLoading, error: appointmentsError })}
                     {appointments && appointments.length > 0 ? (
                       appointments
                         .filter((appointment) => {
