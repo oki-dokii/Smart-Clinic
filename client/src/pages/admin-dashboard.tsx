@@ -3587,10 +3587,6 @@ export default function ClinicDashboard() {
                                         size="sm" 
                                         variant="outline"
                                         data-testid={`button-reschedule-${appointment.id}`}
-                                        onClick={() => {
-                                          alert('🔥 RESCHEDULE DIALOG OPENED! Now fill in date and time.');
-                                          console.log('🔥🔥🔥 RESCHEDULE DIALOG - Button clicked for appointment:', appointment.id);
-                                        }}
                                       >
                                         Reschedule
                                       </Button>
