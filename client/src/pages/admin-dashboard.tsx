@@ -1931,18 +1931,18 @@ export default function ClinicDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       {/* Header */}
-      <header className="bg-white border-b border-gray-200 px-2 sm:px-4 lg:px-6 py-3 sm:py-4">
+      <header className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 mobile-px-4 sm:px-4 lg:px-6 mobile-py-3 sm:py-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2 sm:gap-4">
             <div className="flex items-center gap-2 sm:gap-3">
-              <div className="w-6 h-6 sm:w-8 sm:h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-                <Stethoscope className="w-3 h-3 sm:w-5 sm:h-5 text-white" />
+              <div className="w-6 h-6 sm:w-8 sm:h-8 bg-blue-600 dark:bg-blue-500 rounded-lg flex items-center justify-center mobile-touch-target">
+                <Stethoscope className="mobile-icon sm:w-5 sm:h-5 text-white" />
               </div>
               <div>
-                <h1 className="text-sm sm:text-xl font-semibold text-gray-900">SmartClinic Medical Center</h1>
-                <p className="text-xs sm:text-sm text-gray-500 hidden sm:block">Healthcare Management System</p>
+                <h1 className="mobile-subheading sm:text-xl font-semibold text-gray-900 dark:text-white">SmartClinic Medical Center</h1>
+                <p className="mobile-caption sm:text-sm text-gray-500 dark:text-gray-400 hidden sm:block">Healthcare Management System</p>
               </div>
             </div>
           </div>
@@ -2591,10 +2591,10 @@ export default function ClinicDashboard() {
       </header>
 
       {/* Navigation Tabs */}
-      <div className="nav-tabs">
-        <div className="px-2 sm:px-4 lg:px-6">
+      <div className="nav-tabs mobile-nav-tabs">
+        <div className="mobile-px-4 sm:px-4 lg:px-6">
           <Tabs defaultValue="dashboard" className="w-full">
-            <TabsList className="grid w-full grid-cols-4 sm:grid-cols-8 bg-transparent border-0 h-auto p-0 overflow-x-auto">
+            <TabsList className="mobile-tabs-list grid w-full grid-cols-4 sm:grid-cols-8 bg-transparent border-0 h-auto p-0 overflow-x-auto mobile-scrollbar-hide">
               <TabsTrigger
                 value="dashboard"
                 className="nav-tab data-[state=active]:active rounded-none text-xs sm:text-sm px-2 sm:px-4"
@@ -2652,9 +2652,9 @@ export default function ClinicDashboard() {
             </TabsList>
 
             <TabsContent value="dashboard" className="mt-0">
-              <main className="p-2 sm:p-4 lg:p-6">
+              <main className="mobile-px-4 sm:p-4 lg:p-6 mobile-py-4">
                 {/* Key Metrics */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6 mb-6 sm:mb-8">
+                <div className="mobile-metrics-grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 mobile-gap-3 sm:gap-6 mobile-mb-6 sm:mb-8">
                   {/* Patients Today */}
                   <Card className="dashboard-card stats-card">
                     <CardHeader className="pb-3">

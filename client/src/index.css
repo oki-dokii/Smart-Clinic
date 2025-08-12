@@ -291,7 +291,7 @@
   }
 
   .dashboard-card {
-    @apply p-3;
+    @apply p-3 text-sm;
   }
 
   .stat-number {
@@ -311,6 +311,10 @@
     @apply text-sm;
   }
 
+  .mobile-text-xs {
+    @apply text-xs;
+  }
+
   .mobile-hidden {
     @apply hidden;
   }
@@ -323,8 +327,35 @@
     @apply p-2;
   }
 
+  .mobile-p-3 {
+    @apply p-3;
+  }
+
   .mobile-gap-2 {
     @apply gap-2;
+  }
+
+  .mobile-gap-3 {
+    @apply gap-3;
+  }
+
+  .mobile-space-y-2 > * + * {
+    @apply mt-2;
+  }
+
+  .mobile-space-y-3 > * + * {
+    @apply mt-3;
+  }
+
+  /* Enhanced mobile navigation */
+  .nav-tabs {
+    @apply overflow-x-auto;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  
+  .nav-tabs::-webkit-scrollbar {
+    display: none;
   }
 
   /* Quick Actions mobile layout */
@@ -339,12 +370,65 @@
 
   /* Table mobile responsiveness */
   .table-mobile {
-    @apply text-xs;
+    @apply text-xs overflow-x-auto;
   }
 
   .table-mobile th,
   .table-mobile td {
-    @apply px-2 py-2;
+    @apply px-2 py-2 min-w-20;
+  }
+
+  /* Mobile form improvements */
+  .mobile-form input,
+  .mobile-form select,
+  .mobile-form textarea {
+    @apply text-base min-h-12;
+  }
+
+  /* Mobile button improvements */
+  .mobile-btn {
+    @apply min-h-12 text-base px-4 py-3;
+  }
+
+  .mobile-btn-sm {
+    @apply min-h-10 text-sm px-3 py-2;
+  }
+
+  /* Mobile dialog/modal improvements */
+  .mobile-dialog {
+    @apply m-2 max-w-none w-auto;
+  }
+
+  .mobile-dialog-content {
+    @apply p-4 overflow-y-auto;
+    max-height: 90vh;
+  }
+
+  /* Mobile tabs scrolling */
+  .mobile-tabs-scroll {
+    @apply flex overflow-x-auto whitespace-nowrap;
+    scroll-behavior: smooth;
+  }
+
+  .mobile-tabs-scroll::-webkit-scrollbar {
+    height: 2px;
+  }
+
+  /* Mobile dashboard grid adjustments */
+  .mobile-dashboard-grid {
+    @apply grid-cols-1 gap-3 p-3;
+  }
+
+  .mobile-metric-card {
+    @apply flex items-center justify-between p-4;
+  }
+
+  .mobile-metric-content {
+    @apply flex-1;
+  }
+
+  .mobile-metric-icon {
+    @apply w-10 h-10 ml-3;
   }
 }
 
@@ -588,6 +672,70 @@
     font-size: 1.875rem;
     line-height: 2.25rem;
   }
+
+  /* Mobile typography improvements */
+  .mobile-heading {
+    @apply text-lg font-bold leading-tight;
+  }
+
+  .mobile-subheading {
+    @apply text-base font-semibold leading-tight;
+  }
+
+  .mobile-body {
+    @apply text-sm leading-relaxed;
+  }
+
+  .mobile-caption {
+    @apply text-xs leading-normal;
+  }
+
+  /* Mobile spacing utilities */
+  .mobile-px-4 {
+    @apply px-4;
+  }
+
+  .mobile-py-3 {
+    @apply py-3;
+  }
+
+  .mobile-mt-2 {
+    @apply mt-2;
+  }
+
+  .mobile-mb-3 {
+    @apply mb-3;
+  }
+
+  /* Mobile layout utilities */
+  .mobile-container {
+    @apply max-w-full px-3 mx-auto;
+  }
+
+  .mobile-card {
+    @apply bg-white dark:bg-gray-900 rounded-lg shadow-sm border border-gray-200 dark:border-gray-800 p-3 mb-3;
+  }
+
+  .mobile-section {
+    @apply mb-4;
+  }
+
+  .mobile-divider {
+    @apply border-t border-gray-200 dark:border-gray-700 my-3;
+  }
+
+  /* Mobile touch targets */
+  .mobile-touch-target {
+    @apply min-h-12 min-w-12 flex items-center justify-center;
+  }
+
+  .mobile-icon {
+    @apply w-5 h-5;
+  }
+
+  .mobile-icon-lg {
+    @apply w-6 h-6;
+  }
 }
 
 @media (min-width: 641px) {
@@ -599,6 +747,181 @@
   .text-responsive-xl {
     font-size: 2.25rem;
     line-height: 2.5rem;
+  }
+}
+
+/* Enhanced Mobile Admin Dashboard CSS */
+@media (max-width: 640px) {
+  /* Additional mobile typography */
+  .mobile-subheading {
+    @apply text-sm font-semibold text-gray-900 dark:text-white;
+  }
+  
+  .mobile-caption {
+    @apply text-xs text-gray-500 dark:text-gray-400;
+  }
+  
+  /* Mobile spacing enhancements */
+  .mobile-px-4 {
+    @apply px-4;
+  }
+  
+  .mobile-py-3 {
+    @apply py-3;
+  }
+  
+  .mobile-py-4 {
+    @apply py-4;
+  }
+  
+  .mobile-gap-3 {
+    @apply gap-3;
+  }
+  
+  .mobile-mb-6 {
+    @apply mb-6;
+  }
+  
+  /* Mobile layout grids */
+  .mobile-metrics-grid {
+    @apply grid;
+  }
+  
+  /* Mobile navigation tabs */
+  .mobile-nav-tabs {
+    @apply bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700;
+  }
+  
+  .mobile-tabs-list {
+    @apply min-h-12;
+  }
+  
+  .mobile-scrollbar-hide {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  
+  .mobile-scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+  
+  /* Enhanced touch targets for mobile */
+  .mobile-touch-target {
+    @apply min-h-12 min-w-12 flex items-center justify-center;
+  }
+  
+  /* Mobile icon sizing */
+  .mobile-icon {
+    @apply w-4 h-4;
+  }
+  
+  /* Mobile card improvements */
+  .mobile-card-padding {
+    @apply p-3;
+  }
+  
+  /* Mobile button improvements */
+  .mobile-btn {
+    @apply min-h-12 text-sm px-4 py-3;
+  }
+  
+  /* Mobile form improvements */
+  .mobile-input {
+    @apply min-h-12 text-base px-4;
+  }
+  
+  .mobile-select {
+    @apply min-h-12 text-base px-4;
+  }
+  
+  /* Mobile dialog improvements */
+  .mobile-dialog {
+    @apply max-w-sm;
+  }
+  
+  /* Mobile table improvements */
+  .mobile-table-scroll {
+    @apply overflow-x-auto;
+  }
+  
+  .mobile-table-cell {
+    @apply min-w-32 px-2 py-3;
+  }
+  
+  /* Mobile status badges */
+  .mobile-badge {
+    @apply text-xs px-2 py-1;
+  }
+  
+  /* Mobile chart container */
+  .mobile-chart {
+    @apply h-48;
+  }
+  
+  /* Improved mobile readability */
+  .mobile-text-readable {
+    line-height: 1.6;
+    font-size: 16px; /* Prevents zoom on iOS */
+  }
+  
+  /* Mobile-friendly shadows */
+  .mobile-shadow {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  }
+  
+  /* Mobile card stacking */
+  .mobile-card-stack {
+    @apply space-y-3;
+  }
+  
+  /* Mobile viewport improvements */
+  .mobile-full-width {
+    width: 100%;
+    max-width: 100%;
+  }
+  
+  .mobile-overflow-hidden {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  
+  /* Mobile layout helpers */
+  .mobile-flex-col {
+    @apply flex flex-col space-y-2;
+  }
+  
+  .mobile-justify-between {
+    @apply flex justify-between items-center;
+  }
+  
+  /* Mobile-specific interactive states */
+  .mobile-tap-highlight-none {
+    -webkit-tap-highlight-color: transparent;
+  }
+  
+  /* Prevent accidental zoom */
+  input[type="search"],
+  input[type="number"],
+  input[type="email"],
+  input[type="tel"],
+  input[type="url"],
+  input[type="password"],
+  input[type="text"],
+  textarea,
+  select {
+    font-size: 16px; /* Prevents zoom on iOS */
+  }
+  
+  /* Mobile-friendly scrollbars */
+  .mobile-scrollbar::-webkit-scrollbar {
+    width: 4px;
+    height: 4px;
+  }
+  
+  .mobile-scrollbar::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 2px;
   }
 }
 
