@@ -122,7 +122,7 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-blue-100 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-blue-100 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         {/* Header */}
         <div className="text-center mb-8">
@@ -131,16 +131,16 @@ export default function LoginPage() {
               <Stethoscope className="w-8 h-8 text-white" />
             </div>
           </div>
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">SmartClinic</h1>
-          <p className="text-gray-600">Healthcare Manager</p>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">SmartClinic</h1>
+          <p className="text-gray-600 dark:text-gray-300">Healthcare Manager</p>
         </div>
 
-        <Card className="shadow-lg border-0">
+        <Card className="shadow-lg border-0 dark:bg-gray-800 dark:border-gray-700">
           <CardHeader className="text-center pb-4">
-            <CardTitle className="text-xl text-gray-900">
+            <CardTitle className="text-xl text-gray-900 dark:text-white">
               {step === "email" ? "Sign In" : "Verify Email"}
             </CardTitle>
-            <p className="text-sm text-gray-600 mt-2">
+            <p className="text-sm text-gray-600 dark:text-gray-300 mt-2">
               {step === "email" 
                 ? "Enter your email address to receive a verification code"
                 : `We've sent a 6-digit code to ${email}`
@@ -154,7 +154,7 @@ export default function LoginPage() {
                 <div className="space-y-2">
                   <Label htmlFor="email">Email Address</Label>
                   <div className="relative">
-                    <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                    <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500 w-4 h-4" />
                     <Input
                       id="email"
                       type="email"
@@ -184,12 +184,12 @@ export default function LoginPage() {
                   
                   {/* Development Helper - Show OTP hint when email fails */}
                   {developmentOtp && (
-                    <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mb-4">
+                    <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-3 mb-4">
                       <div className="flex items-center space-x-2">
-                        <Shield className="w-4 h-4 text-yellow-600" />
-                        <span className="text-xs text-yellow-700 font-medium">Development Mode</span>
+                        <Shield className="w-4 h-4 text-yellow-600 dark:text-yellow-400" />
+                        <span className="text-xs text-yellow-700 dark:text-yellow-300 font-medium">Development Mode</span>
                       </div>
-                      <p className="text-xs text-yellow-600 mt-1">
+                      <p className="text-xs text-yellow-600 dark:text-yellow-400 mt-1">
                         Email delivery failed. Current OTP code: <strong>{developmentOtp}</strong>
                       </p>
                     </div>
@@ -251,19 +251,19 @@ export default function LoginPage() {
             )}
             
             {/* Security Notice */}
-            <div className="bg-green-50 border border-green-200 rounded-lg p-3">
+            <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-3">
               <div className="flex items-center space-x-2">
-                <Shield className="w-4 h-4 text-green-600" />
-                <span className="text-xs text-green-700 font-medium">Secure OTP Authentication</span>
+                <Shield className="w-4 h-4 text-green-600 dark:text-green-400" />
+                <span className="text-xs text-green-700 dark:text-green-300 font-medium">Secure OTP Authentication</span>
               </div>
-              <p className="text-xs text-green-600 mt-1">
+              <p className="text-xs text-green-600 dark:text-green-400 mt-1">
                 Your email address is verified using a secure one-time password
               </p>
             </div>
           </CardContent>
         </Card>
         
-        <div className="text-center mt-6 text-xs text-gray-500">
+        <div className="text-center mt-6 text-xs text-gray-500 dark:text-gray-400">
           By signing in, you agree to our Terms of Service and Privacy Policy
         </div>
       </div>
