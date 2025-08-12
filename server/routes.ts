@@ -880,7 +880,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         appointmentDate: new Date(preferredDate),
         duration: 30, // Default duration
         type,
-        status: 'pending_approval',
+        status: 'pending_approval' as const,
         symptoms: symptoms || '',
         notes: notes || ''
       };
@@ -948,7 +948,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         appointmentDate: new Date(appointmentDetails.preferredDate),
         duration: 30, // Default duration
         type: appointmentDetails.type,
-        status: 'pending_approval',
+        status: 'pending_approval' as const,
         symptoms: appointmentDetails.symptoms || '',
         notes: appointmentDetails.notes || ''
       };
@@ -1684,6 +1684,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         tokenNumber,
         patientId,
         doctorId,
+        clinicId: '84e1b3c6-3b25-4446-96e8-a227d9e92d76',
         priority: 1
       });
 

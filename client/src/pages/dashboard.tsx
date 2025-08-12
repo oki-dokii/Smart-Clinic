@@ -555,7 +555,7 @@ export default function SmartClinicDashboard() {
       rating: "",
       comment: "",
       categories: [],
-      appointmentId: "",
+      appointmentId: "none",
       isAnonymous: false,
     },
   });
@@ -566,7 +566,7 @@ export default function SmartClinicDashboard() {
       const response = await apiRequest("POST", "/api/feedback", {
         ...feedbackData,
         rating: parseInt(feedbackData.rating),
-        appointmentId: feedbackData.appointmentId || null,
+        appointmentId: feedbackData.appointmentId === "none" ? null : feedbackData.appointmentId || null,
       });
       return response.json();
     },
@@ -1500,7 +1500,7 @@ export default function SmartClinicDashboard() {
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="">No specific appointment</SelectItem>
+                          <SelectItem value="none">No specific appointment</SelectItem>
                           {appointmentsArray.map((appointment: any) => (
                             <SelectItem key={appointment.id} value={appointment.id}>
                               {new Date(appointment.appointmentDate).toLocaleDateString('en-IN', {timeZone: 'Asia/Kolkata'})} - Dr. {appointment.doctor?.firstName}
