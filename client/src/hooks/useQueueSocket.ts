@@ -9,7 +9,7 @@ interface QueuePosition {
 }
 
 interface QueueUpdate {
-  type: 'queue_position' | 'admin_queue_update';
+  type: 'queue_position' | 'admin_queue_update' | 'full_queue_update';
   data: any;
 }
 
@@ -57,6 +57,8 @@ export function useQueueSocket(patientId?: string, isAdmin = false) {
           if (update.type === 'queue_position') {
             setQueuePosition(update.data);
           } else if (update.type === 'admin_queue_update') {
+            setQueueTokens(update.data);
+          } else if (update.type === 'full_queue_update') {
             setQueueTokens(update.data);
           }
         } catch (error) {

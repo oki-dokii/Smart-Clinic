@@ -1791,6 +1791,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
           // Send current queue position
           const position = await storage.getPatientQueuePosition(data.patientId);
           ws.send(JSON.stringify({ type: 'queue_position', data: position || { tokenNumber: null, position: null, estimatedWaitTime: 0 } }));
+          
+          // Also send full queue data for patient's clinic
+          const user = await storage.getUser(data.patientId);
+          if (user?.clinicId) {
+            const fullQueue = await storage.getQueueTokensByClinic(user.clinicId);
+            // Filter for today's active tokens
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const tomorrow = new Date(today);
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            
+            const activeTokens = fullQueue.filter(token => {
+              const isActive = token.status !== 'completed' && token.status !== 'cancelled';
+              const appointmentDate = token.appointmentDate ? new Date(token.appointmentDate) : new Date();
+              appointmentDate.setHours(0, 0, 0, 0);
+              const isToday = appointmentDate >= today && appointmentDate < tomorrow;
+              return isActive && isToday;
+            });
+            
+            console.log('🔥 Patient subscription - Sending full queue:', activeTokens.length, 'tokens');
+            ws.send(JSON.stringify({ type: 'full_queue_update', data: activeTokens }));
+          }
         }
         
         if (data.type === 'subscribe_admin_queue') {
@@ -2833,6 +2855,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log('🔥 QUEUE ADMIN - Found tokens for clinic:', tokens.length);
       res.json(tokens);
     } catch (error: any) {
+      res.status(400).json({ message: error.message });
+    }
+  });
+
+  // Public queue view for patients - shows full queue for their clinic
+  app.get("/api/queue/public", authMiddleware, async (req, res) => {
+    try {
+      // Get user's clinic ID
+      const userClinicId = req.user!.clinicId;
+      console.log('🔥 QUEUE PUBLIC - User clinic ID:', userClinicId);
+      
+      if (!userClinicId) {
+        return res.status(400).json({ message: "User has no associated clinic" });
+      }
+
+      const tokens = await storage.getQueueTokensByClinic(userClinicId);
+      console.log('🔥 QUEUE PUBLIC - Found tokens for clinic:', tokens.length);
+      
+      // Filter out completed tokens and only show today's queue
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const tomorrow = new Date(today);
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      
+      const activeTokens = tokens.filter(token => {
+        const isActive = token.status !== 'completed' && token.status !== 'cancelled';
+        const appointmentDate = token.appointmentDate ? new Date(token.appointmentDate) : new Date();
+        appointmentDate.setHours(0, 0, 0, 0);
+        const isToday = appointmentDate >= today && appointmentDate < tomorrow;
+        return isActive && isToday;
+      });
+      
+      console.log('🔥 QUEUE PUBLIC - Active tokens for today:', activeTokens.length);
+      res.json(activeTokens);
+    } catch (error: any) {
+      console.error('🔥 QUEUE PUBLIC ERROR:', error);
       res.status(400).json({ message: error.message });
     }
   });

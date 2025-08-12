@@ -208,9 +208,9 @@ export default function SmartClinicDashboard() {
     user?.role === 'admin' || user?.role === 'staff'
   );
 
-  // Get admin queue data for full queue view - use admin endpoint for modal
+  // Get queue data for full queue view - use public endpoint for patients, admin for admins
   const { data: apiAdminQueue = [] } = useQuery({
-    queryKey: ["/api/queue/admin"], 
+    queryKey: [user?.role === 'admin' ? "/api/queue/admin" : "/api/queue/public"], 
     refetchInterval: 2000, // Faster refresh to pick up changes
     retry: false, // Don't retry if unauthorized
     staleTime: 0, // Always fetch fresh data
@@ -1740,9 +1740,9 @@ function LiveQueueContent({
     true // Admin mode for full queue access
   );
 
-  // Get admin queue data for full queue view - use admin endpoint for modal
+  // Get queue data for full queue view - use public endpoint for patients, admin for admins  
   const { data: apiAdminQueue = [] } = useQuery({
-    queryKey: ["/api/queue/admin"], 
+    queryKey: ["/api/queue/public"], 
     refetchInterval: 3000,
     retry: false, // Don't retry if unauthorized
   });
