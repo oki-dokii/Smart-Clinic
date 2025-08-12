@@ -846,18 +846,46 @@ export class DatabaseStorage implements IStorage {
   async getPatientQueuePosition(patientId: string, doctorId?: string): Promise<QueueToken | undefined> {
     let whereClause = and(
       eq(queueTokens.patientId, patientId),
-      sql`${queueTokens.status} IN ('waiting', 'called')`
+      sql`${queueTokens.status} IN ('waiting', 'called', 'in_progress')`
     );
     
     if (doctorId) {
       whereClause = and(whereClause, eq(queueTokens.doctorId, doctorId));
     }
     
-    const [token] = await db.select().from(queueTokens)
-      .where(whereClause)
-      .orderBy(desc(queueTokens.createdAt));
+    // Get all tokens for this patient
+    const allTokens = await db.select({
+      id: queueTokens.id,
+      tokenNumber: queueTokens.tokenNumber,
+      patientId: queueTokens.patientId,
+      doctorId: queueTokens.doctorId,
+      clinicId: queueTokens.clinicId,
+      appointmentId: queueTokens.appointmentId,
+      status: queueTokens.status,
+      estimatedWaitTime: queueTokens.estimatedWaitTime,
+      calledAt: queueTokens.calledAt,
+      completedAt: queueTokens.completedAt,
+      priority: queueTokens.priority,
+      createdAt: queueTokens.createdAt,
+      appointmentDate: appointments.appointmentDate
+    })
+    .from(queueTokens)
+    .leftJoin(appointments, eq(queueTokens.appointmentId, appointments.id))
+    .where(whereClause)
+    .orderBy(asc(appointments.appointmentDate), desc(queueTokens.createdAt));
     
-    return token || undefined;
+    // Prioritize today's appointments, then most recent
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    const todayTokens = allTokens.filter(token => {
+      const tokenDate = new Date(token.appointmentDate || new Date());
+      tokenDate.setHours(0, 0, 0, 0);
+      return tokenDate.getTime() === today.getTime();
+    });
+    
+    // Return today's token if exists, otherwise most recent token
+    return todayTokens[0] || allTokens[0] || undefined;
   }
 
   async getQueueTokens(): Promise<(QueueToken & { patient: User; doctor: User })[]> {
