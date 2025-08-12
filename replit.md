@@ -21,7 +21,17 @@ Preferred communication style: Simple, everyday language.
     - Frontend displays all times in Indian Standard Time (Asia/Kolkata)
     - Fixed time mismatch issue between "My Medicines" and "Today's Reminders"
     - All medicine reminder times now consistently show in IST format
+    - Email notifications now correctly format reminder times in IST (Asia/Kolkata timezone)
+    - Added formatTime helper function to dashboard for consistent time display across all pages
+    - Fixed scheduler service to properly format email reminder times in Indian Standard Time
     - Existing reminders created before timezone fix may show incorrect times (stored as UTC but intended as IST)
+- **Mobile UI Optimization**: Applied comprehensive mobile-first design improvements:
+  - Fixed critical button overflow issues in admin dashboard appointments and patient records sections
+  - Added mobile-responsive button containers with proper wrapping and sizing constraints
+  - Implemented text truncation and flex controls to prevent content overflow
+  - Created mobile-card-buttons CSS class with responsive sizing for different screen sizes
+  - Added ultra-responsive design support for very small screens (under 480px width)
+  - Applied mobile-optimized styling with proper touch targets and safe area support
 - **CRITICAL Security Fixes**: Fixed major authentication vulnerabilities:
   - Removed hardcoded JWT token from admin dashboard (line 860)
   - Implemented proper route-level authentication protection

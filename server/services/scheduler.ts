@@ -47,12 +47,19 @@ export class SchedulerService {
     
     for (const reminder of dueReminders) {
       try {
-        // Send email reminder
+        // Format time in Indian Standard Time for email
+        const istTime = reminder.scheduledAt.toLocaleTimeString('en-IN', { 
+          hour: '2-digit', 
+          minute: '2-digit',
+          timeZone: 'Asia/Kolkata'
+        });
+        
+        // Send email reminder with properly formatted IST time
         await emailService.sendMedicineReminder(
           reminder.prescription.patient.email,
           reminder.prescription.medicine.name,
           reminder.prescription.dosage,
-          reminder.scheduledAt.toLocaleTimeString()
+          istTime
         );
         
         // Mark email as sent (would need to add this field update to storage)
