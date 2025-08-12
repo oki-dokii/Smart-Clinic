@@ -1215,6 +1215,12 @@ export class DatabaseStorage implements IStorage {
     return updatedReminder || undefined;
   }
 
+  async markReminderEmailSent(reminderId: string): Promise<void> {
+    await db.update(medicineReminders)
+      .set({ smsReminderSent: true })
+      .where(eq(medicineReminders.id, reminderId));
+  }
+
   // Delay Notifications
   async createDelayNotification(notification: InsertDelayNotification): Promise<DelayNotification> {
     const [newNotification] = await db.insert(delayNotifications).values(notification).returning();
