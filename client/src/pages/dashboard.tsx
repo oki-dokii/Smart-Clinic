@@ -1734,10 +1734,12 @@ function LiveQueueContent({
   joinQueuePending: boolean;
   isInQueue: boolean;
 }) {
-  // WebSocket connection for real-time queue updates
+  const { user } = useUser();
+  
+  // WebSocket connection for real-time queue updates - use patient mode for patients, admin for staff/admin
   const { queueTokens: liveAdminQueue } = useQueueSocket(
     undefined, // No specific user ID for modal view
-    true // Admin mode for full queue access
+    user?.role === 'admin' || user?.role === 'staff' // Admin mode only for admin/staff
   );
 
   // Get queue data for full queue view - use public endpoint for patients, admin for admins  

@@ -87,13 +87,20 @@ export class QueueService {
               }));
             }
             
-            // Send patient-specific updates with updated wait times
+            // Send patient updates - both individual position AND full queue data
             if ((ws as any).patientId) {
+              // Send individual position first
               storage.getPatientQueuePosition((ws as any).patientId).then(position => {
                 if (ws.readyState === WebSocket.OPEN) {
                   ws.send(JSON.stringify({ 
                     type: 'queue_position', 
                     data: position || { tokenNumber: null, position: null, estimatedWaitTime: 0 } 
+                  }));
+                  
+                  // Also send full queue data to patients for complete visibility
+                  ws.send(JSON.stringify({ 
+                    type: 'full_queue_update', 
+                    data: updatedQueueTokens 
                   }));
                 }
               }).catch(console.error);

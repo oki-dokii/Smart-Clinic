@@ -2051,57 +2051,63 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getQueueTokensByClinic(clinicId: string): Promise<(QueueToken & { patient: User; doctor: User })[]> {
-    return await db.select({
-      id: queueTokens.id,
-      patientId: queueTokens.patientId,
-      doctorId: queueTokens.doctorId,
-      clinicId: queueTokens.clinicId,
-      tokenNumber: queueTokens.tokenNumber,
-      status: queueTokens.status,
-      estimatedWaitTime: queueTokens.estimatedWaitTime,
-      checkedInAt: queueTokens.checkedInAt,
-      calledAt: queueTokens.calledAt,
-      completedAt: queueTokens.completedAt,
-      createdAt: queueTokens.createdAt,
-      updatedAt: queueTokens.updatedAt,
-      patient: {
-        id: sql`${users.id}`.as('patient_id'),
-        phoneNumber: sql`${users.phoneNumber}`.as('patient_phone'),
-        role: sql`${users.role}`.as('patient_role'),
-        firstName: sql`${users.firstName}`.as('patient_first_name'),
-        lastName: sql`${users.lastName}`.as('patient_last_name'),
-        email: sql`${users.email}`.as('patient_email'),
-        dateOfBirth: sql`${users.dateOfBirth}`.as('patient_dob'),
-        address: sql`${users.address}`.as('patient_address'),
-        emergencyContact: sql`${users.emergencyContact}`.as('patient_emergency'),
-        clinicId: sql`${users.clinicId}`.as('patient_clinic_id'),
-        isActive: sql`${users.isActive}`.as('patient_is_active'),
-        isApproved: sql`${users.isApproved}`.as('patient_is_approved'),
-        createdAt: sql`${users.createdAt}`.as('patient_created_at'),
-        updatedAt: sql`${users.updatedAt}`.as('patient_updated_at')
-      },
-      doctor: {
-        id: sql`doctor.id`.as('doctor_id'),
-        phoneNumber: sql`doctor.phone_number`.as('doctor_phone'),
-        role: sql`doctor.role`.as('doctor_role'),
-        firstName: sql`doctor.first_name`.as('doctor_first_name'),
-        lastName: sql`doctor.last_name`.as('doctor_last_name'),
-        email: sql`doctor.email`.as('doctor_email'),
-        dateOfBirth: sql`doctor.date_of_birth`.as('doctor_dob'),
-        address: sql`doctor.address`.as('doctor_address'),
-        emergencyContact: sql`doctor.emergency_contact`.as('doctor_emergency'),
-        clinicId: sql`doctor.clinic_id`.as('doctor_clinic_id'),
-        isActive: sql`doctor.is_active`.as('doctor_is_active'),
-        isApproved: sql`doctor.is_approved`.as('doctor_is_approved'),
-        createdAt: sql`doctor.created_at`.as('doctor_created_at'),
-        updatedAt: sql`doctor.updated_at`.as('doctor_updated_at')
-      }
-    })
-    .from(queueTokens)
-    .leftJoin(users, eq(queueTokens.patientId, users.id))
-    .leftJoin(sql`${users} as doctor`, sql`${queueTokens.doctorId} = doctor.id`)
-    .where(eq(queueTokens.clinicId, clinicId))
-    .orderBy(asc(queueTokens.tokenNumber)) as any;
+    try {
+      // Use raw SQL to avoid Drizzle complex join issues
+      const result = await db.execute(sql`
+        SELECT 
+          qt.*,
+          p.id as patient_id, p.first_name as patient_first_name, p.last_name as patient_last_name, 
+          p.phone_number as patient_phone, p.role as patient_role,
+          d.id as doctor_id, d.first_name as doctor_first_name, d.last_name as doctor_last_name, 
+          d.phone_number as doctor_phone, d.role as doctor_role
+        FROM queue_tokens qt
+        JOIN users p ON qt.patient_id = p.id
+        JOIN users d ON qt.doctor_id = d.id
+        WHERE qt.clinic_id = ${clinicId}
+        ORDER BY qt.token_number ASC
+      `);
+
+      console.log('🔥 QUEUE CLINIC DEBUG - Raw SQL returned:', result.length, 'rows');
+
+      const enrichedTokens = result.map((row: any) => ({
+        // Queue token data
+        id: row.id,
+        tokenNumber: row.token_number,
+        patientId: row.patient_id,
+        doctorId: row.doctor_id,
+        clinicId: row.clinic_id,
+        appointmentId: row.appointment_id,
+        status: row.status,
+        estimatedWaitTime: row.estimated_wait_time,
+        calledAt: row.called_at,
+        completedAt: row.completed_at,
+        priority: row.priority,
+        createdAt: row.created_at,
+        appointmentDate: row.appointment_date,
+        // Patient data
+        patient: {
+          id: row.patient_id,
+          firstName: row.patient_first_name,
+          lastName: row.patient_last_name,
+          phoneNumber: row.patient_phone,
+          role: row.patient_role
+        },
+        // Doctor data  
+        doctor: {
+          id: row.doctor_id,
+          firstName: row.doctor_first_name,
+          lastName: row.doctor_last_name,
+          phoneNumber: row.doctor_phone,
+          role: row.doctor_role
+        }
+      }));
+      
+      console.log('🔥 QUEUE CLINIC DEBUG - Enriched tokens:', enrichedTokens.length);
+      return enrichedTokens as (QueueToken & { patient: User; doctor: User })[];
+    } catch (error) {
+      console.error('🔥 QUEUE CLINIC ERROR:', error);
+      return [];
+    }
   }
 
   async getActiveStaffCountByClinic(clinicId: string): Promise<number> {
