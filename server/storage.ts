@@ -1121,11 +1121,12 @@ export class DatabaseStorage implements IStorage {
     const fiveMinutesAgo = new Date(now.getTime() - 5 * 60 * 1000);
     
     // Use direct SQL query to avoid relation issues
-    return await db.select({
+    const results = await db.select({
       id: medicineReminders.id,
       prescriptionId: medicineReminders.prescriptionId,
       scheduledAt: medicineReminders.scheduledAt,
       patientName: sql<string>`CONCAT(${users.firstName}, ' ', ${users.lastName})`,
+      patientEmail: users.email,
       patientPhone: users.phoneNumber,
       medicineName: medicines.name,
       dosage: prescriptions.dosage,
@@ -1142,6 +1143,23 @@ export class DatabaseStorage implements IStorage {
       eq(medicineReminders.isSkipped, false),
       eq(medicineReminders.smsReminderSent, false)
     ));
+    
+    // Transform results to match expected structure
+    return results.map(result => ({
+      id: result.id,
+      prescriptionId: result.prescriptionId,
+      scheduledAt: result.scheduledAt,
+      prescription: {
+        patient: {
+          email: result.patientEmail,
+          name: result.patientName
+        },
+        medicine: {
+          name: result.medicineName
+        },
+        dosage: result.dosage
+      }
+    }));
   }
 
   async markReminderTaken(id: string): Promise<MedicineReminder | undefined> {
