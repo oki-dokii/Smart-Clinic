@@ -97,6 +97,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Test endpoint to recreate reminders with fixed scheduler
+  app.get('/api/test-recreate-reminders', async (req, res) => {
+    try {
+      const { prescriptionId } = req.query;
+      
+      if (!prescriptionId) {
+        return res.status(400).json({ error: 'prescriptionId required' });
+      }
+      
+      console.log('🔥 RECREATE REMINDERS - Starting for prescription:', prescriptionId);
+      
+      if (schedulerService) {
+        await schedulerService.createMedicineReminders(prescriptionId as string);
+        console.log('🔥 RECREATE REMINDERS - Success');
+        res.json({ success: true, message: 'Reminders recreated successfully' });
+      } else {
+        res.status(500).json({ error: 'Scheduler service not available' });
+      }
+    } catch (error: any) {
+      console.error('🔥 RECREATE REMINDERS - Error:', error);
+      res.status(500).json({ error: 'Failed to recreate reminders: ' + error.message });
+    }
+  });
+
   // Simple email test endpoint (no auth required for debugging)
   app.get('/api/email-debug', async (req, res) => {
     try {
