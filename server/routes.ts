@@ -629,7 +629,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
             console.log(`🔥 FIREBASE LOGIN - Updated existing user with Firebase UID: ${user.email}`);
           }
         } else {
-          return res.status(404).json({ message: "No account found. Please sign up first." });
+          console.log(`🔥 FIREBASE LOGIN - No account found for email: ${loginData.email}`);
+          return res.status(404).json({ 
+            message: "No account found for this email address. Please create an account first using the signup page.",
+            emailNotFound: true 
+          });
         }
       }
 

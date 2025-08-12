@@ -44,9 +44,23 @@ export default function PatientLogin() {
       }
     },
     onError: (error: any) => {
+      console.error("Firebase login mutation failed:", error);
+      setIsLoading(false);
+      
+      let errorMessage = "Authentication failed. Please try again.";
+      
+      // Check if it's a response error with detailed message
+      if (error.response?.data?.emailNotFound) {
+        errorMessage = "No account found with this email. Please create an account first, then try logging in with Google.";
+      } else if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
       toast({
-        title: "Login Failed",
-        description: error.message || "Failed to login. Please try again.",
+        title: "Google Login Failed",
+        description: errorMessage,
         variant: "destructive"
       });
     }

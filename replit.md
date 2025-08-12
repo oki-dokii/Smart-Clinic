@@ -42,6 +42,11 @@ Preferred communication style: Simple, everyday language.
   - Implemented proper route-level authentication protection
   - Added role-based access control for all routes
   - Prevents unauthorized access to admin, staff, and patient pages
+- **Google OAuth Authentication Fix**: Fixed "account doesn't exist" error for Google login:
+  - Improved backend Firebase login logic to properly link existing email accounts with Google OAuth
+  - Enhanced error handling to provide clear messages when account needs to be created first
+  - Users who registered with email/password can now successfully login with Google OAuth
+  - Backend automatically updates existing accounts with Firebase UID when Google login is used
 - **Super Admin Access Control**: Implemented strict admin access restriction:
   - Only 44441100sf@gmail.com can access admin dashboard and functions
   - Added SuperAdminRoute component for frontend protection
