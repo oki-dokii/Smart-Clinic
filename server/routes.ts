@@ -2743,7 +2743,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         strength,
         dosageForm,
         manufacturer,
-        clinicId: req.user!.clinicId, // Add the required clinicId
+        clinicId: req.user!.clinicId || 'default-clinic-id', // Add the required clinicId
         stock: parseInt(stock) || 0,
         description
       });
@@ -3036,19 +3036,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Medicine/Inventory Management Routes
-  app.post("/api/medicines", authMiddleware, async (req, res) => {
-    try {
-      if (req.user!.role !== 'admin' && req.user!.role !== 'staff') {
-        return res.status(403).json({ message: "Admin or staff access required" });
-      }
-
-      const medicine = await storage.createMedicine(req.body);
-      res.json(medicine);
-    } catch (error: any) {
-      res.status(400).json({ message: error.message });
-    }
-  });
+  // Medicine/Inventory Management Routes (Duplicate removed - using the one at line 2733)
 
   app.put("/api/medicines/:medicineId", authMiddleware, async (req, res) => {
     try {
@@ -3606,9 +3594,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Filter medicines with low stock (less than 10 units or custom threshold)
       const threshold = parseInt(req.query.threshold as string) || 10;
       const lowStockMedicines = medicines.filter(medicine => 
-        medicine.stockQuantity !== undefined && 
-        medicine.stockQuantity !== null && 
-        medicine.stockQuantity < threshold
+        medicine.stock !== undefined && 
+        medicine.stock !== null && 
+        medicine.stock < threshold
       );
       
       res.json(lowStockMedicines);
@@ -3638,9 +3626,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         if (!patient) {
           return res.status(404).json({ error: 'Patient not found' });
         }
-        requestData.clinicId = patient.clinicId;
+        requestData.clinicId = patient.clinicId || 'default-clinic-id';
       } else {
-        requestData.clinicId = user.clinicId;
+        requestData.clinicId = user.clinicId || 'default-clinic-id';
       }
       
       const emergencyRequest = await storage.createEmergencyRequest(requestData);
