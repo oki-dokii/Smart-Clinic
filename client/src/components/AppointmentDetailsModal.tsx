@@ -29,7 +29,7 @@ export default function AppointmentDetailsModal({ isOpen, onClose, appointment }
               <Stethoscope className="w-6 h-6 text-blue-600" />
             </div>
             <div>
-              <p className="font-semibold">Dr. {appointment.doctor.firstName} {appointment.doctor.lastName}</p>
+              <p className="font-semibold">{appointment.doctor.firstName?.startsWith('Dr. ') ? `${appointment.doctor.firstName} ${appointment.doctor.lastName}` : `Dr. ${appointment.doctor.firstName} ${appointment.doctor.lastName}`}</p>
               <p className="text-sm text-gray-600">{appointment.doctor.email}</p>
             </div>
           </div>

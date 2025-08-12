@@ -286,7 +286,7 @@ export default function PatientBooking() {
                           <div className="flex items-center gap-3">
                             <Stethoscope className="w-5 h-5 text-blue-500" />
                             <div>
-                              <p className="font-medium">Dr. {doctor.firstName} {doctor.lastName}</p>
+                              <p className="font-medium">{doctor.firstName?.startsWith('Dr. ') ? `${doctor.firstName} ${doctor.lastName}` : `Dr. ${doctor.firstName} ${doctor.lastName}`}</p>
                               <p className="text-sm text-gray-600">{doctor.specialization || 'General Practitioner'}</p>
                             </div>
                           </div>

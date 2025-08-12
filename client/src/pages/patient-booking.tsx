@@ -363,7 +363,7 @@ export default function PatientBooking() {
                         >
                           <div className="flex items-center justify-between">
                             <div>
-                              <div className="font-medium">Dr. {doctor.firstName} {doctor.lastName}</div>
+                              <div className="font-medium">{doctor.firstName?.startsWith('Dr. ') ? `${doctor.firstName} ${doctor.lastName}` : `Dr. ${doctor.firstName} ${doctor.lastName}`}</div>
                               <div className="text-sm text-gray-500">{doctor.phoneNumber}</div>
                               {doctor.specialization && (
                                 <Badge variant="outline" className="mt-1">{doctor.specialization}</Badge>

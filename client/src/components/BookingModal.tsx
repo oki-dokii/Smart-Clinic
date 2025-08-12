@@ -17,6 +17,20 @@ import {
 } from "lucide-react";
 import { format } from "date-fns";
 
+// Helper function to format doctor names properly (avoid double "Dr.")
+const formatDoctorName = (firstName: string, lastName: string) => {
+  const cleanFirstName = firstName?.startsWith('Dr. ') ? firstName.slice(4) : firstName;
+  return `Dr. ${cleanFirstName} ${lastName}`;
+};
+
+// Clinic location options
+const clinicLocations = [
+  "Bangalore Central Clinic, MG Road, Bangalore",
+  "Whitefield Branch, ITPL Main Road, Bangalore",
+  "Koramangala Clinic, 5th Block, Bangalore", 
+  "Electronic City Clinic, Phase 1, Bangalore"
+];
+
 interface BookingModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -306,7 +320,7 @@ export default function BookingModal({ isOpen, onClose, selectedAppointment, sel
                     <div className="flex items-center gap-2">
                       <User className="w-4 h-4" />
                       <div>
-                        <p className="font-medium">{doctor.firstName} {doctor.lastName}</p>
+                        <p className="font-medium">{formatDoctorName(doctor.firstName, doctor.lastName)}</p>
                         <p className="text-xs text-gray-500">{doctor.address}</p>
                       </div>
                     </div>
@@ -457,15 +471,44 @@ export default function BookingModal({ isOpen, onClose, selectedAppointment, sel
           {/* Location */}
           <div>
             <Label>Location</Label>
-            <div className="flex items-center gap-2">
-              <MapPin className="w-4 h-4 text-gray-500" />
-              <Input
-                value={bookingData.location}
-                onChange={(e) => setBookingData(prev => ({ ...prev, location: e.target.value }))}
-                placeholder="Appointment location"
-                readOnly={bookingData.type !== 'home_visit'}
-              />
-            </div>
+            {bookingData.type === 'home_visit' ? (
+              <div className="flex items-center gap-2">
+                <MapPin className="w-4 h-4 text-gray-500" />
+                <Input
+                  value={bookingData.location}
+                  onChange={(e) => setBookingData(prev => ({ ...prev, location: e.target.value }))}
+                  placeholder="Enter your home address"
+                />
+              </div>
+            ) : bookingData.type === 'video_call' ? (
+              <div className="flex items-center gap-2">
+                <Video className="w-4 h-4 text-gray-500" />
+                <Input
+                  value="Video Call - Online"
+                  readOnly
+                  className="bg-gray-50"
+                />
+              </div>
+            ) : (
+              <Select 
+                value={bookingData.location} 
+                onValueChange={(value) => setBookingData(prev => ({ ...prev, location: value }))}
+              >
+                <SelectTrigger>
+                  <div className="flex items-center gap-2">
+                    <MapPin className="w-4 h-4 text-gray-500" />
+                    <SelectValue placeholder="Select clinic location" />
+                  </div>
+                </SelectTrigger>
+                <SelectContent>
+                  {clinicLocations.map((location) => (
+                    <SelectItem key={location} value={location}>
+                      {location}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
           </div>
 
           {/* Symptoms */}
@@ -498,7 +541,10 @@ export default function BookingModal({ isOpen, onClose, selectedAppointment, sel
                 Booking Summary - Time Slot Available
               </h4>
               <div className="space-y-1 text-sm text-green-800">
-                <p><strong>Doctor:</strong> {doctors.find((d: Doctor) => d.id === bookingData.doctorId)?.firstName} {doctors.find((d: Doctor) => d.id === bookingData.doctorId)?.lastName}</p>
+                <p><strong>Doctor:</strong> {(() => {
+                  const doctor = doctors.find((d: Doctor) => d.id === bookingData.doctorId);
+                  return doctor ? formatDoctorName(doctor.firstName, doctor.lastName) : '';
+                })()}</p>
                 <p><strong>Date & Time:</strong> {selectedDate && format(selectedDate, "PPP")} at {selectedTime}</p>
                 <p><strong>Type:</strong> 
                   <Badge className={`ml-2 ${getTypeColor(bookingData.type)}`}>
