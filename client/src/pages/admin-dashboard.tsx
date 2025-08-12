@@ -3518,32 +3518,32 @@ export default function ClinicDashboard() {
                           return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
                         })
                         .map((appointment) => (
-                        <Card key={appointment.id} className="p-4">
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-4">
-                              <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${
+                        <Card key={appointment.id} className="p-4 card-with-buttons appointment-card">
+                          <div className="flex items-center justify-between min-w-0">
+                            <div className="flex items-center gap-4 min-w-0 flex-1">
+                              <div className={`w-12 h-12 rounded-lg flex items-center justify-center flex-shrink-0 ${
                                 appointment.status === 'pending_approval' ? 'bg-yellow-100' : 'bg-green-100'
                               }`}>
                                 <Calendar className={`w-6 h-6 ${
                                   appointment.status === 'pending_approval' ? 'text-yellow-600' : 'text-green-600'
                                 }`} />
                               </div>
-                              <div>
-                                <h3 className="font-semibold">
+                              <div className="min-w-0 flex-1">
+                                <h3 className="font-semibold truncate">
                                   {appointment.patient?.firstName} {appointment.patient?.lastName}
                                 </h3>
-                                <p className="text-sm text-gray-600">
+                                <p className="text-sm text-gray-600 truncate">
                                   Dr. {appointment.doctor?.firstName} {appointment.doctor?.lastName}
                                 </p>
-                                <p className="text-xs text-gray-500">
+                                <p className="text-xs text-gray-500 truncate">
                                   {new Date(appointment.appointmentDate).toLocaleDateString()} at {new Date(appointment.appointmentDate).toLocaleTimeString()}
                                 </p>
                                 {appointment.symptoms && (
-                                  <p className="text-xs text-blue-600 mt-1">Symptoms: {appointment.symptoms}</p>
+                                  <p className="text-xs text-blue-600 mt-1 truncate">Symptoms: {appointment.symptoms}</p>
                                 )}
                               </div>
                             </div>
-                            <div className="flex items-center gap-4">
+                            <div className="flex items-center gap-2 flex-shrink-0">
                               <div className="text-right">
                                 <Badge className={
                                   appointment.status === 'scheduled' ? 'bg-blue-100 text-blue-800' :
@@ -3554,11 +3554,11 @@ export default function ClinicDashboard() {
                                 }>
                                   {appointment.status === 'pending_approval' ? 'PENDING APPROVAL' : appointment.status}
                                 </Badge>
-                                <p className="text-sm text-gray-600 mt-1">
+                                <p className="text-sm text-gray-600 mt-1 hidden sm:block">
                                   {appointment.type || 'Consultation'}
                                 </p>
                               </div>
-                              <div className="flex gap-2">
+                              <div className="mobile-card-buttons">
                                 {appointment.status === 'pending_approval' ? (
                                   <>
                                     <Button
@@ -3904,25 +3904,25 @@ export default function ClinicDashboard() {
                                  address.includes(query);
                         })
                         .map((patient: any) => (
-                        <Card key={patient.id} className="p-4">
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-4">
-                              <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
+                        <Card key={patient.id} className="p-4 card-with-buttons patient-record-card">
+                          <div className="flex items-center justify-between min-w-0">
+                            <div className="flex items-center gap-4 min-w-0 flex-1">
+                              <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center flex-shrink-0">
                                 <User className="w-6 h-6 text-purple-600" />
                               </div>
-                              <div>
-                                <h3 className="font-semibold">
+                              <div className="min-w-0 flex-1">
+                                <h3 className="font-semibold truncate">
                                   {patient.firstName} {patient.lastName}
                                 </h3>
-                                <p className="text-sm text-gray-600">
+                                <p className="text-sm text-gray-600 truncate">
                                   {patient.phoneNumber}
                                 </p>
-                                <p className="text-xs text-gray-500">
+                                <p className="text-xs text-gray-500 truncate">
                                   Registered: {new Date(patient.createdAt).toLocaleDateString()}
                                 </p>
                               </div>
                             </div>
-                            <div className="flex items-center gap-4">
+                            <div className="flex items-center gap-2 flex-shrink-0">
                               <div className="text-right">
                                 <Badge className={
                                   patient.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
@@ -3930,12 +3930,12 @@ export default function ClinicDashboard() {
                                   {patient.isActive ? 'Active' : 'Inactive'}
                                 </Badge>
                                 {!patient.isApproved && (
-                                  <Badge className="bg-yellow-100 text-yellow-800 ml-2">
-                                    Pending Approval
+                                  <Badge className="bg-yellow-100 text-yellow-800 ml-1 text-xs hidden sm:inline-flex">
+                                    Pending
                                   </Badge>
                                 )}
                               </div>
-                              <div className="flex gap-2">
+                              <div className="mobile-card-buttons">
                                 <Button 
                                   size="sm" 
                                   variant="outline"

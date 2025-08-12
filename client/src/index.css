@@ -1181,4 +1181,106 @@
   .mobile-focus-ring:focus-visible {
     @apply ring-2 ring-blue-500 ring-offset-2 outline-none;
   }
+
+  /* CRITICAL: Fix button overflow in appointments and records sections */
+  
+  /* Appointment cards button container fix */
+  .appointment-card {
+    @apply overflow-hidden;
+  }
+
+  .appointment-card .flex.gap-2:last-child {
+    @apply flex-wrap justify-end min-w-0;
+    max-width: 100%;
+  }
+
+  .appointment-card .flex.gap-2 > button {
+    @apply text-xs px-2 py-1;
+    min-width: 70px;
+    white-space: nowrap;
+  }
+
+  /* Patient records button container fix */
+  .patient-record-card {
+    @apply overflow-hidden;
+  }
+
+  .patient-record-card .flex.gap-2:last-child {
+    @apply flex-wrap justify-end min-w-0;
+    max-width: 100%;
+  }
+
+  .patient-record-card .flex.gap-2 > button {
+    @apply text-xs px-2 py-1;
+    min-width: 65px;
+    white-space: nowrap;
+  }
+
+  /* Universal card button container fix */
+  .mobile-card-buttons {
+    @apply flex flex-wrap gap-1 justify-end min-w-0;
+    max-width: 200px;
+  }
+
+  .mobile-card-buttons button {
+    @apply text-xs px-2 py-1;
+    min-width: 60px;
+    max-width: 90px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  /* Specific button sizing for different actions */
+  .mobile-card-buttons button[data-testid*="reschedule"] {
+    min-width: 80px;
+  }
+
+  .mobile-card-buttons button[data-testid*="view-history"] {
+    min-width: 85px;
+  }
+
+  .mobile-card-buttons button[data-testid*="edit-profile"] {
+    min-width: 80px;
+  }
+
+  .mobile-card-buttons button[data-testid*="approve"] {
+    min-width: 70px;
+  }
+
+  .mobile-card-buttons button[data-testid*="deactivate"] {
+    min-width: 85px;
+  }
+
+  .mobile-card-buttons button[data-testid*="activate"] {
+    min-width: 70px;
+  }
+
+  /* Responsive button layout for very small screens */
+  @media (max-width: 480px) {
+    .mobile-card-buttons {
+      max-width: 150px;
+    }
+    
+    .mobile-card-buttons button {
+      @apply text-xs px-1 py-1;
+      min-width: 50px;
+      max-width: 70px;
+      font-size: 10px;
+    }
+  }
+
+  /* Container overflow protection */
+  .card-with-buttons {
+    @apply overflow-hidden;
+  }
+
+  .card-with-buttons .flex.justify-between {
+    @apply min-w-0;
+  }
+
+  .card-with-buttons .flex.justify-between > div:last-child {
+    @apply min-w-0 flex-shrink-0;
+    max-width: 50%;
+  }
 }
