@@ -176,11 +176,11 @@ export class SchedulerService {
   private calculateReminderTimes(frequency: string): { hour: number; minute: number }[] {
     switch (frequency) {
       case 'once_daily':
-        return [{ hour: 9, minute: 0 }]; // 9 AM
+        return [{ hour: 8, minute: 0 }]; // 8 AM - matches generateTimingsFromFrequency
       case 'twice_daily':
         return [
-          { hour: 9, minute: 0 },   // 9 AM
-          { hour: 21, minute: 0 }   // 9 PM
+          { hour: 8, minute: 0 },   // 8 AM
+          { hour: 20, minute: 0 }   // 8 PM
         ];
       case 'three_times_daily':
         return [
@@ -196,11 +196,11 @@ export class SchedulerService {
           { hour: 20, minute: 0 }   // 8 PM
         ];
       case 'weekly':
-        return [{ hour: 9, minute: 0 }]; // Once per week at 9 AM
+        return [{ hour: 8, minute: 0 }]; // Once per week at 8 AM
       case 'monthly':
-        return [{ hour: 9, minute: 0 }]; // Once per month at 9 AM
+        return [{ hour: 8, minute: 0 }]; // Once per month at 8 AM
       default:
-        return [{ hour: 9, minute: 0 }]; // Default to once daily
+        return [{ hour: 8, minute: 0 }]; // Default to once daily
     }
   }
 }

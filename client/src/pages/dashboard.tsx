@@ -288,35 +288,6 @@ export default function SmartClinicDashboard() {
     snoozeReminderMutation.mutate(reminderId);
   };
 
-  const formatTime = (time: string) => {
-    if (!time) return 'N/A';
-    
-    // Handle time string (HH:MM format)
-    if (time.includes(':') && !time.includes('T') && !time.includes('Z')) {
-      // Ensure proper time format
-      const timeFormatted = time.length === 5 ? `${time}:00` : time;
-      const date = new Date(`2000-01-01T${timeFormatted}`);
-      if (isNaN(date.getTime())) return time; // Return original if invalid
-      return date.toLocaleTimeString('en-IN', { 
-        hour: '2-digit', 
-        minute: '2-digit',
-        timeZone: 'Asia/Kolkata'
-      });
-    }
-    
-    // Handle full datetime string - convert from UTC to IST
-    const date = new Date(time);
-    if (isNaN(date.getTime())) return time; // Return original if invalid
-    
-    // Format in Indian Standard Time
-    return date.toLocaleTimeString('en-IN', { 
-      hour: '2-digit', 
-      minute: '2-digit',
-      hour12: true,
-      timeZone: 'Asia/Kolkata'
-    });
-  };
-
   // Add new reminder action handlers
   const handleSkipReminder = (reminderId: string) => {
     skipReminderMutation.mutate(reminderId);
