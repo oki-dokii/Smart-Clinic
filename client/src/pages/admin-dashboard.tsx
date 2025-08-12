@@ -1931,9 +1931,9 @@ export default function ClinicDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 mobile-page mobile-container">
       {/* Header */}
-      <header className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 mobile-px-4 sm:px-4 lg:px-6 mobile-py-3 sm:py-4">
+      <header className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 mobile-content sm:px-4 lg:px-6 mobile-py-3 sm:py-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2 sm:gap-4">
             <div className="flex items-center gap-2 sm:gap-3">
@@ -2592,7 +2592,7 @@ export default function ClinicDashboard() {
 
       {/* Navigation Tabs */}
       <div className="nav-tabs mobile-nav-tabs">
-        <div className="mobile-px-4 sm:px-4 lg:px-6">
+        <div className="mobile-content sm:px-4 lg:px-6">
           <Tabs defaultValue="dashboard" className="w-full">
             <TabsList className="mobile-tabs-list grid w-full grid-cols-4 sm:grid-cols-8 bg-transparent border-0 h-auto p-0 overflow-x-auto mobile-scrollbar-hide">
               <TabsTrigger
@@ -2652,20 +2652,20 @@ export default function ClinicDashboard() {
             </TabsList>
 
             <TabsContent value="dashboard" className="mt-0">
-              <main className="mobile-px-4 sm:p-4 lg:p-6 mobile-py-4">
+              <main className="mobile-content sm:p-4 lg:p-6 mobile-safe-area">
                 {/* Key Metrics */}
-                <div className="mobile-metrics-grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 mobile-gap-3 sm:gap-6 mobile-mb-6 sm:mb-8">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-6 sm:mb-8">
                   {/* Patients Today */}
                   <Card className="dashboard-card stats-card">
                     <CardHeader className="pb-3">
-                      <CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-400 flex items-center gap-2">
-                        <Users className="w-4 h-4 text-blue-500 dark:text-blue-400" />
+                      <CardTitle className="mobile-card-title sm:text-sm font-medium text-gray-600 dark:text-gray-400 flex items-center gap-2">
+                        <Users className="w-5 h-5 sm:w-4 sm:h-4 text-blue-500 dark:text-blue-400" />
                         Patients Today
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
                       <div className="flex items-center gap-2 mb-2">
-                        <span className="stat-number">{statsLoading ? '...' : (stats?.patientsToday || 0)}</span>
+                        <span className="stat-number text-2xl sm:text-3xl">{statsLoading ? '...' : (stats?.patientsToday || 0)}</span>
                         <Badge className={`text-xs flex items-center gap-1 ${
                           stats?.completedAppointments && stats?.patientsToday 
                             ? (stats.completedAppointments / stats.patientsToday > 0.7 ? 'stat-change-positive' : 'bg-blue-100 text-blue-800')
@@ -2678,7 +2678,7 @@ export default function ClinicDashboard() {
                           }
                         </Badge>
                       </div>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">
+                      <p className="mobile-body-text text-gray-600 dark:text-gray-400">
                         {stats?.completedAppointments || 0} completed, {(stats?.patientsToday || 0) - (stats?.completedAppointments || 0)} pending
                       </p>
                     </CardContent>
@@ -2687,14 +2687,14 @@ export default function ClinicDashboard() {
                   {/* Queue Length */}
                   <Card className="dashboard-card alert-card">
                     <CardHeader className="pb-3">
-                      <CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-400 flex items-center gap-2">
-                        <Clock className="w-4 h-4 text-orange-500 dark:text-orange-400" />
+                      <CardTitle className="mobile-card-title sm:text-sm font-medium text-gray-600 dark:text-gray-400 flex items-center gap-2">
+                        <Clock className="w-5 h-5 sm:w-4 sm:h-4 text-orange-500 dark:text-orange-400" />
                         Queue Length
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
                       <div className="flex items-center gap-2 mb-2">
-                        <span className="stat-number text-orange-600">{queueTokens ? queueTokens.length : 0}</span>
+                        <span className="stat-number text-2xl sm:text-3xl text-orange-600">{queueTokens ? queueTokens.length : 0}</span>
                         {queueTokens && queueTokens.length > 5 && (
                           <Badge className="bg-red-500 text-white text-xs">Urgent</Badge>
                         )}
@@ -2705,7 +2705,7 @@ export default function ClinicDashboard() {
                           <Badge className="bg-green-500 text-white text-xs">Light</Badge>
                         )}
                       </div>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">Current waiting patients</p>
+                      <p className="mobile-body-text text-gray-600 dark:text-gray-400">Current waiting patients</p>
                     </CardContent>
                   </Card>
 
@@ -2791,10 +2791,10 @@ export default function ClinicDashboard() {
                         <Dialog open={isDelayModalOpen} onOpenChange={setIsDelayModalOpen}>
                           <DialogTrigger asChild>
                             <Button 
-                              className="action-btn-primary h-16 sm:h-20 flex-col gap-1 sm:gap-2 bg-orange-600 hover:bg-orange-700 text-xs sm:text-sm"
+                              className="mobile-btn action-btn-primary h-16 sm:h-20 flex-col gap-1 sm:gap-2 bg-orange-600 hover:bg-orange-700 text-base sm:text-sm"
                               data-testid="button-doctor-delay"
                             >
-                              <Clock className="w-4 h-4 sm:w-6 sm:h-6" />
+                              <Clock className="w-5 h-5 sm:w-6 sm:h-6" />
                               <span className="text-center">Doctor Running Late</span>
                             </Button>
                           </DialogTrigger>

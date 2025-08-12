@@ -754,11 +754,25 @@
 @media (max-width: 640px) {
   /* Additional mobile typography */
   .mobile-subheading {
-    @apply text-sm font-semibold text-gray-900 dark:text-white;
+    @apply text-base font-semibold text-gray-900 dark:text-white !important;
   }
   
   .mobile-caption {
-    @apply text-xs text-gray-500 dark:text-gray-400;
+    @apply text-sm text-gray-500 dark:text-gray-400 !important;
+  }
+  
+  /* Mobile body text improvements */
+  .mobile-body-text {
+    @apply text-base leading-relaxed !important;
+  }
+  
+  /* Mobile card text */
+  .mobile-card-title {
+    @apply text-lg font-semibold !important;
+  }
+  
+  .mobile-card-content {
+    @apply text-base !important;
   }
   
   /* Mobile spacing enhancements */
@@ -822,7 +836,29 @@
   
   /* Mobile button improvements */
   .mobile-btn {
-    @apply min-h-12 text-sm px-4 py-3;
+    @apply min-h-12 text-base px-4 py-3 !important;
+  }
+  
+  /* Critical mobile layout fixes */
+  .mobile-container {
+    max-width: 100vw;
+    overflow-x: hidden;
+  }
+  
+  .mobile-page {
+    min-height: 100vh;
+    padding-bottom: 60px; /* Space for mobile browser UI */
+  }
+  
+  .mobile-content {
+    padding: 16px;
+    margin: 0;
+    width: 100%;
+    box-sizing: border-box;
+  }
+  
+  .mobile-safe-area {
+    padding-bottom: env(safe-area-inset-bottom);
   }
   
   /* Mobile form improvements */
