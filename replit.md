@@ -16,14 +16,19 @@ Preferred communication style: Simple, everyday language.
   - Patient medicines now work completely independently from admin/clinic systems
   - Fixed both "Add Medicine" and "Upload List" functionality for patients
   - Backend returns flat reminder properties (medicineName, dosage) which frontend now correctly accesses
-  - **Indian Standard Time Fix**: Fixed timezone handling for medicine reminders:
-    - Server now properly converts IST to UTC when storing reminders (IST - 5:30 hours)
-    - Frontend displays all times in Indian Standard Time (Asia/Kolkata)
-    - Fixed time mismatch issue between "My Medicines" and "Today's Reminders"
-    - All medicine reminder times now consistently show in IST format
-    - Email notifications now correctly format reminder times in IST (Asia/Kolkata timezone)
+  - **Indian Standard Time Fix**: Fixed comprehensive timezone handling across the entire system:
+    - **Medicine Reminders**: Server properly converts IST to UTC when storing reminders (IST - 5:30 hours)
+    - **Medicine Reminders**: Frontend displays all times in Indian Standard Time (Asia/Kolkata)
+    - **Medicine Reminders**: Fixed time mismatch issue between "My Medicines" and "Today's Reminders"
+    - **Medicine Reminders**: All medicine reminder times consistently show in IST format
+    - **Medicine Reminders**: Email notifications correctly format reminder times in IST (Asia/Kolkata timezone)
+    - **Appointment Emails**: Fixed ALL appointment email notifications to use proper IST timezone formatting
+    - **Appointment Emails**: Appointment approval, rejection, reschedule, and SMS notifications now show correct IST times
+    - **Appointment Emails**: Admin dashboard stats logging now uses IST for date display consistency
+    - **Appointment Emails**: Test endpoints also updated to use proper IST timezone formatting
     - Added formatTime helper function to dashboard for consistent time display across all pages
     - Fixed scheduler service to properly format email reminder times in Indian Standard Time
+    - Both medicine AND appointment email systems now use consistent 'en-IN' locale with 'Asia/Kolkata' timezone
     - Existing reminders created before timezone fix may show incorrect times (stored as UTC but intended as IST)
 - **Mobile UI Optimization**: Applied comprehensive mobile-first design improvements:
   - Fixed critical button overflow issues in admin dashboard appointments and patient records sections

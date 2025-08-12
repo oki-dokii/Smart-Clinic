@@ -73,8 +73,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         const emailResult = await emailService.sendAppointmentApproved(patient.email, {
           doctorName: `Dr. ${doctor.firstName} ${doctor.lastName}`,
-          appointmentDate: appointmentDate.toLocaleDateString(),
-          appointmentTime: appointmentDate.toLocaleTimeString(),
+          appointmentDate: appointmentDate.toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata' }),
+          appointmentTime: appointmentDate.toLocaleTimeString('en-IN', { 
+            timeZone: 'Asia/Kolkata',
+            hour: '2-digit',
+            minute: '2-digit'
+          }),
           clinic: 'SmartClinic'
         });
         
@@ -957,7 +961,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Send SMS notification to patient
       try {
         const doctor = await storage.getUser(appointmentDetails.doctorId);
-        await smsService.send(patientInfo.phoneNumber, `Your appointment request with Dr. ${doctor?.firstName} ${doctor?.lastName} for ${new Date(appointmentDetails.preferredDate).toLocaleDateString()} has been submitted. Appointment ID: ${appointment.id}`);
+        await smsService.send(patientInfo.phoneNumber, `Your appointment request with Dr. ${doctor?.firstName} ${doctor?.lastName} for ${new Date(appointmentDetails.preferredDate).toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata' })} has been submitted. Appointment ID: ${appointment.id}`);
         console.log('🔥 SMS notification sent to patient');
       } catch (smsError) {
         console.error('SMS notification failed:', smsError);
@@ -1034,8 +1038,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         if (status === 'approved') {
           await emailService.sendAppointmentApproved(patient?.email || '', {
             doctorName: `Dr. ${doctor?.firstName} ${doctor?.lastName}`,
-            appointmentDate: new Date(updateData.appointmentDate || appointment.appointmentDate).toLocaleDateString(),
-            appointmentTime: new Date(updateData.appointmentDate || appointment.appointmentDate).toLocaleTimeString(),
+            appointmentDate: new Date(updateData.appointmentDate || appointment.appointmentDate).toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata' }),
+            appointmentTime: new Date(updateData.appointmentDate || appointment.appointmentDate).toLocaleTimeString('en-IN', { 
+              timeZone: 'Asia/Kolkata',
+              hour: '2-digit',
+              minute: '2-digit'
+            }),
             clinic: 'SmartClinic'
           });
         } else {
@@ -1214,11 +1222,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
           
           console.log('🔥 APPROVAL - Sending email to:', patient.email);
           
-          // Send email notification
+          // Send email notification with IST timezone
           const emailResult = await emailService.sendAppointmentApproved(patient.email, {
             doctorName: `Dr. ${doctor.firstName} ${doctor.lastName}`,
-            appointmentDate: appointmentDate.toLocaleDateString(),
-            appointmentTime: appointmentDate.toLocaleTimeString(),
+            appointmentDate: appointmentDate.toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata' }),
+            appointmentTime: appointmentDate.toLocaleTimeString('en-IN', { 
+              timeZone: 'Asia/Kolkata',
+              hour: '2-digit',
+              minute: '2-digit'
+            }),
             clinic: 'SmartClinic'
           });
           
@@ -1232,7 +1244,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           
           // Send SMS notification (keeping existing SMS functionality)
           try {
-            const message = `Good news! Your appointment with Dr. ${doctor.firstName} ${doctor.lastName} on ${appointmentDate.toLocaleDateString()} at ${appointmentDate.toLocaleTimeString()} has been approved. Please arrive 15 minutes early.`;
+            const message = `Good news! Your appointment with Dr. ${doctor.firstName} ${doctor.lastName} on ${appointmentDate.toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata' })} at ${appointmentDate.toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit' })} has been approved. Please arrive 15 minutes early.`;
             await smsService.send(patient.phoneNumber, message);
             console.log('🔥 APPROVAL - SMS sent to:', patient.phoneNumber);
           } catch (smsError) {
@@ -1284,7 +1296,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         if (patient && doctor) {
           const appointmentDate = new Date(appointment.appointmentDate);
-          const message = `We're sorry, but your appointment request with Dr. ${doctor.firstName} ${doctor.lastName} on ${appointmentDate.toLocaleDateString()} could not be approved. Please contact the clinic to schedule an alternative time.`;
+          const message = `We're sorry, but your appointment request with Dr. ${doctor.firstName} ${doctor.lastName} on ${appointmentDate.toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata' })} could not be approved. Please contact the clinic to schedule an alternative time.`;
           
           await smsService.sendSMS(patient.phoneNumber, message);
           console.log('🔥 Rejection SMS sent to:', patient.phoneNumber);
@@ -2562,8 +2574,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log('🔥 DASHBOARD STATS - Date range:', { 
         today: today.toISOString(), 
         tomorrow: tomorrow.toISOString(),
-        todayLocal: today.toLocaleDateString(),
-        tomorrowLocal: tomorrow.toLocaleDateString()
+        todayLocal: today.toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata' }),
+        tomorrowLocal: tomorrow.toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata' })
       });
 
       // Fetch stats - all clinics for super admin, specific clinic for regular admin
