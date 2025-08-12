@@ -2052,24 +2052,47 @@ export class DatabaseStorage implements IStorage {
 
   async getQueueTokensByClinic(clinicId: string): Promise<(QueueToken & { patient: User; doctor: User })[]> {
     try {
-      // Use raw SQL to avoid Drizzle complex join issues
-      const result = await db.execute(sql`
-        SELECT 
-          qt.*,
-          p.id as patient_id, p.first_name as patient_first_name, p.last_name as patient_last_name, 
-          p.phone_number as patient_phone, p.role as patient_role,
-          d.id as doctor_id, d.first_name as doctor_first_name, d.last_name as doctor_last_name, 
-          d.phone_number as doctor_phone, d.role as doctor_role
-        FROM queue_tokens qt
-        JOIN users p ON qt.patient_id = p.id
-        JOIN users d ON qt.doctor_id = d.id
-        WHERE qt.clinic_id = ${clinicId}
-        ORDER BY qt.token_number ASC
-      `);
+      // Use manual join with Drizzle ORM syntax instead of raw SQL
+      const queueTokensWithUsers = await db.select({
+        // Queue token fields
+        id: queueTokens.id,
+        tokenNumber: queueTokens.tokenNumber,
+        patientId: queueTokens.patientId,
+        doctorId: queueTokens.doctorId,
+        clinicId: queueTokens.clinicId,
+        appointmentId: queueTokens.appointmentId,
+        status: queueTokens.status,
+        estimatedWaitTime: queueTokens.estimatedWaitTime,
+        calledAt: queueTokens.calledAt,
+        completedAt: queueTokens.completedAt,
+        priority: queueTokens.priority,
+        createdAt: queueTokens.createdAt,
+        // Patient fields
+        patientFirstName: sql<string>`${users}.first_name`,
+        patientLastName: sql<string>`${users}.last_name`,
+        patientPhone: sql<string>`${users}.phone_number`,
+        patientEmail: sql<string>`${users}.email`,
+        patientRole: sql<string>`${users}.role`,
+        // Doctor fields  
+        doctorFirstName: sql<string>`d.first_name`,
+        doctorLastName: sql<string>`d.last_name`,
+        doctorPhone: sql<string>`d.phone_number`,
+        doctorEmail: sql<string>`d.email`,
+        doctorRole: sql<string>`d.role`,
+      })
+      .from(queueTokens)
+      .innerJoin(users, eq(queueTokens.patientId, users.id))
+      .innerJoin(sql`users as d`, sql`${queueTokens.doctorId} = d.id`)
+      .where(eq(queueTokens.clinicId, clinicId))
+      .orderBy(asc(queueTokens.tokenNumber));
 
-      console.log('🔥 QUEUE CLINIC DEBUG - Raw SQL returned:', result.length, 'rows');
+      console.log('🔥 QUEUE CLINIC DEBUG - Drizzle ORM returned:', queueTokensWithUsers.length, 'items');
+      console.log('🔥 QUEUE CLINIC DEBUG - First item sample:', queueTokensWithUsers[0]);
 
-      const enrichedTokens = result.map((row: any) => ({
+      // Transform to expected format
+      const rows = queueTokensWithUsers;
+
+      const enrichedTokens = rows.map((row: any) => ({
         // Queue token data
         id: row.id,
         tokenNumber: row.token_number,

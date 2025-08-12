@@ -1,0 +1,629 @@
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AdvisorMetrics Pro - Team Performance Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        'inter': ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        primary: '#1E40AF',
+                        secondary: '#6366F1',
+                        success: '#10B981',
+                        warning: '#F59E0B',
+                        danger: '#EF4444',
+                    }
+                }
+            }
+        };
+    </script>
+</head>
+<body class="bg-slate-50 font-inter">
+    <!-- @COMPONENT: AppLayout -->
+    <div class="flex min-h-screen">
+        <!-- @COMPONENT: Sidebar -->
+        <aside class="w-64 bg-white shadow-lg border-r border-slate-200 fixed h-full z-10 lg:relative lg:z-0" id="sidebar">
+            <div class="p-6 border-b border-slate-200">
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 bg-primary rounded-lg flex items-center justify-center">
+                        <i class="fas fa-chart-line text-white text-lg"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-xl font-bold text-slate-900">AdvisorMetrics</h1>
+                        <p class="text-sm text-slate-500">Pro Dashboard</p>
+                    </div>
+                </div>
+            </div>
+            
+            <nav class="p-4 space-y-2">
+                <a href="#" class="flex items-center space-x-3 px-4 py-3 bg-primary text-white rounded-lg">
+                    <i class="fas fa-tachometer-alt"></i>
+                    <span class="font-medium">Dashboard</span>
+                </a>
+                <a href="#" class="flex items-center space-x-3 px-4 py-3 text-slate-600 hover:bg-slate-100 rounded-lg transition-colors">
+                    <i class="fas fa-users"></i>
+                    <span>Team Performance</span>
+                </a>
+                <a href="#" class="flex items-center space-x-3 px-4 py-3 text-slate-600 hover:bg-slate-100 rounded-lg transition-colors">
+                    <i class="fas fa-user-tie"></i>
+                    <span>Individual Metrics</span>
+                </a>
+                <a href="#" class="flex items-center space-x-3 px-4 py-3 text-slate-600 hover:bg-slate-100 rounded-lg transition-colors">
+                    <i class="fas fa-chart-bar"></i>
+                    <span>Analytics</span>
+                </a>
+                <a href="#" class="flex items-center space-x-3 px-4 py-3 text-slate-600 hover:bg-slate-100 rounded-lg transition-colors">
+                    <i class="fas fa-file-alt"></i>
+                    <span>Reports</span>
+                </a>
+                
+                <div class="pt-4 border-t border-slate-200 mt-4">
+                    <a href="#" class="flex items-center space-x-3 px-4 py-3 text-slate-600 hover:bg-slate-100 rounded-lg transition-colors">
+                        <i class="fas fa-user-cog"></i>
+                        <span>User Management</span>
+                    </a>
+                    <a href="#" class="flex items-center space-x-3 px-4 py-3 text-slate-600 hover:bg-slate-100 rounded-lg transition-colors">
+                        <i class="fas fa-shield-alt"></i>
+                        <span>Security</span>
+                    </a>
+                    <a href="#" class="flex items-center space-x-3 px-4 py-3 text-slate-600 hover:bg-slate-100 rounded-lg transition-colors">
+                        <i class="fas fa-cog"></i>
+                        <span>Settings</span>
+                    </a>
+                </div>
+            </nav>
+        </aside>
+        <!-- @END_COMPONENT: Sidebar -->
+
+        <!-- @COMPONENT: MainContent -->
+        <main class="flex-1 lg:ml-0 ml-64">
+            <!-- @COMPONENT: Header -->
+            <header class="bg-white shadow-sm border-b border-slate-200 p-4 lg:p-6">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center space-x-4">
+                        <button class="lg:hidden text-slate-600" onclick="toggleSidebar()">
+                            <i class="fas fa-bars text-xl"></i>
+                        </button>
+                        <div>
+                            <h2 class="text-2xl font-bold text-slate-900">Team Performance Dashboard</h2>
+                            <p class="text-slate-600">Monitor and analyze your team's key performance indicators</p>
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-center space-x-4">
+                        <!-- @COMPONENT: SSO UserProfile -->
+                        <div class="hidden md:flex items-center space-x-3 bg-slate-100 rounded-lg px-4 py-2">
+                            <i class="fas fa-shield-alt text-success"></i>
+                            <span class="text-sm font-medium text-slate-700">SSO Authenticated</span>
+                        </div>
+                        
+                        <div class="flex items-center space-x-3">
+                            <div class="text-right hidden sm:block">
+                                <p class="text-sm font-medium text-slate-900" data-bind="user.name">Sarah Johnson</p>
+                                <p class="text-xs text-slate-500" data-bind="user.role">Branch Manager</p>
+                            </div>
+                            <!-- Professional headshot of a female business executive -->
+                            <img src="https://pixabay.com/get/gb7f77f212c3e68e2cbcccaea3002a1aada33068aeac9d76b0ca46a381500e140d5a74283d1e97f1b414b073ea8f7fa30ff863f8883e48b98ae0f42cfca7cacb7_1280.jpg" 
+                                 alt="User profile" 
+                                 class="w-10 h-10 rounded-full object-cover border-2 border-slate-200"
+                                 data-mock-image="true" 
+                                 data-implementation="Use user profile image from SSO provider">
+                        </div>
+                        
+                        <button class="text-slate-600 hover:text-slate-900 transition-colors">
+                            <i class="fas fa-sign-out-alt text-lg"></i>
+                        </button>
+                    </div>
+                </div>
+            </header>
+            <!-- @END_COMPONENT: Header -->
+
+            <!-- @COMPONENT: Dashboard Content -->
+            <div class="p-4 lg:p-6 space-y-6">
+                <!-- @COMPONENT: KPI Cards -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-slate-600 text-sm font-medium">Total Revenue</p>
+                                <p class="text-3xl font-bold text-slate-900" data-bind="metrics.totalRevenue">$2.4M</p>
+                                <div class="flex items-center mt-2">
+                                    <i class="fas fa-arrow-up text-success text-sm"></i>
+                                    <span class="text-success text-sm font-medium ml-1">+12.5%</span>
+                                    <span class="text-slate-500 text-sm ml-2">vs last month</span>
+                                </div>
+                            </div>
+                            <div class="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
+                                <i class="fas fa-dollar-sign text-primary text-xl"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-slate-600 text-sm font-medium">New Clients</p>
+                                <p class="text-3xl font-bold text-slate-900" data-bind="metrics.newClients">147</p>
+                                <div class="flex items-center mt-2">
+                                    <i class="fas fa-arrow-up text-success text-sm"></i>
+                                    <span class="text-success text-sm font-medium ml-1">+8.2%</span>
+                                    <span class="text-slate-500 text-sm ml-2">vs last month</span>
+                                </div>
+                            </div>
+                            <div class="w-12 h-12 bg-secondary/10 rounded-lg flex items-center justify-center">
+                                <i class="fas fa-user-plus text-secondary text-xl"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-slate-600 text-sm font-medium">Avg Deal Size</p>
+                                <p class="text-3xl font-bold text-slate-900" data-bind="metrics.avgDealSize">$16.3K</p>
+                                <div class="flex items-center mt-2">
+                                    <i class="fas fa-arrow-down text-danger text-sm"></i>
+                                    <span class="text-danger text-sm font-medium ml-1">-2.1%</span>
+                                    <span class="text-slate-500 text-sm ml-2">vs last month</span>
+                                </div>
+                            </div>
+                            <div class="w-12 h-12 bg-warning/10 rounded-lg flex items-center justify-center">
+                                <i class="fas fa-handshake text-warning text-xl"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-slate-600 text-sm font-medium">Team Performance</p>
+                                <p class="text-3xl font-bold text-slate-900" data-bind="metrics.teamScore">94.2%</p>
+                                <div class="flex items-center mt-2">
+                                    <i class="fas fa-arrow-up text-success text-sm"></i>
+                                    <span class="text-success text-sm font-medium ml-1">+5.7%</span>
+                                    <span class="text-slate-500 text-sm ml-2">vs last month</span>
+                                </div>
+                            </div>
+                            <div class="w-12 h-12 bg-success/10 rounded-lg flex items-center justify-center">
+                                <i class="fas fa-trophy text-success text-xl"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- @END_COMPONENT: KPI Cards -->
+
+                <!-- @COMPONENT: Charts Section -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <!-- Revenue Trend Chart -->
+                    <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+                        <div class="flex items-center justify-between mb-6">
+                            <h3 class="text-lg font-semibold text-slate-900">Revenue Trend</h3>
+                            <select class="text-sm border border-slate-300 rounded-lg px-3 py-2 bg-white">
+                                <option>Last 6 months</option>
+                                <option>Last 12 months</option>
+                                <option>Year to date</option>
+                            </select>
+                        </div>
+                        <canvas id="revenueChart" class="w-full h-64"></canvas>
+                    </div>
+
+                    <!-- Performance by Advisor Chart -->
+                    <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+                        <div class="flex items-center justify-between mb-6">
+                            <h3 class="text-lg font-semibold text-slate-900">Top Performers</h3>
+                            <button class="text-sm text-primary hover:text-primary/80 font-medium">View All</button>
+                        </div>
+                        <canvas id="performanceChart" class="w-full h-64"></canvas>
+                    </div>
+                </div>
+                <!-- @END_COMPONENT: Charts Section -->
+
+                <!-- @COMPONENT: Team Performance Table -->
+                <div class="bg-white rounded-xl shadow-sm border border-slate-200">
+                    <div class="p-6 border-b border-slate-200">
+                        <div class="flex items-center justify-between">
+                            <h3 class="text-lg font-semibold text-slate-900">Team Performance Overview</h3>
+                            <div class="flex items-center space-x-3">
+                                <button class="flex items-center space-x-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors" data-event="click:exportReport">
+                                    <i class="fas fa-download"></i>
+                                    <span class="text-sm font-medium">Export</span>
+                                </button>
+                                <div class="relative">
+                                    <input type="text" placeholder="Search advisors..." class="pl-10 pr-4 py-2 border border-slate-300 rounded-lg text-sm w-64">
+                                    <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="overflow-x-auto">
+                        <table class="w-full">
+                            <thead class="bg-slate-50 border-b border-slate-200">
+                                <tr>
+                                    <th class="text-left py-4 px-6 text-sm font-semibold text-slate-900">Advisor</th>
+                                    <th class="text-left py-4 px-6 text-sm font-semibold text-slate-900">Revenue</th>
+                                    <th class="text-left py-4 px-6 text-sm font-semibold text-slate-900">Clients</th>
+                                    <th class="text-left py-4 px-6 text-sm font-semibold text-slate-900">Avg Deal</th>
+                                    <th class="text-left py-4 px-6 text-sm font-semibold text-slate-900">Performance</th>
+                                    <th class="text-left py-4 px-6 text-sm font-semibold text-slate-900">Status</th>
+                                    <th class="text-left py-4 px-6 text-sm font-semibold text-slate-900">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-200">
+                                <!-- @MAP: advisors.map(advisor => ( -->
+                                <tr class="hover:bg-slate-50" data-mock="true">
+                                    <td class="py-4 px-6">
+                                        <div class="flex items-center space-x-3">
+                                            <!-- Professional headshot of a male financial advisor -->
+                                            <img src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=60&h=60" alt="Advisor" class="w-10 h-10 rounded-full object-cover">
+                                            <div>
+                                                <p class="font-medium text-slate-900" data-bind="advisor.name">Michael Chen</p>
+                                                <p class="text-sm text-slate-500" data-bind="advisor.role">Senior Advisor</p>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="py-4 px-6">
+                                        <span class="font-semibold text-slate-900" data-bind="advisor.revenue">$487K</span>
+                                    </td>
+                                    <td class="py-4 px-6">
+                                        <span class="text-slate-900" data-bind="advisor.clients">32</span>
+                                    </td>
+                                    <td class="py-4 px-6">
+                                        <span class="text-slate-900" data-bind="advisor.avgDeal">$15.2K</span>
+                                    </td>
+                                    <td class="py-4 px-6">
+                                        <div class="flex items-center space-x-2">
+                                            <div class="w-24 bg-slate-200 rounded-full h-2">
+                                                <div class="bg-success h-2 rounded-full" style="width: 92%"></div>
+                                            </div>
+                                            <span class="text-sm font-medium text-slate-900">92%</span>
+                                        </div>
+                                    </td>
+                                    <td class="py-4 px-6">
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-success/10 text-success">
+                                            Exceeding
+                                        </span>
+                                    </td>
+                                    <td class="py-4 px-6">
+                                        <button class="text-slate-600 hover:text-slate-900 transition-colors">
+                                            <i class="fas fa-ellipsis-h"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+
+                                <tr class="hover:bg-slate-50" data-mock="true">
+                                    <td class="py-4 px-6">
+                                        <div class="flex items-center space-x-3">
+                                            <!-- Professional headshot of a female financial advisor -->
+                                            <img src="https://images.unsplash.com/photo-1438761681033-6461ffad8d80?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=60&h=60" alt="Advisor" class="w-10 h-10 rounded-full object-cover">
+                                            <div>
+                                                <p class="font-medium text-slate-900" data-bind="advisor.name">Lisa Rodriguez</p>
+                                                <p class="text-sm text-slate-500" data-bind="advisor.role">Financial Advisor</p>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="py-4 px-6">
+                                        <span class="font-semibold text-slate-900" data-bind="advisor.revenue">$423K</span>
+                                    </td>
+                                    <td class="py-4 px-6">
+                                        <span class="text-slate-900" data-bind="advisor.clients">28</span>
+                                    </td>
+                                    <td class="py-4 px-6">
+                                        <span class="text-slate-900" data-bind="advisor.avgDeal">$15.1K</span>
+                                    </td>
+                                    <td class="py-4 px-6">
+                                        <div class="flex items-center space-x-2">
+                                            <div class="w-24 bg-slate-200 rounded-full h-2">
+                                                <div class="bg-success h-2 rounded-full" style="width: 89%"></div>
+                                            </div>
+                                            <span class="text-sm font-medium text-slate-900">89%</span>
+                                        </div>
+                                    </td>
+                                    <td class="py-4 px-6">
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-success/10 text-success">
+                                            Exceeding
+                                        </span>
+                                    </td>
+                                    <td class="py-4 px-6">
+                                        <button class="text-slate-600 hover:text-slate-900 transition-colors">
+                                            <i class="fas fa-ellipsis-h"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+
+                                <tr class="hover:bg-slate-50" data-mock="true">
+                                    <td class="py-4 px-6">
+                                        <div class="flex items-center space-x-3">
+                                            <!-- Professional headshot of a male financial advisor with glasses -->
+                                            <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=60&h=60" alt="Advisor" class="w-10 h-10 rounded-full object-cover">
+                                            <div>
+                                                <p class="font-medium text-slate-900" data-bind="advisor.name">David Thompson</p>
+                                                <p class="text-sm text-slate-500" data-bind="advisor.role">Junior Advisor</p>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="py-4 px-6">
+                                        <span class="font-semibold text-slate-900" data-bind="advisor.revenue">$312K</span>
+                                    </td>
+                                    <td class="py-4 px-6">
+                                        <span class="text-slate-900" data-bind="advisor.clients">22</span>
+                                    </td>
+                                    <td class="py-4 px-6">
+                                        <span class="text-slate-900" data-bind="advisor.avgDeal">$14.2K</span>
+                                    </td>
+                                    <td class="py-4 px-6">
+                                        <div class="flex items-center space-x-2">
+                                            <div class="w-24 bg-slate-200 rounded-full h-2">
+                                                <div class="bg-warning h-2 rounded-full" style="width: 76%"></div>
+                                            </div>
+                                            <span class="text-sm font-medium text-slate-900">76%</span>
+                                        </div>
+                                    </td>
+                                    <td class="py-4 px-6">
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-warning/10 text-warning">
+                                            Meeting
+                                        </span>
+                                    </td>
+                                    <td class="py-4 px-6">
+                                        <button class="text-slate-600 hover:text-slate-900 transition-colors">
+                                            <i class="fas fa-ellipsis-h"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+
+                                <tr class="hover:bg-slate-50" data-mock="true">
+                                    <td class="py-4 px-6">
+                                        <div class="flex items-center space-x-3">
+                                            <!-- Professional headshot of a female financial advisor with dark hair -->
+                                            <img src="https://images.unsplash.com/photo-1487412720507-e7ab37603c6f?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=60&h=60" alt="Advisor" class="w-10 h-10 rounded-full object-cover">
+                                            <div>
+                                                <p class="font-medium text-slate-900" data-bind="advisor.name">Amanda Foster</p>
+                                                <p class="text-sm text-slate-500" data-bind="advisor.role">Financial Advisor</p>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="py-4 px-6">
+                                        <span class="font-semibold text-slate-900" data-bind="advisor.revenue">$298K</span>
+                                    </td>
+                                    <td class="py-4 px-6">
+                                        <span class="text-slate-900" data-bind="advisor.clients">19</span>
+                                    </td>
+                                    <td class="py-4 px-6">
+                                        <span class="text-slate-900" data-bind="advisor.avgDeal">$15.7K</span>
+                                    </td>
+                                    <td class="py-4 px-6">
+                                        <div class="flex items-center space-x-2">
+                                            <div class="w-24 bg-slate-200 rounded-full h-2">
+                                                <div class="bg-danger h-2 rounded-full" style="width: 62%"></div>
+                                            </div>
+                                            <span class="text-sm font-medium text-slate-900">62%</span>
+                                        </div>
+                                    </td>
+                                    <td class="py-4 px-6">
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-danger/10 text-danger">
+                                            Needs Improvement
+                                        </span>
+                                    </td>
+                                    <td class="py-4 px-6">
+                                        <button class="text-slate-600 hover:text-slate-900 transition-colors">
+                                            <i class="fas fa-ellipsis-h"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                                <!-- @END_MAP )) -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <!-- @END_COMPONENT: Team Performance Table -->
+
+                <!-- @COMPONENT: User Management Panel -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+                        <div class="flex items-center justify-between mb-6">
+                            <h3 class="text-lg font-semibold text-slate-900">Role-Based Access Control</h3>
+                            <button class="text-sm text-primary hover:text-primary/80 font-medium">Manage Roles</button>
+                        </div>
+                        
+                        <div class="space-y-4">
+                            <div class="flex items-center justify-between p-4 bg-slate-50 rounded-lg">
+                                <div class="flex items-center space-x-3">
+                                    <div class="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
+                                        <i class="fas fa-user-shield text-primary"></i>
+                                    </div>
+                                    <div>
+                                        <p class="font-medium text-slate-900">Admin Users</p>
+                                        <p class="text-sm text-slate-600">Full system access</p>
+                                    </div>
+                                </div>
+                                <span class="bg-primary text-white px-3 py-1 rounded-full text-sm font-medium">3</span>
+                            </div>
+                            
+                            <div class="flex items-center justify-between p-4 bg-slate-50 rounded-lg">
+                                <div class="flex items-center space-x-3">
+                                    <div class="w-10 h-10 bg-secondary/10 rounded-lg flex items-center justify-center">
+                                        <i class="fas fa-users-cog text-secondary"></i>
+                                    </div>
+                                    <div>
+                                        <p class="font-medium text-slate-900">Managers</p>
+                                        <p class="text-sm text-slate-600">Team oversight & reports</p>
+                                    </div>
+                                </div>
+                                <span class="bg-secondary text-white px-3 py-1 rounded-full text-sm font-medium">8</span>
+                            </div>
+                            
+                            <div class="flex items-center justify-between p-4 bg-slate-50 rounded-lg">
+                                <div class="flex items-center space-x-3">
+                                    <div class="w-10 h-10 bg-success/10 rounded-lg flex items-center justify-center">
+                                        <i class="fas fa-user-tie text-success"></i>
+                                    </div>
+                                    <div>
+                                        <p class="font-medium text-slate-900">Advisors</p>
+                                        <p class="text-sm text-slate-600">Individual metrics only</p>
+                                    </div>
+                                </div>
+                                <span class="bg-success text-white px-3 py-1 rounded-full text-sm font-medium">24</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+                        <div class="flex items-center justify-between mb-6">
+                            <h3 class="text-lg font-semibold text-slate-900">Security Status</h3>
+                            <span class="bg-success/10 text-success px-3 py-1 rounded-full text-sm font-medium">
+                                <i class="fas fa-check-circle mr-1"></i>
+                                Secure
+                            </span>
+                        </div>
+                        
+                        <div class="space-y-4">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center space-x-3">
+                                    <i class="fas fa-key text-success"></i>
+                                    <span class="text-slate-900">SSO Authentication</span>
+                                </div>
+                                <span class="text-success"><i class="fas fa-check"></i></span>
+                            </div>
+                            
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center space-x-3">
+                                    <i class="fas fa-shield-alt text-success"></i>
+                                    <span class="text-slate-900">Multi-Factor Auth</span>
+                                </div>
+                                <span class="text-success"><i class="fas fa-check"></i></span>
+                            </div>
+                            
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center space-x-3">
+                                    <i class="fas fa-lock text-success"></i>
+                                    <span class="text-slate-900">Data Encryption</span>
+                                </div>
+                                <span class="text-success"><i class="fas fa-check"></i></span>
+                            </div>
+                            
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center space-x-3">
+                                    <i class="fas fa-database text-success"></i>
+                                    <span class="text-slate-900">Secure Database</span>
+                                </div>
+                                <span class="text-success"><i class="fas fa-check"></i></span>
+                            </div>
+                            
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center space-x-3">
+                                    <i class="fas fa-clipboard-check text-success"></i>
+                                    <span class="text-slate-900">Audit Logging</span>
+                                </div>
+                                <span class="text-success"><i class="fas fa-check"></i></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- @END_COMPONENT: User Management Panel -->
+            </div>
+            <!-- @END_COMPONENT: Dashboard Content -->
+        </main>
+        <!-- @END_COMPONENT: MainContent -->
+    </div>
+    <!-- @END_COMPONENT: AppLayout -->
+
+    <script>
+        // TODO: Implement business logic, API calls, and state management
+        
+        (function() {
+            // Sidebar toggle for mobile
+            window.toggleSidebar = function() {
+                const sidebar = document.getElementById('sidebar');
+                sidebar.classList.toggle('-translate-x-full');
+            };
+
+            // Initialize charts when page loads
+            document.addEventListener('DOMContentLoaded', function() {
+                initializeCharts();
+            });
+
+            function initializeCharts() {
+                // Revenue Trend Chart
+                const revenueCtx = document.getElementById('revenueChart').getContext('2d');
+                new Chart(revenueCtx, {
+                    type: 'line',
+                    data: {
+                        labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+                        datasets: [{
+                            label: 'Revenue',
+                            data: [320, 380, 290, 410, 450, 487],
+                            borderColor: '#1E40AF',
+                            backgroundColor: '#1E40AF20',
+                            borderWidth: 3,
+                            fill: true,
+                            tension: 0.4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: false
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                grid: {
+                                    color: '#E2E8F0'
+                                },
+                                ticks: {
+                                    callback: function(value) {
+                                        return '$' + value + 'K';
+                                    }
+                                }
+                            },
+                            x: {
+                                grid: {
+                                    display: false
+                                }
+                            }
+                        }
+                    }
+                });
+
+                // Performance Chart
+                const performanceCtx = document.getElementById('performanceChart').getContext('2d');
+                new Chart(performanceCtx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Exceeding', 'Meeting', 'Needs Improvement'],
+                        datasets: [{
+                            data: [65, 25, 10],
+                            backgroundColor: ['#10B981', '#F59E0B', '#EF4444'],
+                            borderWidth: 0
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'bottom',
+                                labels: {
+                                    padding: 20,
+                                    usePointStyle: true
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+        })();
+    </script>
+</body>
+</html>

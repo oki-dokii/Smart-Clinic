@@ -1738,19 +1738,28 @@ function LiveQueueContent({
   
   // WebSocket connection for real-time queue updates - use patient mode for patients, admin for staff/admin
   const { queueTokens: liveAdminQueue } = useQueueSocket(
-    undefined, // No specific user ID for modal view
+    user?.id, // Use user ID to get full queue updates for patients
     user?.role === 'admin' || user?.role === 'staff' // Admin mode only for admin/staff
   );
 
-  // Get queue data for full queue view - use public endpoint for patients, admin for admins  
+  // Debug logging to see what data we're getting
+  console.log('🔥 LiveQueueContent - User role:', user?.role);
+  console.log('🔥 LiveQueueContent - WebSocket data:', liveAdminQueue?.length, 'items');
+  console.log('🔥 LiveQueueContent - Sample data:', liveAdminQueue?.[0]);
+
+  // For patients: Use WebSocket data only since they receive full_queue_update messages
+  // For admin/staff: Use API endpoint as primary source
+  const isPatient = user?.role === 'patient';
+  
   const { data: apiAdminQueue = [] } = useQuery({
-    queryKey: ["/api/queue/public"], 
-    refetchInterval: 3000,
-    retry: false, // Don't retry if unauthorized
+    queryKey: isPatient ? ["/api/queue/public"] : ["/api/queue/admin"], 
+    refetchInterval: isPatient ? 60000 : 3000, // Very infrequent for patients since they get WebSocket updates
+    retry: false,
+    enabled: !isPatient || !liveAdminQueue || liveAdminQueue.length === 0, // Only enable API for non-patients or when WebSocket fails
   });
 
-  // Use live data if available, otherwise fallback to API data, and sort by appointment time
-  const rawAdminQueue = liveAdminQueue || apiAdminQueue || [];
+  // For patients: Always prioritize WebSocket data, for admin/staff: use API data
+  const rawAdminQueue = isPatient ? (liveAdminQueue || []) : (apiAdminQueue || []);
   
   // Remove duplicates and sort by appointment time
   const adminQueue = Array.isArray(rawAdminQueue) ? 
