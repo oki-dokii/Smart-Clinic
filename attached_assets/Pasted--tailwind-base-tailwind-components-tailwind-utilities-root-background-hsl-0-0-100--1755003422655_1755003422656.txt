@@ -1,0 +1,1393 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: hsl(0, 0%, 100%);
+  --foreground: hsl(20, 14.3%, 4.1%);
+  --muted: hsl(60, 4.8%, 95.9%);
+  --muted-foreground: hsl(25, 5.3%, 44.7%);
+  --popover: hsl(0, 0%, 100%);
+  --popover-foreground: hsl(20, 14.3%, 4.1%);
+  --card: hsl(0, 0%, 100%);
+  --card-foreground: hsl(20, 14.3%, 4.1%);
+  --border: hsl(20, 5.9%, 90%);
+  --input: hsl(20, 5.9%, 90%);
+  --primary: hsl(207, 90%, 54%);
+  --primary-foreground: hsl(211, 100%, 99%);
+  --secondary: hsl(60, 4.8%, 95.9%);
+  --secondary-foreground: hsl(24, 9.8%, 10%);
+  --accent: hsl(60, 4.8%, 95.9%);
+  --accent-foreground: hsl(24, 9.8%, 10%);
+  --destructive: hsl(0, 84.2%, 60.2%);
+  --destructive-foreground: hsl(60, 9.1%, 97.8%);
+  --ring: hsl(20, 14.3%, 4.1%);
+  --radius: 0.5rem;
+
+  /* Healthcare theme colors */
+  --healthcare-blue: hsl(207, 90%, 54%);
+  --healthcare-green: hsl(142, 71%, 45%);
+  --healthcare-orange: hsl(25, 95%, 53%);
+  --healthcare-red: hsl(0, 84%, 60%);
+  --healthcare-purple: hsl(262, 83%, 58%);
+}
+
+.dark {
+  --background: hsl(240, 10%, 3.9%);
+  --foreground: hsl(0, 0%, 98%);
+  --muted: hsl(240, 3.7%, 15.9%);
+  --muted-foreground: hsl(240, 5%, 64.9%);
+  --popover: hsl(240, 10%, 3.9%);
+  --popover-foreground: hsl(0, 0%, 98%);
+  --card: hsl(240, 10%, 3.9%);
+  --card-foreground: hsl(0, 0%, 98%);
+  --border: hsl(240, 3.7%, 15.9%);
+  --input: hsl(240, 3.7%, 15.9%);
+  --primary: hsl(207, 90%, 54%);
+  --primary-foreground: hsl(211, 100%, 99%);
+  --secondary: hsl(240, 3.7%, 15.9%);
+  --secondary-foreground: hsl(0, 0%, 98%);
+  --accent: hsl(240, 3.7%, 15.9%);
+  --accent-foreground: hsl(0, 0%, 98%);
+  --destructive: hsl(0, 62.8%, 30.6%);
+  --destructive-foreground: hsl(0, 0%, 98%);
+  --ring: hsl(240, 4.9%, 83.9%);
+  --radius: 0.5rem;
+}
+
+/* Fix dark mode visibility issues */
+.dark .bg-gray-50,
+.dark .bg-blue-50 {
+  background-color: hsl(var(--muted));
+}
+
+.dark .text-gray-600,
+.dark .text-gray-700,
+.dark .text-gray-800,
+.dark .text-gray-900 {
+  color: hsl(var(--muted-foreground));
+}
+
+/* Dark background with light text for medicine cards */
+.medicine-card {
+  background-color: white;
+}
+
+.dark .medicine-card {
+  background-color: #111827 !important;
+  border-color: #374151 !important;
+}
+
+.dark .medicine-card,
+.dark .medicine-card h3,
+.dark .medicine-card p,
+.dark .medicine-card span,
+.dark .medicine-card div {
+  color: #d1d5db !important;
+}
+
+.dark .medicine-card .font-bold,
+.dark .medicine-card .font-semibold {
+  color: #f9fafb !important;
+}
+
+.dark .text-blue-100 {
+  color: hsl(var(--accent-foreground));
+}
+
+.dark .border-gray-200,
+.dark .border-gray-300 {
+  border-color: hsl(var(--border));
+}
+
+.dark .bg-white {
+  background-color: hsl(var(--card));
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply font-sans antialiased bg-background text-foreground;
+  }
+}
+
+/* Healthcare specific animations */
+@keyframes flash {
+  0%, 50%, 100% {
+    opacity: 1;
+  }
+  25%, 75% {
+    opacity: 0.7;
+  }
+}
+
+.animate-flash {
+  animation: flash 2s infinite;
+}
+
+/* Custom scrollbar for better UX */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: hsl(var(--muted));
+}
+
+::-webkit-scrollbar-thumb {
+  background: hsl(var(--border));
+  border-radius: 3px;
+}
+
+/* Enhanced navigation styling */
+.nav-tabs {
+  @apply border-b border-gray-200 dark:border-gray-800;
+  background: linear-gradient(135deg, hsl(var(--background)) 0%, hsl(var(--muted)) 100%);
+}
+
+.nav-tab {
+  @apply relative px-6 py-3 text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-all duration-200 border-b-2 border-transparent hover:border-blue-300 dark:hover:border-blue-600;
+}
+
+.nav-tab.active {
+  @apply text-blue-600 dark:text-blue-400 border-blue-500 dark:border-blue-400 bg-blue-50 dark:bg-blue-950/30;
+}
+
+.nav-tab::before {
+  content: '';
+  @apply absolute inset-0 bg-gradient-to-r from-blue-500/0 to-blue-500/0 hover:from-blue-500/5 hover:to-blue-500/10 dark:hover:from-blue-500/10 dark:hover:to-blue-500/20 transition-all duration-300 rounded-t-lg;
+}
+
+.nav-tab.active::before {
+  @apply from-blue-500/10 to-blue-500/20 dark:from-blue-500/20 dark:dark:to-blue-500/30;
+}
+
+/* Dashboard card enhancements */
+.dashboard-card {
+  @apply bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 shadow-sm hover:shadow-md transition-all duration-300 rounded-xl p-6 relative overflow-hidden;
+}
+
+.dashboard-card::before {
+  content: '';
+  @apply absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 to-purple-500;
+}
+
+.dashboard-card.stats-card::before {
+  @apply from-green-500 to-blue-500;
+}
+
+.dashboard-card.alert-card::before {
+  @apply from-red-500 to-orange-500;
+}
+
+.dashboard-card.info-card::before {
+  @apply from-purple-500 to-pink-500;
+}
+
+/* Stat number styling */
+.stat-number {
+  @apply text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent;
+}
+
+.stat-change-positive {
+  @apply text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-950/30 px-2 py-1 rounded-full text-xs font-medium;
+}
+
+.stat-change-negative {
+  @apply text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/30 px-2 py-1 rounded-full text-xs font-medium;
+}
+
+/* Button enhancements */
+.btn-primary {
+  @apply bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-medium px-4 py-2 rounded-lg shadow-sm hover:shadow-md transition-all duration-200 transform hover:scale-105;
+}
+
+.btn-secondary {
+  @apply bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 font-medium px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 transition-all duration-200;
+}
+
+/* Alert styling */
+.alert-emergency {
+  @apply bg-red-50 dark:bg-red-950/30 border-l-4 border-red-500 p-4 rounded-r-lg animate-pulse shadow-sm;
+}
+
+.alert-warning {
+  @apply bg-yellow-50 dark:bg-yellow-950/30 border-l-4 border-yellow-500 p-4 rounded-r-lg shadow-sm;
+}
+
+.alert-info {
+  @apply bg-blue-50 dark:bg-blue-950/30 border-l-4 border-blue-500 p-4 rounded-r-lg shadow-sm;
+}
+
+/* Queue status badges */
+.queue-waiting {
+  @apply bg-yellow-100 text-yellow-800 dark:bg-yellow-950/30 dark:text-yellow-400 px-2 py-1 rounded-full text-xs font-medium;
+}
+
+.queue-called {
+  @apply bg-blue-100 text-blue-800 dark:bg-blue-950/30 dark:text-blue-400 px-2 py-1 rounded-full text-xs font-medium;
+}
+
+.queue-completed {
+  @apply bg-green-100 text-green-800 dark:bg-green-950/30 dark:text-green-400 px-2 py-1 rounded-full text-xs font-medium;
+}
+
+/* Appointment status badges */
+.appointment-scheduled {
+  @apply bg-blue-100 text-blue-800 dark:bg-blue-950/30 dark:text-blue-400 px-2 py-1 rounded-full text-xs font-medium;
+}
+
+.appointment-confirmed {
+  @apply bg-green-100 text-green-800 dark:bg-green-950/30 dark:text-green-400 px-2 py-1 rounded-full text-xs font-medium;
+}
+
+.appointment-completed {
+  @apply bg-gray-100 text-gray-800 dark:bg-gray-950/30 dark:text-gray-400 px-2 py-1 rounded-full text-xs font-medium;
+}
+
+.appointment-cancelled {
+  @apply bg-red-100 text-red-800 dark:bg-red-950/30 dark:text-red-400 px-2 py-1 rounded-full text-xs font-medium;
+}
+
+/* Table enhancements */
+.data-table {
+  @apply w-full border-collapse bg-white dark:bg-gray-900 shadow-sm rounded-lg overflow-hidden;
+}
+
+.data-table th {
+  @apply bg-gray-50 dark:bg-gray-800 px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider border-b border-gray-200 dark:border-gray-700;
+}
+
+.data-table td {
+  @apply px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100 border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors duration-150;
+}
+
+/* Loading and skeleton states */
+.skeleton {
+  @apply animate-pulse bg-gray-200 dark:bg-gray-700 rounded;
+}
+
+.loading-spinner {
+  @apply animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500;
+}
+
+/* ENHANCED MOBILE OPTIMIZATIONS */
+
+/* Mobile-first approach: Base styles for mobile */
+@media screen and (max-width: 640px) {
+  /* Core mobile layout */
+  * {
+    box-sizing: border-box;
+  }
+
+  html {
+    font-size: 16px; /* Prevent zoom on form focus */
+    -webkit-text-size-adjust: 100%;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  body {
+    @apply text-base leading-relaxed;
+    overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Mobile viewport and safe areas */
+  .mobile-viewport {
+    min-height: 100vh;
+    min-height: 100dvh; /* Dynamic viewport height */
+    width: 100vw;
+    overflow-x: hidden;
+    padding-bottom: env(safe-area-inset-bottom);
+    padding-top: env(safe-area-inset-top);
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+  }
+
+  .mobile-container {
+    @apply px-4 py-3 mx-auto;
+    max-width: 100vw;
+    overflow-x: hidden;
+  }
+
+  /* Mobile navigation improvements */
+  .nav-tabs {
+    @apply overflow-x-auto px-0;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    scroll-behavior: smooth;
+    scroll-snap-type: x mandatory;
+  }
+
+  .nav-tabs::-webkit-scrollbar {
+    display: none;
+  }
+
+  .nav-tab {
+    @apply px-4 py-3 text-sm font-medium whitespace-nowrap;
+    min-width: max-content;
+    scroll-snap-align: center;
+    touch-action: manipulation;
+  }
+
+  .nav-tab.active {
+    @apply bg-blue-50 dark:bg-blue-950/50;
+  }
+
+  /* Enhanced mobile cards */
+  .dashboard-card,
+  .mobile-card {
+    @apply p-4 mb-3 rounded-xl shadow-sm border border-gray-200 dark:border-gray-800;
+    background: white;
+    will-change: transform;
+  }
+
+  .dark .dashboard-card,
+  .dark .mobile-card {
+    background: hsl(var(--card));
+    border-color: hsl(var(--border));
+  }
+
+  /* Mobile-optimized typography */
+  .mobile-heading {
+    @apply text-xl font-bold leading-tight mb-2;
+    font-size: clamp(1.25rem, 4vw, 1.5rem);
+  }
+
+  .mobile-subheading {
+    @apply text-lg font-semibold leading-tight mb-2;
+    font-size: clamp(1.125rem, 3.5vw, 1.25rem);
+  }
+
+  .mobile-body {
+    @apply text-base leading-relaxed;
+    font-size: 16px; /* Prevent zoom on iOS */
+  }
+
+  .mobile-caption {
+    @apply text-sm text-gray-600 dark:text-gray-400 leading-normal;
+  }
+
+  .mobile-label {
+    @apply text-sm font-medium text-gray-700 dark:text-gray-300 mb-1;
+  }
+
+  /* Mobile stat numbers */
+  .stat-number {
+    @apply text-2xl font-bold;
+    font-size: clamp(1.5rem, 6vw, 2rem);
+  }
+
+  /* Enhanced mobile buttons */
+  .btn-primary,
+  .mobile-btn-primary {
+    @apply min-h-12 px-6 py-3 text-base font-medium rounded-lg;
+    touch-action: manipulation;
+    -webkit-touch-callout: none;
+    user-select: none;
+  }
+
+  .btn-secondary,
+  .mobile-btn-secondary {
+    @apply min-h-12 px-6 py-3 text-base font-medium rounded-lg;
+    touch-action: manipulation;
+    -webkit-touch-callout: none;
+    user-select: none;
+  }
+
+  .mobile-btn-small {
+    @apply min-h-10 px-4 py-2 text-sm font-medium rounded-md;
+    touch-action: manipulation;
+  }
+
+  .mobile-btn-large {
+    @apply min-h-14 px-8 py-4 text-lg font-medium rounded-xl;
+    touch-action: manipulation;
+  }
+
+  /* Mobile form elements */
+  input,
+  select,
+  textarea,
+  .mobile-input {
+    @apply min-h-12 px-4 py-3 text-base rounded-lg border border-gray-300 dark:border-gray-600;
+    font-size: 16px !important; /* Prevent zoom on iOS */
+    -webkit-appearance: none;
+    appearance: none;
+  }
+
+  input:focus,
+  select:focus,
+  textarea:focus,
+  .mobile-input:focus {
+    @apply ring-2 ring-blue-500 border-blue-500 outline-none;
+  }
+
+  /* Mobile layout grids */
+  .mobile-grid-1 {
+    @apply grid grid-cols-1 gap-3;
+  }
+
+  .mobile-grid-2 {
+    @apply grid grid-cols-2 gap-2;
+  }
+
+  .mobile-metrics-grid {
+    @apply grid grid-cols-1 gap-3;
+  }
+
+  .mobile-metrics-card {
+    @apply p-4 rounded-lg bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 shadow-sm;
+  }
+
+  /* Mobile flex layouts */
+  .mobile-flex-col {
+    @apply flex flex-col space-y-3;
+  }
+
+  .mobile-flex-row {
+    @apply flex flex-row items-center space-x-3;
+  }
+
+  .mobile-flex-between {
+    @apply flex justify-between items-center;
+  }
+
+  .mobile-flex-center {
+    @apply flex justify-center items-center;
+  }
+
+  /* Mobile spacing utilities */
+  .mobile-px-4 {
+    @apply px-4;
+  }
+
+  .mobile-py-3 {
+    @apply py-3;
+  }
+
+  .mobile-py-4 {
+    @apply py-4;
+  }
+
+  .mobile-gap-3 {
+    @apply gap-3;
+  }
+
+  .mobile-gap-4 {
+    @apply gap-4;
+  }
+
+  .mobile-mb-4 {
+    @apply mb-4;
+  }
+
+  .mobile-mb-6 {
+    @apply mb-6;
+  }
+
+  .mobile-mt-4 {
+    @apply mt-4;
+  }
+
+  /* Mobile tables */
+  .mobile-table-container {
+    @apply overflow-x-auto -mx-4 px-4;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(0, 0, 0, 0.3) transparent;
+  }
+
+  .mobile-table {
+    @apply min-w-full text-sm;
+  }
+
+  .mobile-table th,
+  .mobile-table td {
+    @apply px-3 py-3 text-left;
+    min-width: 100px;
+  }
+
+  .mobile-table th {
+    @apply bg-gray-50 dark:bg-gray-800 font-medium text-gray-600 dark:text-gray-400 text-xs uppercase tracking-wider sticky top-0;
+  }
+
+  .mobile-table td {
+    @apply border-b border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-100;
+  }
+
+  /* Mobile status badges */
+  .mobile-badge {
+    @apply px-2 py-1 text-xs font-medium rounded-full;
+    white-space: nowrap;
+  }
+
+  /* Mobile touch targets */
+  .mobile-touch-target {
+    @apply min-h-12 min-w-12 flex items-center justify-center;
+    touch-action: manipulation;
+  }
+
+  .mobile-icon {
+    @apply w-5 h-5;
+  }
+
+  .mobile-icon-lg {
+    @apply w-6 h-6;
+  }
+
+  /* Mobile dialog/modal improvements */
+  .mobile-dialog {
+    @apply m-3 max-w-none w-auto max-h-[90vh] overflow-y-auto rounded-lg;
+  }
+
+  .mobile-dialog-content {
+    @apply p-4;
+    max-height: calc(100vh - 120px);
+    overflow-y: auto;
+  }
+
+  /* Mobile alert improvements */
+  .alert-emergency,
+  .alert-warning,
+  .alert-info {
+    @apply p-3 text-sm rounded-lg;
+  }
+
+  /* Mobile medicine cards */
+  .medicine-card {
+    @apply p-3 mb-3 rounded-lg border-l-4;
+  }
+
+  .medicine-card.overdue {
+    @apply animate-pulse;
+  }
+
+  /* Mobile queue tokens */
+  .queue-token {
+    @apply p-4 text-center rounded-lg;
+  }
+
+  /* Mobile appointment cards */
+  .appointment-card {
+    @apply p-3 mb-3 rounded-lg border-l-4;
+  }
+
+  /* Mobile scrollbars */
+  .mobile-scrollbar::-webkit-scrollbar {
+    width: 4px;
+    height: 4px;
+  }
+
+  .mobile-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .mobile-scrollbar::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 2px;
+  }
+
+  .mobile-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: rgba(0, 0, 0, 0.5);
+  }
+
+  /* Mobile performance optimizations */
+  .mobile-will-change {
+    will-change: transform, opacity;
+  }
+
+  .mobile-gpu-accelerated {
+    transform: translate3d(0, 0, 0);
+    backface-visibility: hidden;
+  }
+
+  /* Mobile accessibility improvements */
+  .mobile-focus-visible:focus-visible {
+    @apply ring-2 ring-blue-500 ring-offset-2 outline-none;
+  }
+
+  /* Mobile emergency flashing */
+  .flash-urgent,
+  .flash-delay {
+    @apply px-2 py-1 rounded text-white font-medium text-xs;
+  }
+
+  .pulse-urgent,
+  .pulse-delay {
+    @apply text-white font-medium;
+  }
+
+  /* Mobile card hover effects (disabled on touch devices) */
+  .card-hover {
+    transition: none;
+  }
+
+  .card-hover:hover {
+    transform: none;
+  }
+
+  /* Mobile-specific healthcare elements */
+  .mobile-healthcare-card {
+    @apply bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-4 shadow-sm;
+  }
+
+  .mobile-healthcare-header {
+    @apply flex items-center justify-between mb-3;
+  }
+
+  .mobile-healthcare-title {
+    @apply text-lg font-semibold text-gray-900 dark:text-white;
+  }
+
+  .mobile-healthcare-subtitle {
+    @apply text-sm text-gray-600 dark:text-gray-400;
+  }
+
+  /* Mobile bottom navigation */
+  .mobile-bottom-nav {
+    @apply fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800 px-4 py-2;
+    padding-bottom: calc(0.5rem + env(safe-area-inset-bottom));
+  }
+
+  /* Mobile loading states */
+  .mobile-skeleton {
+    @apply animate-pulse bg-gray-200 dark:bg-gray-700 rounded;
+    height: 1rem;
+  }
+
+  .mobile-skeleton-text {
+    @apply h-4 bg-gray-200 dark:bg-gray-700 rounded;
+  }
+
+  .mobile-skeleton-circle {
+    @apply w-10 h-10 bg-gray-200 dark:bg-gray-700 rounded-full;
+  }
+
+  /* Mobile chart containers */
+  .mobile-chart-container {
+    @apply h-48 w-full overflow-hidden rounded-lg;
+  }
+
+  /* Mobile overflow handling */
+  .mobile-overflow-scroll {
+    overflow: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .mobile-text-ellipsis {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  /* Mobile sticky elements */
+  .mobile-sticky-header {
+    @apply sticky top-0 z-10 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800;
+  }
+
+  /* Mobile pull-to-refresh indicator */
+  .mobile-pull-refresh {
+    @apply flex justify-center items-center py-4 text-gray-500;
+  }
+
+  /* Mobile error states */
+  .mobile-error-card {
+    @apply bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 rounded-lg p-4 text-center;
+  }
+
+  .mobile-error-text {
+    @apply text-red-700 dark:text-red-400 text-sm;
+  }
+
+  /* Mobile success states */
+  .mobile-success-card {
+    @apply bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800 rounded-lg p-4 text-center;
+  }
+
+  .mobile-success-text {
+    @apply text-green-700 dark:text-green-400 text-sm;
+  }
+}
+
+/* Tablet optimization (481px - 768px) */
+@media screen and (min-width: 481px) and (max-width: 768px) {
+  .tablet-grid-2 {
+    @apply grid-cols-2;
+  }
+
+  .tablet-grid-3 {
+    @apply grid-cols-3;
+  }
+
+  .nav-tab {
+    @apply px-4 py-3 text-sm;
+  }
+
+  .dashboard-card {
+    @apply p-5;
+  }
+
+  .stat-number {
+    @apply text-3xl;
+  }
+
+  .mobile-metrics-grid {
+    @apply grid-cols-2 gap-4;
+  }
+}
+
+/* Landscape phone optimization */
+@media screen and (max-height: 500px) and (orientation: landscape) {
+  .mobile-container {
+    @apply py-2;
+  }
+
+  .mobile-card {
+    @apply p-3 mb-2;
+  }
+
+  .mobile-heading {
+    @apply text-lg mb-1;
+  }
+
+  .mobile-subheading {
+    @apply text-base mb-1;
+  }
+
+  .nav-tab {
+    @apply py-2;
+  }
+
+  .mobile-btn-primary,
+  .mobile-btn-secondary {
+    @apply min-h-10 py-2;
+  }
+}
+
+/* High DPI screen optimizations */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+  .mobile-icon,
+  .mobile-icon-lg {
+    image-rendering: -webkit-optimize-contrast;
+  }
+}
+
+/* Reduced motion preferences */
+@media (prefers-reduced-motion: reduce) {
+  .animate-flash,
+  .animate-pulse,
+  .flash-urgent,
+  .flash-delay,
+  .pulse-urgent,
+  .pulse-delay {
+    animation: none;
+  }
+
+  .transition-all,
+  .card-hover {
+    transition: none;
+  }
+}
+
+/* Large desktop improvements */
+@media (min-width: 1025px) {
+  .desktop-large-grid-4 {
+    @apply grid-cols-4;
+  }
+
+  .desktop-large-grid-6 {
+    @apply grid-cols-6;
+  }
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--muted-foreground));
+}
+
+/* Focus styles for accessibility */
+.focus-visible:focus-visible {
+  outline: 2px solid hsl(var(--primary));
+  outline-offset: 2px;
+}
+
+/* Loading spinner animation */
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
+
+/* Smooth transitions for interactive elements */
+.transition-all {
+  transition-property: all;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+}
+
+/* Healthcare status indicators */
+.status-active {
+  background-color: hsl(var(--healthcare-green));
+  color: white;
+}
+
+.status-pending {
+  background-color: hsl(var(--healthcare-orange));
+  color: white;
+}
+
+.status-urgent {
+  background-color: hsl(var(--healthcare-red));
+  color: white;
+}
+
+.status-info {
+  background-color: hsl(var(--healthcare-blue));
+  color: white;
+}
+
+/* Queue token styling */
+.queue-token {
+  background: linear-gradient(135deg, hsl(var(--healthcare-blue)), hsl(207, 90%, 64%));
+  color: white;
+  border-radius: 12px;
+  padding: 1.5rem;
+  text-align: center;
+  box-shadow: 0 4px 12px hsla(207, 90%, 54%, 0.3);
+}
+
+/* Medicine reminder card */
+.medicine-card {
+  border-left: 4px solid hsl(var(--healthcare-orange));
+  background: linear-gradient(to right, hsl(25, 95%, 98%), white);
+}
+
+.medicine-card.overdue {
+  border-left-color: hsl(var(--healthcare-red));
+  background: linear-gradient(to right, hsl(0, 84%, 98%), white);
+  animation: flash-red 2s infinite;
+}
+
+/* Optimized flash animations for better performance */
+@keyframes flash-blink {
+  0%, 100% {
+    opacity: 1;
+    background-color: hsl(0, 84%, 60%);
+  }
+  50% {
+    opacity: 0.7;
+    background-color: hsl(0, 100%, 50%);
+  }
+}
+
+@keyframes flash-orange-blink {
+  0%, 100% {
+    opacity: 1;
+    background-color: hsl(24, 95%, 53%);
+  }
+  50% {
+    opacity: 0.7;
+    background-color: hsl(24, 100%, 45%);
+  }
+}
+
+@keyframes gentle-pulse {
+  0%, 100% {
+    background-color: hsl(0, 84%, 60%);
+  }
+  50% {
+    background-color: hsl(0, 100%, 50%);
+  }
+}
+
+@keyframes gentle-orange-pulse {
+  0%, 100% {
+    background-color: hsl(24, 95%, 53%);
+  }
+  50% {
+    background-color: hsl(24, 100%, 45%);
+  }
+}
+
+/* Lightweight flash animation classes */
+.flash-urgent {
+  animation: flash-blink 2s infinite;
+  border-radius: 6px;
+  padding: 4px 8px;
+  font-weight: 600;
+  color: white !important;
+  will-change: opacity, background-color;
+}
+
+.flash-delay {
+  animation: flash-orange-blink 2s infinite;
+  border-radius: 6px;
+  padding: 4px 8px;
+  font-weight: 600;
+  color: white !important;
+  will-change: opacity, background-color;
+}
+
+.pulse-urgent {
+  animation: gentle-pulse 2.5s infinite;
+  color: white !important;
+  font-weight: 600;
+  will-change: background-color;
+}
+
+.pulse-delay {
+  animation: gentle-orange-pulse 2.5s infinite;
+  color: white !important;
+  font-weight: 600;
+  will-change: background-color;
+}
+
+/* Simple border flash for cards */
+.flash-border-urgent {
+  border: 2px solid hsl(0, 84%, 60%);
+  animation: flash-blink 2s infinite;
+  will-change: opacity;
+}
+
+.flash-border-delay {
+  border: 2px solid hsl(24, 95%, 53%);
+  animation: flash-orange-blink 2s infinite;
+  will-change: opacity;
+}
+
+/* Appointment card */
+.appointment-card {
+  border-left: 4px solid hsl(var(--healthcare-green));
+  background: linear-gradient(to right, hsl(142, 71%, 98%), white);
+}
+
+/* Healthcare gradient backgrounds */
+.gradient-healthcare {
+  background: linear-gradient(135deg, hsl(var(--healthcare-blue)), hsl(var(--healthcare-green)));
+}
+
+.gradient-healthcare-secondary {
+  background: linear-gradient(135deg, hsl(var(--healthcare-purple)), hsl(var(--healthcare-blue)));
+}
+
+/* Card hover effects */
+.card-hover {
+  transition: all 0.2s ease-in-out;
+}
+
+.card-hover:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px hsla(0, 0%, 0%, 0.1);
+}
+
+/* Button loading state */
+.btn-loading {
+  position: relative;
+  color: transparent;
+}
+
+.btn-loading::after {
+  content: "";
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  top: 50%;
+  left: 50%;
+  margin-left: -8px;
+  margin-top: -8px;
+  border: 2px solid transparent;
+  border-top-color: currentColor;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+/* ADDITIONAL MOBILE ENHANCEMENTS */
+
+/* Mobile-specific touch interactions */
+@media screen and (max-width: 640px) {
+  
+  /* Enhanced mobile touch feedback */
+  .mobile-touch-feedback {
+    -webkit-tap-highlight-color: rgba(59, 130, 246, 0.1);
+    tap-highlight-color: rgba(59, 130, 246, 0.1);
+  }
+
+  .mobile-touch-feedback:active {
+    background-color: rgba(59, 130, 246, 0.05);
+    transform: scale(0.98);
+    transition: all 0.1s ease;
+  }
+
+  /* Mobile-optimized healthcare status pills */
+  .mobile-status-pill {
+    @apply inline-flex items-center px-3 py-1 text-xs font-medium rounded-full;
+    min-height: 24px;
+  }
+
+  .mobile-status-urgent {
+    @apply bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400;
+  }
+
+  .mobile-status-warning {
+    @apply bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400;
+  }
+
+  .mobile-status-success {
+    @apply bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400;
+  }
+
+  .mobile-status-info {
+    @apply bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400;
+  }
+
+  /* Mobile healthcare metric cards */
+  .mobile-metric-card {
+    @apply bg-white dark:bg-gray-900 p-4 rounded-lg border border-gray-200 dark:border-gray-800 shadow-sm;
+  }
+
+  .mobile-metric-value {
+    @apply text-2xl font-bold text-gray-900 dark:text-white mb-1;
+  }
+
+  .mobile-metric-label {
+    @apply text-sm text-gray-600 dark:text-gray-400;
+  }
+
+  .mobile-metric-change {
+    @apply text-xs font-medium mt-2;
+  }
+
+  .mobile-metric-up {
+    @apply text-green-600 dark:text-green-400;
+  }
+
+  .mobile-metric-down {
+    @apply text-red-600 dark:text-red-400;
+  }
+
+  /* Mobile patient cards */
+  .mobile-patient-card {
+    @apply bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-800 p-4 mb-3 shadow-sm;
+  }
+
+  .mobile-patient-header {
+    @apply flex items-center space-x-3 mb-3;
+  }
+
+  .mobile-patient-avatar {
+    @apply w-12 h-12 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center text-blue-600 dark:text-blue-400 font-semibold;
+  }
+
+  .mobile-patient-info {
+    @apply flex-1;
+  }
+
+  .mobile-patient-name {
+    @apply text-base font-semibold text-gray-900 dark:text-white;
+  }
+
+  .mobile-patient-id {
+    @apply text-sm text-gray-600 dark:text-gray-400;
+  }
+
+  /* Mobile appointment slots */
+  .mobile-appointment-slot {
+    @apply p-3 rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-600 text-center;
+  }
+
+  .mobile-appointment-slot.available {
+    @apply border-green-300 dark:border-green-600 bg-green-50 dark:bg-green-900/10 text-green-700 dark:text-green-400;
+  }
+
+  .mobile-appointment-slot.booked {
+    @apply border-blue-300 dark:border-blue-600 bg-blue-50 dark:bg-blue-900/10 text-blue-700 dark:text-blue-400;
+  }
+
+  .mobile-appointment-slot.unavailable {
+    @apply border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-800 text-gray-500 dark:text-gray-400;
+  }
+
+  /* Mobile queue management */
+  .mobile-queue-card {
+    @apply bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-800 p-4 mb-3 shadow-sm;
+  }
+
+  .mobile-queue-number {
+    @apply text-3xl font-bold text-center mb-2;
+    background: linear-gradient(135deg, hsl(var(--healthcare-blue)), hsl(var(--healthcare-purple)));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .mobile-queue-status {
+    @apply text-center text-sm font-medium;
+  }
+
+  .mobile-queue-waiting {
+    @apply text-orange-600 dark:text-orange-400;
+  }
+
+  .mobile-queue-called {
+    @apply text-blue-600 dark:text-blue-400;
+  }
+
+  .mobile-queue-served {
+    @apply text-green-600 dark:text-green-400;
+  }
+
+  /* Mobile medicine tracking */
+  .mobile-medicine-card {
+    @apply bg-white dark:bg-gray-900 rounded-lg border-l-4 border-orange-500 p-4 mb-3 shadow-sm;
+  }
+
+  .mobile-medicine-name {
+    @apply text-base font-semibold text-gray-900 dark:text-white mb-1;
+  }
+
+  .mobile-medicine-dose {
+    @apply text-sm text-gray-600 dark:text-gray-400 mb-2;
+  }
+
+  .mobile-medicine-time {
+    @apply text-sm font-medium;
+  }
+
+  .mobile-medicine-overdue {
+    @apply border-l-red-500 bg-red-50 dark:bg-red-900/10;
+  }
+
+  .mobile-medicine-upcoming {
+    @apply border-l-blue-500 bg-blue-50 dark:bg-blue-900/10;
+  }
+
+  .mobile-medicine-taken {
+    @apply border-l-green-500 bg-green-50 dark:bg-green-900/10;
+  }
+
+  /* Mobile vital signs display */
+  .mobile-vital-card {
+    @apply bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-800 p-4 text-center;
+  }
+
+  .mobile-vital-icon {
+    @apply w-8 h-8 mx-auto mb-2 text-blue-600 dark:text-blue-400;
+  }
+
+  .mobile-vital-value {
+    @apply text-lg font-bold text-gray-900 dark:text-white;
+  }
+
+  .mobile-vital-label {
+    @apply text-xs text-gray-600 dark:text-gray-400 mt-1;
+  }
+
+  .mobile-vital-normal {
+    @apply border-green-200 dark:border-green-800;
+  }
+
+  .mobile-vital-warning {
+    @apply border-orange-200 dark:border-orange-800;
+  }
+
+  .mobile-vital-critical {
+    @apply border-red-200 dark:border-red-800;
+  }
+
+  /* Mobile emergency alert bar */
+  .mobile-emergency-bar {
+    @apply fixed top-0 left-0 right-0 bg-red-600 text-white p-3 text-center text-sm font-medium z-50;
+    animation: flash-blink 2s infinite;
+  }
+
+  .mobile-emergency-bar.warning {
+    @apply bg-orange-600;
+    animation: flash-orange-blink 2s infinite;
+  }
+
+  /* Mobile fab button */
+  .mobile-fab {
+    @apply fixed bottom-6 right-6 w-14 h-14 bg-blue-600 hover:bg-blue-700 text-white rounded-full shadow-lg flex items-center justify-center;
+    z-index: 1000;
+    bottom: calc(1.5rem + env(safe-area-inset-bottom));
+  }
+
+  .mobile-fab:active {
+    transform: scale(0.95);
+  }
+
+  /* Mobile search bar */
+  .mobile-search {
+    @apply relative mb-4;
+  }
+
+  .mobile-search-input {
+    @apply w-full pl-10 pr-4 py-3 text-base border border-gray-300 dark:border-gray-600 rounded-lg;
+    font-size: 16px !important;
+  }
+
+  .mobile-search-icon {
+    @apply absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400;
+  }
+
+  /* Mobile filter pills */
+  .mobile-filter-container {
+    @apply flex space-x-2 overflow-x-auto pb-2 mb-4;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+
+  .mobile-filter-container::-webkit-scrollbar {
+    display: none;
+  }
+
+  .mobile-filter-pill {
+    @apply px-3 py-2 text-sm font-medium rounded-full whitespace-nowrap border;
+  }
+
+  .mobile-filter-pill.active {
+    @apply bg-blue-600 text-white border-blue-600;
+  }
+
+  .mobile-filter-pill:not(.active) {
+    @apply bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600;
+  }
+
+  /* Mobile data visualization */
+  .mobile-chart-card {
+    @apply bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-800 p-4 mb-4 shadow-sm;
+  }
+
+  .mobile-chart-title {
+    @apply text-base font-semibold text-gray-900 dark:text-white mb-3;
+  }
+
+  .mobile-chart-container {
+    @apply h-48 w-full;
+  }
+
+  /* Mobile notification card */
+  .mobile-notification {
+    @apply bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg p-4 mb-3 shadow-sm;
+  }
+
+  .mobile-notification.unread {
+    @apply border-l-4 border-l-blue-500 bg-blue-50 dark:bg-blue-900/10;
+  }
+
+  .mobile-notification-header {
+    @apply flex items-start justify-between mb-2;
+  }
+
+  .mobile-notification-title {
+    @apply text-sm font-semibold text-gray-900 dark:text-white;
+  }
+
+  .mobile-notification-time {
+    @apply text-xs text-gray-500 dark:text-gray-400;
+  }
+
+  .mobile-notification-content {
+    @apply text-sm text-gray-600 dark:text-gray-400;
+  }
+
+  /* Mobile progress indicators */
+  .mobile-progress-bar {
+    @apply w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2;
+  }
+
+  .mobile-progress-fill {
+    @apply h-2 rounded-full transition-all duration-300;
+  }
+
+  .mobile-progress-success {
+    @apply bg-green-600;
+  }
+
+  .mobile-progress-warning {
+    @apply bg-orange-600;
+  }
+
+  .mobile-progress-danger {
+    @apply bg-red-600;
+  }
+
+  /* Mobile step indicator */
+  .mobile-steps {
+    @apply flex items-center justify-between mb-6;
+  }
+
+  .mobile-step {
+    @apply flex items-center justify-center w-8 h-8 rounded-full text-xs font-semibold;
+  }
+
+  .mobile-step.completed {
+    @apply bg-green-600 text-white;
+  }
+
+  .mobile-step.active {
+    @apply bg-blue-600 text-white;
+  }
+
+  .mobile-step.inactive {
+    @apply bg-gray-300 dark:bg-gray-600 text-gray-600 dark:text-gray-400;
+  }
+
+  .mobile-step-line {
+    @apply flex-1 h-px bg-gray-300 dark:bg-gray-600 mx-2;
+  }
+
+  .mobile-step-line.completed {
+    @apply bg-green-600;
+  }
+}
+
+/* PWA and standalone app optimizations */
+@media (display-mode: standalone) {
+  .mobile-viewport {
+    padding-top: 0; /* Remove status bar padding in PWA */
+  }
+
+  .mobile-header {
+    padding-top: env(safe-area-inset-top);
+  }
+}
+
+/* Ultra-wide mobile screens */
+@media screen and (max-width: 640px) and (min-aspect-ratio: 2/1) {
+  .mobile-container {
+    max-width: 480px;
+    margin: 0 auto;
+  }
+}
+
+/* Foldable device support */
+@media (spanning: single-fold-vertical) {
+  .mobile-container {
+    max-width: 50vw;
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .mobile-card,
+  .dashboard-card {
+    border-width: 2px;
+  }
+
+  .mobile-btn-primary {
+    border: 2px solid transparent;
+  }
+
+  .mobile-status-pill {
+    border: 1px solid currentColor;
+  }
+}
